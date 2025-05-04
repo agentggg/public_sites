@@ -1,0 +1,10 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:RAW Lounge Night
+DTSTART;TZID=America/New_York:20250719T190000
+DTEND;TZID=America/New_York:20250719T230000
+LOCATION:Antioch Winder
+DESCRIPTION:A chill night of music, food, and fun for believers. RAW Lounge Night.
+END:VEVENT
+END:VCALENDAR
