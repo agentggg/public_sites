@@ -3,73 +3,77 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>RAW Lounge Night - Event Flyer</title>
+  <title id="page-title">Event Flyer</title>
   <style>
     :root {
       --accent: #ea5a28;
       --text: #222;
       --bg: #fff;
+      --card-bg: #fffaf7;
     }
 
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: var(--bg);
+      background: linear-gradient(to bottom, #fff5f0, #ffffff);
       color: var(--text);
-      padding: 2rem;
       margin: 0;
-      text-align: center;
+      padding: 1.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
     }
 
     .flyer {
       max-width: 600px;
-      margin: auto;
+      background: var(--card-bg);
       padding: 2rem;
-      background: #f9f9f9;
       border-radius: 16px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      text-align: center;
     }
 
-    h1 {
+    .flyer h1 {
       color: var(--accent);
+      font-size: 2rem;
       margin-bottom: 0.5rem;
     }
 
-    h2 {
-      margin: 0.2rem;
+    .flyer h2 {
       font-weight: 500;
+      margin-top: 0;
+      font-size: 1.2rem;
     }
 
-    .details {
+    .flyer .details {
       font-size: 1rem;
-      margin-bottom: 1.5rem;
-      color: #444;
+      margin: 1rem 0;
+      color: #555;
+    }
+
+    .flyer img {
+      max-width: 100%;
+      border-radius: 12px;
+      margin-bottom: 1rem;
     }
 
     .btn {
       background: var(--accent);
       color: white;
-      border: none;
       padding: 0.8rem 1.4rem;
-      font-size: 1rem;
+      border: none;
       border-radius: 8px;
-      margin-top: 1rem;
+      font-size: 1rem;
       cursor: pointer;
+      margin-top: 0.5rem;
     }
 
     input[type="tel"] {
+      width: 90%;
       padding: 0.6rem;
+      margin: 1rem 0;
       border-radius: 6px;
       border: 1px solid #ccc;
-      width: 80%;
-      margin: 1rem 0;
-    }
-
-    a.download {
-      display: inline-block;
-      margin-top: 1rem;
-      color: var(--accent);
-      font-weight: bold;
-      text-decoration: none;
     }
 
     .legal {
@@ -77,32 +81,60 @@
       color: #777;
       margin-top: 2rem;
     }
+
+    @media (max-width: 600px) {
+      .flyer {
+        padding: 1.5rem;
+      }
+
+      .flyer h1 {
+        font-size: 1.5rem;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="flyer">
-    <h1>RAW Lounge Night</h1>
-    <h2>🌙 A Chill Night for Believers</h2>
-    <p class="details">
-      📍 Antioch Winder<br/>
-      🗓 Friday, July 19, 2025<br/>
-      🕗 7:00 PM – 11:00 PM
-    </p>
+    <img id="flyer-image" src="https://via.placeholder.com/500x300" alt="Event Banner"/>
+    <h1 id="event-title">Event Name</h1>
+    <h2 id="event-subtitle">Subtitle</h2>
+    <p class="details" id="event-details">Loading event details...</p>
+    <a class="btn" id="calendar-link" href="#" download>Add to Calendar</a>
 
-    <a class="btn" href="event.ics" download>Add to Calendar</a>
-
-    <p style="margin-top:2rem;">📱 Want to be reminded?</p>
-    <input type="tel" id="phone" placeholder="e.g. +1 404 555 1234"/>
-    <br/>
+    <p style="margin-top:1.5rem;">📱 Want a reminder?</p>
+    <input type="tel" id="phone" placeholder="e.g. +1 404 555 1234" />
+    <br />
     <button class="btn" onclick="submitPhone()">Remind Me</button>
 
     <div class="legal">
-      By entering your number, you agree to receive a reminder text before the event. No spam. We respect your privacy.
+      By entering your number, you agree to receive a reminder text. No spam. We respect your privacy.
     </div>
   </div>
 
   <script>
-    function submitPhone() {
+    async function loadEventInfo() {
+      try {
+        const res = await fetch("event_info.json");
+        const data = await res.json();
+
+        document.title = `${data.title} - Event Flyer`;
+        document.getElementById('page-title').innerText = data.title;
+        document.getElementById('event-title').innerText = data.title;
+        document.getElementById('event-subtitle').innerText = data.subtitle;
+        document.getElementById('event-details').innerHTML = `
+          📍 ${data.location}<br/>
+          🗓 ${data.date}<br/>
+          🕗 ${data.time}
+        `;
+        document.getElementById('flyer-image').src = data.image || "https://via.placeholder.com/500x300";
+        document.getElementById('calendar-link').href = data.ics || "#";
+      } catch (err) {
+        console.error("Error loading event info:", err);
+        document.getElementById('event-details').innerText = "Unable to load event details.";
+      }
+    }
+
+    async function submitPhone() {
       const phone = document.getElementById('phone').value.trim();
       if (!phone) return alert("Please enter your phone number.");
 
@@ -112,7 +144,7 @@
         body: JSON.stringify({ phone })
       }).then(res => {
         if (res.status === 200) {
-          alert("📬 We'll remind you before the event!");
+          alert("📬 You'll get a reminder before the event!");
           document.getElementById('phone').value = '';
         } else {
           alert("⚠️ Couldn't save your reminder. Try again later.");
@@ -122,6 +154,8 @@
         alert("Server error. Try again shortly.");
       });
     }
+
+    loadEventInfo();
   </script>
 </body>
 </html>
