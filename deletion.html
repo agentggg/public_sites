@@ -4,52 +4,121 @@
   <meta charset="UTF-8">
   <title>Delete Account - App</title>
   <style>
-    body { font-family: Arial; max-width: 700px; margin: auto; padding: 2rem; }
-    h1 { color: #ea5a28; }
-    label, input { display: block; margin-bottom: 1rem; width: 100%; max-width: 400px; }
-    .hidden { display: none; }
-    #confirmation { margin-top: 2rem; padding: 1rem; background-color: #ffe9e9; border: 1px solid red; }
-    #confirmation button { background: red; color: white; padding: 0.5rem 1rem; border: none; cursor: pointer; }
-    .legal { font-size: 0.9rem; color: #555; margin-top: 2rem; }
+    :root {
+      --primary: #ea5a28;
+      --danger: #c0392b;
+      --bg: #fdfdfd;
+      --text: #333;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      max-width: 700px;
+      margin: 2rem auto;
+      padding: 2rem;
+      line-height: 1.6;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    h1, h2 {
+      color: var(--primary);
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 1rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.6rem;
+      margin-top: 0.25rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    button {
+      background-color: var(--primary);
+      color: white;
+      padding: 0.7rem 1.4rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    button:hover {
+      background-color: #d14f23;
+    }
+
+    #confirmation {
+      background-color: #fff4f4;
+      border: 1px solid var(--danger);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 2rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .legal {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 2rem;
+    }
   </style>
 </head>
 <body>
   <h1 id="title">Request Account Deletion</h1>
-  <p id="description">Loading...</p>
+  <p id="description">Loading description...</p>
 
-  <h2>Login to Verify Identity</h2>
+  <h2>Login to Verify Your Identity</h2>
   <form id="verifyForm">
-    <label>Username or Email:
-      <input type="text" id="username" required />
-    </label>
-    <label>Password:
-      <input type="password" id="password" required />
-    </label>
+    <label for="username">Username or Email</label>
+    <input type="text" id="username" required />
+
+    <label for="password">Password</label>
+    <input type="password" id="password" required />
+
     <button type="submit">Verify Identity</button>
   </form>
 
   <div id="confirmation" class="hidden">
-    <h2>⚠️ Confirm Account Deletion</h2>
-    <p>This action is irreversible. All associated personal data will be permanently deleted in accordance with our privacy policy.</p>
-    <p><strong>By confirming, you waive any right to recovery of deleted data or services.</strong></p>
+    <h2>⚠️ Confirm Deletion</h2>
+    <p>
+      You are about to permanently delete your account. This action is <strong>irreversible</strong> and will remove your data in accordance with our data policy.
+    </p>
+    <p>
+      This includes: name, email, phone, preferences, and all usage data. By confirming, you acknowledge that this action cannot be undone.
+    </p>
     <button onclick="finalizeDeletion()">Yes, Delete My Account</button>
   </div>
 
   <h2>Data Deleted</h2>
   <ul>
-    <li>Personal identifiers (email, phone number, username)</li>
-    <li>App usage and login history</li>
-    <li>Account and preferences data</li>
+    <li>Personal info (name, phone number, email)</li>
+    <li>Account settings & history</li>
+    <li>Activity logs & app interactions</li>
   </ul>
 
   <h2>Data Retained</h2>
-  <p>We retain minimal logs and non-identifiable analytics data for security, auditing, or compliance reasons, as permitted by law, for no longer than 30 days.</p>
+  <p>
+    Minimal logs and anonymized records may be retained up to 30 days for security, legal, or operational requirements.
+  </p>
 
   <h2>Need Help?</h2>
   <p>Contact us at <strong id="contact">support@example.com</strong></p>
 
   <p class="legal">
-    By using this form, you acknowledge and agree that this process is final and legally binding. You understand that all data will be deleted in accordance with data protection laws including the General Data Protection Regulation (GDPR) and the California Consumer Privacy Act (CCPA). We are not liable for any lost access, data, or services once deletion is confirmed.
+    This deletion process complies with GDPR, CCPA, and Google Play requirements. By submitting this request, you release Tech & Faith and its representatives from liability for deleted data or lost access. All requests are final once confirmed.
   </p>
 
   <script>
@@ -58,41 +127,61 @@
       return urlParams.get(param);
     }
 
-    const appName = getQueryParam('app') || 'Our App';
-    const contactEmail = `${appName.toLowerCase().replace(/\s/g, '')}@support.com`;
+    const appName = (getQueryParam('app') || 'Our App').trim();
+    const appLower = appName.toLowerCase().replace(/\s/g, '');
 
+    // Define app-specific login URLs
+    const loginEndpoints = {
+      raw: 'https://raw-agentofgod.pythonanywhere.com/login',
+      revealed: 'https://revealed-agentofgod-agentofgod.pythonanywhere.com/login',
+      allnation: 'https://allnations-agentofgod.pythonanywhere.com/login'
+    };
+
+    const contactEmail = `${appLower}@support.com`;
+    const backendLoginURL = loginEndpoints[appLower] || '';
+
+    // Update page content
     document.title = `Delete Account - ${appName}`;
     document.getElementById('title').innerText = `Request Account Deletion for ${appName}`;
-    document.getElementById('description').innerText = `This page explains how to request deletion of your account and personal data associated with the ${appName} mobile app.`;
+    document.getElementById('description').innerText = `Follow the instructions below to delete your account and associated data from ${appName}.`;
     document.getElementById('contact').innerText = contactEmail;
 
+    // Form handling
     const form = document.getElementById('verifyForm');
     const confirmationBox = document.getElementById('confirmation');
 
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
+      if (!backendLoginURL) {
+        alert("This app does not currently support account deletion via this method.");
+        return;
+      }
+
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
 
-      // 🔧 Replace this URL with your actual API endpoint
-      const response = await fetch('https://your-backend.com/api/verify-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
+      try {
+        const res = await fetch(backendLoginURL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
 
-      if (response.status === 200) {
-        confirmationBox.classList.remove('hidden');
-        form.classList.add('hidden');
-      } else {
-        alert("Invalid credentials. Please try again.");
+        if (res.status === 200) {
+          confirmationBox.classList.remove('hidden');
+          form.classList.add('hidden');
+        } else {
+          alert("Verification failed. Please check your credentials and try again.");
+        }
+      } catch (error) {
+        alert("An error occurred while connecting to the server. Please try again later.");
+        console.error(error);
       }
     });
 
     function finalizeDeletion() {
-      alert("Your account deletion request has been submitted. If verified, you will receive a confirmation shortly.");
-      // Optional: call your actual backend deletion endpoint here.
-      // fetch('https://your-backend.com/api/delete-account', { ... })
+      alert("✅ Your account deletion request has been received. A confirmation will be sent if applicable.");
+      // Optional: add deletion request API call here
     }
   </script>
 </body>
