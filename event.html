@@ -118,7 +118,7 @@
 </head>
 <body>
   <div class="flyer">
-    <img id="flyer-image" src="https://via.placeholder.com/500x300" alt="Event Banner"/>
+    <img id="flyer-image" src="" alt="Event Banner" />
     <h1 id="event-title">RAW Lounge Night</h1>
     <h2 id="event-subtitle">🌙 A Chill Night for Believers</h2>
     <p class="details" id="event-details">Loading event details...</p>
@@ -180,6 +180,20 @@
     }
 
     loadEventInfo();
+    const imageMap = {
+  "b5351613-60ba-44a4-b142-fe828672e37a.png": "/mnt/data/b5351613-60ba-44a4-b142-fe828672e37a.png",
+  "37345b53-319f-4e7c-b1b7-72f1b959bae8.png": "/mnt/data/37345b53-319f-4e7c-b1b7-72f1b959bae8.png",
+  "f01a32dd-7bd0-4afd-8f4e-a5d8871144a0.png": "/mnt/data/f01a32dd-7bd0-4afd-8f4e-a5d8871144a0.png",
+  "4a3f9e54-bc81-4e38-a223-7db772c4c5ac.png": "/mnt/data/4a3f9e54-bc81-4e38-a223-7db772c4c5ac.png"
+};
+
+document.getElementById('flyer-image').src = imageMap[data.image] || "https://via.placeholder.com/500x300";
+if (data.theme === "dark-glow") {
+  document.body.style.background = "radial-gradient(circle at top left, #000000, #1a1a1a)";
+  document.querySelector(".flyer").style.border = "2px solid #d4af37";
+  document.querySelector(".flyer").style.boxShadow = "0 0 20px #d4af37";
+}
+
   </script>
 </body>
 </html>
