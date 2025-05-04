@@ -99,7 +99,7 @@
     <p>
       This includes: name, email, phone, preferences, and all usage data. By confirming, you acknowledge that this action cannot be undone.
     </p>
-    <button onclick="finalizeDeletion()">Yes, Delete My Account</button>
+<button onclick="finalizeDeletion()">Yes, Delete My Account</button>
   </div>
 
   <h2>Data Deleted</h2>
@@ -121,68 +121,106 @@
     This deletion process complies with GDPR, CCPA, and Google Play requirements. By submitting this request, you release Tech & Faith and its representatives from liability for deleted data or lost access. All requests are final once confirmed.
   </p>
 
-  <script>
-    function getQueryParam(param) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(param);
+<script>
+  function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+  }
+
+  const appName = (getQueryParam('app') || 'Our App').trim();
+  const appLower = appName.toLowerCase().replace(/\s/g, '');
+
+  const loginEndpoints = {
+    raw: 'https://raw-agentofgod.pythonanywhere.com/login',
+    revealed: 'https://revealed-agentofgod-agentofgod.pythonanywhere.com/login',
+    allnation: 'https://allnations-agentofgod.pythonanywhere.com/login'
+  };
+
+  const deactivateEndpoints = {
+    raw: 'https://raw-agentofgod.pythonanywhere.com/deactivate',
+    revealed: 'https://revealed-agentofgod-agentofgod.pythonanywhere.com/deactivate',
+    allnation: 'https://allnations-agentofgod.pythonanywhere.com/deactivate'
+  };
+
+  const contactEmail = `${appLower}@support.com`;
+  const loginURL = loginEndpoints[appLower] || '';
+  const deactivateURL = deactivateEndpoints[appLower] || '';
+
+  document.title = `Delete Account - ${appName}`;
+  document.getElementById('title').innerText = `Request Account Deletion for ${appName}`;
+  document.getElementById('description').innerText = `Follow the instructions below to delete your account and associated data from ${appName}.`;
+  document.getElementById('contact').innerText = contactEmail;
+
+  let storedUsername = "";
+
+  const form = document.getElementById('verifyForm');
+  const confirmationBox = document.getElementById('confirmation');
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    if (!loginURL) {
+      alert("This app is not currently supported.");
+      return;
     }
 
-    const appName = (getQueryParam('app') || 'Our App').trim();
-    const appLower = appName.toLowerCase().replace(/\s/g, '');
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    storedUsername = username;
 
-    // Define app-specific login URLs
-    const loginEndpoints = {
-      raw: 'https://raw-agentofgod.pythonanywhere.com/login_verification',
-      revealed: 'https://revealed-agentofgod-agentofgod.pythonanywhere.com/login_verification',
-      allnation: 'https://allnations-agentofgod.pythonanywhere.com/login_verification'
-    };
+    try {
+      const res = await fetch(loginURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
 
-    const contactEmail = `${appLower}@support.com`;
-    const backendLoginURL = loginEndpoints[appLower] || '';
-
-    // Update page content
-    document.title = `Delete Account - ${appName}`;
-    document.getElementById('title').innerText = `Request Account Deletion for ${appName}`;
-    document.getElementById('description').innerText = `Follow the instructions below to delete your account and associated data from ${appName}.`;
-    document.getElementById('contact').innerText = contactEmail;
-
-    // Form handling
-    const form = document.getElementById('verifyForm');
-    const confirmationBox = document.getElementById('confirmation');
-
-    form.addEventListener('submit', async function (e) {
-      e.preventDefault();
-      if (!backendLoginURL) {
-        alert("This app does not currently support account deletion via this method.");
-        return;
+      if (res.status === 200) {
+        confirmationBox.classList.remove('hidden');
+        form.classList.add('hidden');
+      } else {
+        alert("Verification failed. Please check your credentials.");
       }
-
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-
-      try {
-        const res = await fetch(backendLoginURL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
-
-        if (res.status === 200) {
-          confirmationBox.classList.remove('hidden');
-          form.classList.add('hidden');
-        } else {
-          alert("Verification failed. Please check your credentials and try again.");
-        }
-      } catch (error) {
-        alert("An error occurred while connecting to the server. Please try again later.");
-        console.error(error);
-      }
-    });
-
-    function finalizeDeletion() {
-      alert("✅ Your account deletion request has been received. A confirmation will be sent if applicable.");
-      // Optional: add deletion request API call here
+    } catch (err) {
+      console.error(err);
+      alert("Error connecting to the server. Try again later.");
     }
-  </script>
+  });
+
+  async function finalizeDeletion() {
+    if (!deactivateURL || !storedUsername) {
+      alert("Missing deactivation endpoint or username.");
+      return;
+    }
+
+    try {
+      const res = await fetch(deactivateURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: storedUsername })
+      });
+
+      if (res.status === 200) {
+        document.body.innerHTML = `
+          <h1 style="color:#ea5a28;">✅ Account Deletion Confirmed</h1>
+          <p>Your account and associated data have been permanently deleted from the <strong>${appName}</strong> system.</p>
+          <p>This action is final. No recovery of account data is possible.</p>
+          <p>If you have any questions, contact <strong>${contactEmail}</strong>.</p>
+          <hr/>
+          <p style="font-size:0.9rem; color:#666;">
+            By using this form, you acknowledge that your account deletion is voluntary, final, and irreversible. 
+            ${appName} and its developer Tech & Faith, are not liable for any loss of access, data, or services 
+            after deletion. This deletion was performed in compliance with data protection laws (GDPR, CCPA).
+          </p>
+        `;
+      } else {
+        alert("Something went wrong deleting your account. Please contact support.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred. Please try again later.");
+    }
+  }
+</script>
 </body>
 </html>
