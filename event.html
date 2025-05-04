@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title id="page-title">Event Flyer</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Raleway:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Raleway:wght@500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --gold: #d4af37;
-      --black: #111;
+      --primary: #d4af37;
+      --secondary: #111;
       --bg: #000;
-      --white: #fff;
+      --text: #fff;
     }
 
     body {
@@ -18,7 +18,7 @@
       padding: 2rem;
       background-color: var(--bg);
       font-family: 'Raleway', sans-serif;
-      color: var(--white);
+      color: var(--text);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -32,43 +32,49 @@
       border-radius: 16px;
       box-shadow: 0 8px 24px rgba(212, 175, 55, 0.2);
       text-align: center;
-      border: 1px solid var(--gold);
+      border: 1px solid var(--primary);
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .flyer img {
       max-width: 100%;
       border-radius: 12px;
       margin-bottom: 1rem;
-      border: 2px solid var(--gold);
+      border: 2px solid var(--primary);
     }
 
     h1 {
       font-family: 'Playfair Display', serif;
-      color: var(--gold);
-      font-size: 2.2rem;
-      margin-bottom: 0.3rem;
+      color: var(--primary);
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
     }
 
     h2 {
       font-weight: 400;
-      font-size: 1.2rem;
+      font-size: 1.5rem;
       margin: 0 0 1rem;
       color: #ccc;
     }
 
     .details {
-      font-size: 1rem;
+      font-size: 1.1rem;
       color: #bbb;
       margin-bottom: 1.5rem;
     }
 
     .btn {
-      background: var(--gold);
-      color: var(--black);
-      padding: 0.8rem 1.4rem;
+      background: var(--primary);
+      color: var(--secondary);
+      padding: 0.9rem 1.6rem;
       border: none;
       border-radius: 8px;
-      font-size: 1rem;
+      font-size: 1.1rem;
       font-weight: 600;
       cursor: pointer;
       margin-top: 0.5rem;
@@ -76,53 +82,57 @@
     }
 
     .btn:hover {
-      box-shadow: 0 0 12px var(--gold);
-      transform: scale(1.03);
+      box-shadow: 0 0 12px var(--primary);
+      transform: scale(1.05);
     }
 
     input[type="tel"] {
       width: 90%;
-      padding: 0.7rem;
+      padding: 0.8rem;
       margin: 1rem 0;
       border-radius: 8px;
       border: 1px solid #555;
       background: #000;
-      color: var(--white);
+      color: var(--text);
       font-size: 1rem;
     }
 
-    input::placeholder {
-      color: #aaa;
-    }
-
     .legal {
-      font-size: 0.8rem;
+      font-size: 0.9rem;
       color: #888;
       margin-top: 2rem;
     }
 
+    .modal {
+      position: fixed;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #000;
+      color: white;
+      padding: 2rem 3rem;
+      border-radius: 12px;
+      box-shadow: 0 0 30px rgba(255,255,255,0.2);
+      font-size: 1.6rem;
+      font-weight: bold;
+      display: none;
+      z-index: 999;
+    }
+
     @media (max-width: 600px) {
-      body {
-        padding: 1rem;
-      }
-
-      .flyer {
-        padding: 1.5rem;
-      }
-
-      h1 {
-        font-size: 1.6rem;
-      }
+      h1 { font-size: 2rem; }
+      h2 { font-size: 1.2rem; }
+      .btn { font-size: 1rem; }
     }
   </style>
 </head>
 <body>
+  <div class="modal" id="thankYouModal">THANK YOU 🎉</div>
   <div class="flyer">
     <img id="flyer-image" src="" alt="Event Banner" />
     <h1 id="event-title">RAW Lounge Night</h1>
     <h2 id="event-subtitle">🌙 A Chill Night for Believers</h2>
     <p class="details" id="event-details">Loading event details...</p>
-
     <a class="btn" id="calendar-link" href="#" download>Add to Calendar</a>
 
     <p style="margin-top:1.5rem;">📱 Want a reminder?</p>
@@ -136,41 +146,23 @@
   </div>
 
   <script>
-    const imageMap = {
-      "b5351613-60ba-44a4-b142-fe828672e37a.png": "/mnt/data/b5351613-60ba-44a4-b142-fe828672e37a.png",
-      "37345b53-319f-4e7c-b1b7-72f1b959bae8.png": "/mnt/data/37345b53-319f-4e7c-b1b7-72f1b959bae8.png",
-      "f01a32dd-7bd0-4afd-8f4e-a5d8871144a0.png": "/mnt/data/f01a32dd-7bd0-4afd-8f4e-a5d8871144a0.png",
-      "4a3f9e54-bc81-4e38-a223-7db772c4c5ac.png": "/mnt/data/4a3f9e54-bc81-4e38-a223-7db772c4c5ac.png",
-      "6ffced5f-7202-41f3-bb28-e012ebfdf998.png": "/mnt/data/6ffced5f-7202-41f3-bb28-e012ebfdf998.png"
-    };
-
     async function loadEventInfo() {
       try {
         const res = await fetch("event_info.json");
         const data = await res.json();
 
-        // Apply text and values
+        document.documentElement.style.setProperty('--primary', data.colors.primary);
+        document.documentElement.style.setProperty('--secondary', data.colors.secondary);
+        document.documentElement.style.setProperty('--bg', data.colors.bg);
+        document.documentElement.style.setProperty('--text', data.colors.text);
+
         document.title = `${data.title} - Event Flyer`;
         document.getElementById('page-title').innerText = data.title;
         document.getElementById('event-title').innerText = data.title;
         document.getElementById('event-subtitle').innerText = data.subtitle;
-        document.getElementById('event-details').innerHTML = `
-          📍 ${data.location}<br/>
-          🗓 ${data.date}<br/>
-          🕗 ${data.time}
-        `;
+        document.getElementById('event-details').innerHTML = `📍 ${data.location}<br/>🗓 ${data.date}<br/>🕗 ${data.time}`;
+        document.getElementById('flyer-image').src = data.image || "https://via.placeholder.com/500x300";
         document.getElementById('calendar-link').href = data.ics || "#";
-
-        // Apply image dynamically
-        document.getElementById('flyer-image').src = imageMap[data.image] || "https://via.placeholder.com/500x300";
-
-        // Optional: Apply theme
-        if (data.theme === "dark-glow") {
-          document.body.style.background = "radial-gradient(circle at top left, #000000, #1a1a1a)";
-          document.querySelector(".flyer").style.border = "2px solid #d4af37";
-          document.querySelector(".flyer").style.boxShadow = "0 0 20px #d4af37";
-        }
-
       } catch (err) {
         console.error("Error loading event info:", err);
         document.getElementById('event-details').innerText = "Unable to load event details.";
@@ -187,8 +179,10 @@
         body: JSON.stringify({ phone })
       }).then(res => {
         if (res.status === 200) {
-          alert("📬 You'll get a reminder before the event!");
           document.getElementById('phone').value = '';
+          const modal = document.getElementById('thankYouModal');
+          modal.style.display = 'block';
+          setTimeout(() => modal.style.display = 'none', 2500);
         } else {
           alert("⚠️ Couldn't save your reminder. Try again later.");
         }
