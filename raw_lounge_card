@@ -3,60 +3,57 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Digital Business Card - Stevenson Gerard</title>
+  <title>RAW Lounge Night - Event Flyer</title>
   <style>
     :root {
-      --main: #ea5a28;
-      --text: #333;
-      --bg: #fdfdfd;
+      --accent: #ea5a28;
+      --text: #222;
+      --bg: #fff;
     }
 
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: var(--bg);
+      background-color: var(--bg);
       color: var(--text);
-      margin: 0;
       padding: 2rem;
+      margin: 0;
       text-align: center;
     }
 
-    .card {
-      max-width: 500px;
+    .flyer {
+      max-width: 600px;
       margin: auto;
-      background: white;
-      border-radius: 16px;
       padding: 2rem;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-    }
-
-    img {
-      width: 120px;
-      height: 120px;
-      object-fit: cover;
-      border-radius: 50%;
-      margin-bottom: 1rem;
+      background: #f9f9f9;
+      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
     }
 
     h1 {
-      color: var(--main);
-      margin: 0.2rem 0;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
     }
 
-    p {
-      margin: 0.5rem 0 1.5rem;
+    h2 {
+      margin: 0.2rem;
+      font-weight: 500;
+    }
+
+    .details {
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+      color: #444;
     }
 
     .btn {
-      display: inline-block;
-      padding: 0.8rem 1.4rem;
-      margin: 0.3rem;
-      border: none;
-      border-radius: 8px;
+      background: var(--accent);
       color: white;
-      background: var(--main);
+      border: none;
+      padding: 0.8rem 1.4rem;
       font-size: 1rem;
+      border-radius: 8px;
+      margin-top: 1rem;
       cursor: pointer;
-      text-decoration: none;
     }
 
     input[type="tel"] {
@@ -67,6 +64,14 @@
       margin: 1rem 0;
     }
 
+    a.download {
+      display: inline-block;
+      margin-top: 1rem;
+      color: var(--accent);
+      font-weight: bold;
+      text-decoration: none;
+    }
+
     .legal {
       font-size: 0.8rem;
       color: #777;
@@ -75,31 +80,31 @@
   </style>
 </head>
 <body>
-  <div class="card">
-    <img src="https://your-image-url.com/profile.jpg" alt="Stevenson Gerard" />
-    <h1>Stevenson Gerard</h1>
-    <p>Founder | Tech & Faith</p>
-    <p>Evangelist • Developer • Mentor</p>
+  <div class="flyer">
+    <h1>RAW Lounge Night</h1>
+    <h2>🌙 A Chill Night for Believers</h2>
+    <p class="details">
+      📍 Antioch Winder<br/>
+      🗓 Friday, July 19, 2025<br/>
+      🕗 7:00 PM – 11:00 PM
+    </p>
 
-    <a class="btn" href="mailto:stevensongerardeustache@gmail.com">Email Me</a>
-    <a class="btn" href="tel:+1234567890">Call</a>
-    <a class="btn" href="https://yourdomain.com/contact.vcf" download>Save Contact</a>
+    <a class="btn" href="event.ics" download>Add to Calendar</a>
 
-    <div style="margin-top: 2rem;">
-      <p>📱 Want a reminder? Enter your number:</p>
-      <input type="tel" id="phone" placeholder="e.g. +1 555 123 4567"/>
-      <button class="btn" onclick="submitPhone()">Remind Me</button>
-    </div>
+    <p style="margin-top:2rem;">📱 Want to be reminded?</p>
+    <input type="tel" id="phone" placeholder="e.g. +1 404 555 1234"/>
+    <br/>
+    <button class="btn" onclick="submitPhone()">Remind Me</button>
 
     <div class="legal">
-      By submitting, you agree to be contacted regarding this introduction. We do not share your information.
+      By entering your number, you agree to receive a reminder text before the event. No spam. We respect your privacy.
     </div>
   </div>
 
   <script>
     function submitPhone() {
       const phone = document.getElementById('phone').value.trim();
-      if (!phone) return alert("Please enter a phone number.");
+      if (!phone) return alert("Please enter your phone number.");
 
       fetch("https://your-backend.com/register_interest", {
         method: 'POST',
@@ -107,14 +112,14 @@
         body: JSON.stringify({ phone })
       }).then(res => {
         if (res.status === 200) {
-          alert("Thanks! We'll send you a reminder.");
+          alert("📬 We'll remind you before the event!");
           document.getElementById('phone').value = '';
         } else {
-          alert("Error sending. Please try again later.");
+          alert("⚠️ Couldn't save your reminder. Try again later.");
         }
       }).catch(err => {
         console.error(err);
-        alert("Server error. Try again later.");
+        alert("Server error. Try again shortly.");
       });
     }
   </script>
