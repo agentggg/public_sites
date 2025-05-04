@@ -136,11 +136,20 @@
   </div>
 
   <script>
+    const imageMap = {
+      "b5351613-60ba-44a4-b142-fe828672e37a.png": "/mnt/data/b5351613-60ba-44a4-b142-fe828672e37a.png",
+      "37345b53-319f-4e7c-b1b7-72f1b959bae8.png": "/mnt/data/37345b53-319f-4e7c-b1b7-72f1b959bae8.png",
+      "f01a32dd-7bd0-4afd-8f4e-a5d8871144a0.png": "/mnt/data/f01a32dd-7bd0-4afd-8f4e-a5d8871144a0.png",
+      "4a3f9e54-bc81-4e38-a223-7db772c4c5ac.png": "/mnt/data/4a3f9e54-bc81-4e38-a223-7db772c4c5ac.png",
+      "6ffced5f-7202-41f3-bb28-e012ebfdf998.png": "/mnt/data/6ffced5f-7202-41f3-bb28-e012ebfdf998.png"
+    };
+
     async function loadEventInfo() {
       try {
         const res = await fetch("event_info.json");
         const data = await res.json();
 
+        // Apply text and values
         document.title = `${data.title} - Event Flyer`;
         document.getElementById('page-title').innerText = data.title;
         document.getElementById('event-title').innerText = data.title;
@@ -150,8 +159,18 @@
           🗓 ${data.date}<br/>
           🕗 ${data.time}
         `;
-        document.getElementById('flyer-image').src = data.image || "https://via.placeholder.com/500x300";
         document.getElementById('calendar-link').href = data.ics || "#";
+
+        // Apply image dynamically
+        document.getElementById('flyer-image').src = imageMap[data.image] || "https://via.placeholder.com/500x300";
+
+        // Optional: Apply theme
+        if (data.theme === "dark-glow") {
+          document.body.style.background = "radial-gradient(circle at top left, #000000, #1a1a1a)";
+          document.querySelector(".flyer").style.border = "2px solid #d4af37";
+          document.querySelector(".flyer").style.boxShadow = "0 0 20px #d4af37";
+        }
+
       } catch (err) {
         console.error("Error loading event info:", err);
         document.getElementById('event-details').innerText = "Unable to load event details.";
@@ -180,20 +199,6 @@
     }
 
     loadEventInfo();
-    const imageMap = {
-  "b5351613-60ba-44a4-b142-fe828672e37a.png": "/mnt/data/b5351613-60ba-44a4-b142-fe828672e37a.png",
-  "37345b53-319f-4e7c-b1b7-72f1b959bae8.png": "/mnt/data/37345b53-319f-4e7c-b1b7-72f1b959bae8.png",
-  "f01a32dd-7bd0-4afd-8f4e-a5d8871144a0.png": "/mnt/data/f01a32dd-7bd0-4afd-8f4e-a5d8871144a0.png",
-  "4a3f9e54-bc81-4e38-a223-7db772c4c5ac.png": "/mnt/data/4a3f9e54-bc81-4e38-a223-7db772c4c5ac.png"
-};
-
-document.getElementById('flyer-image').src = imageMap[data.image] || "https://via.placeholder.com/500x300";
-if (data.theme === "dark-glow") {
-  document.body.style.background = "radial-gradient(circle at top left, #000000, #1a1a1a)";
-  document.querySelector(".flyer").style.border = "2px solid #d4af37";
-  document.querySelector(".flyer").style.boxShadow = "0 0 20px #d4af37";
-}
-
   </script>
 </body>
 </html>
