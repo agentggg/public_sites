@@ -9,7 +9,7 @@
   "ics": "event.ics",  
   "theme": "dark-glow", 
   "colors": {
-    "primary": "#fff",
+    "primary": "#D3AF37",
     "secondary": "#80020",
     "bg": "#000000",
     "text": "#fff"
