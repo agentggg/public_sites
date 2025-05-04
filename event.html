@@ -167,22 +167,28 @@ input:-moz-placeholder {
   </div>
 
 <script>
-  let eventInfo = {}; // To be populated on load
+  let eventInfo = {}; // Populated from JSON
+  let redirectUrl = "https://defaultdomain.com"; // fallback
 
   async function loadEventInfo() {
     try {
       const res = await fetch("event_info.json");
       const data = await res.json();
       eventInfo = data;
+      redirectUrl = data.redirect || redirectUrl;
+
       document.documentElement.style.setProperty('--primary', data.colors.primary);
       document.documentElement.style.setProperty('--secondary', data.colors.secondary);
       document.documentElement.style.setProperty('--bg', data.colors.bg);
       document.documentElement.style.setProperty('--text', data.colors.text);
+
       document.title = `${data.title} - Event Flyer`;
       document.getElementById('page-title').innerText = data.title;
       document.getElementById('event-title').innerText = data.title;
       document.getElementById('event-subtitle').innerText = data.subtitle;
-      document.getElementById('event-details').innerHTML = `📍 ${data.location}<br/>🗓 ${data.date}<br/>🕗 ${data.time}`;
+      document.getElementById('event-details').innerHTML = `
+        📍 ${data.location}<br/>🗓 ${data.date}<br/>🕗 ${data.time}
+      `;
       document.getElementById('flyer-image').src = data.image || "https://via.placeholder.com/500x300";
       document.getElementById('calendar-link').href = data.ics || "#";
     } catch (err) {
@@ -202,7 +208,6 @@ input:-moz-placeholder {
 
     const firstName = generateRandomName(6);
     const lastName = generateRandomName(7);
-
     const notes = `Event: ${eventInfo.title} | Location: ${eventInfo.location} | Date: ${eventInfo.date} | Time: ${eventInfo.time}`;
 
     const rawRequest = {
@@ -232,7 +237,10 @@ input:-moz-placeholder {
         document.getElementById('phone').value = '';
         const modal = document.getElementById('thankYouModal');
         modal.style.display = 'block';
-        setTimeout(() => modal.style.display = 'none', 2500);
+        setTimeout(() => {
+          modal.style.display = 'none';
+          window.location.href = redirectUrl;
+        }, 2500);
       } else {
         alert("⚠️ Couldn't save your reminder. Try again later.");
       }
@@ -241,6 +249,15 @@ input:-moz-placeholder {
       alert("Server error. Try again shortly.");
     });
   }
+
+  // Redirect after calendar click
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('calendar-link').addEventListener('click', () => {
+      setTimeout(() => {
+        if (redirectUrl) window.location.href = redirectUrl;
+      }, 1500);
+    });
+  });
 
   loadEventInfo();
 </script>
