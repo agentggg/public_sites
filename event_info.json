@@ -4,9 +4,9 @@
   "location": "Antioch Winder",
   "date": "Friday, July 19, 2025",
   "time": "7:00 PM – 11:00 PM",
-  "image": "f01a32dd-7bd0-4afd-8f4e-a5d8871144a0.png",  // image file name (if hosted, use full URL)
-  "ics": "event.ics",  // link to downloadable calendar file
-  "theme": "dark-glow",  // optional, can be used for special styles
+  "image": "f01a32dd-7bd0-4afd-8f4e-a5d8871144a0.png", 
+  "ics": "event.ics",  
+  "theme": "dark-glow", 
   "colors": {
     "primary": "#d4af37",
     "secondary": "#111",
