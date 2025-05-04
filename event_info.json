@@ -1,9 +1,10 @@
 {
-  "title": "RAW Lounge Nights",
+  "title": "RAW Lounge Night",
   "subtitle": "🌙 A Chill Night for Believers",
   "location": "Antioch Winder",
   "date": "Friday, July 19, 2025",
   "time": "7:00 PM – 11:00 PM",
-  "image": "https://images.pexels.com/photos/1227497/pexels-photo-1227497.jpeg?auto=compress&cs=tinysrgb&w=1600",
-  "ics": "event.ics"
+  "image": "b5351613-60ba-44a4-b142-fe828672e37a.png",
+  "ics": "event.ics",
+  "theme": "dark-glow"
 }
