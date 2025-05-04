@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Delete Account - App</title>
+  <style>
+    body { font-family: Arial; max-width: 700px; margin: auto; padding: 2rem; }
+    h1 { color: #ea5a28; }
+  </style>
+</head>
+<body>
+  <h1 id="title">Request Account Deletion</h1>
+  <p id="description">Loading...</p>
+
+  <h2>How to Request Deletion</h2>
+  <p id="instructions">Loading...</p>
+
+  <h2>Data Deleted</h2>
+  <ul>
+    <li>Personal details (name, phone number, email)</li>
+    <li>App usage data</li>
+    <li>Account credentials</li>
+  </ul>
+
+  <h2>Data Retained</h2>
+  <p>We retain basic logs and anonymized data for security and analytics purposes for a period of up to 30 days after account deletion.</p>
+
+  <h2>Need Help?</h2>
+  <p>Contact us at <strong id="contact">support@example.com</strong> for help or questions regarding this policy.</p>
+
+  <script>
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    const appName = getQueryParam('app') || 'Our App';
+    const contactEmail = `${appName.toLowerCase().replace(/\s/g, '')}@support.com`;
+
+    document.title = `Delete Account - ${appName}`;
+    document.getElementById('title').innerText = `Request Account Deletion for ${appName}`;
+    document.getElementById('description').innerText = `This page explains how to request deletion of your account and personal data associated with the ${appName} mobile app.`;
+    document.getElementById('instructions').innerText = `You can request account deletion by emailing us at ${contactEmail} with the subject "Delete My Account" and including the phone number or email associated with your account.`;
+    document.getElementById('contact').innerText = contactEmail;
+  </script>
+</body>
+</html>
