@@ -4,7 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title id="page-title">Event Flyer</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Raleway:wght@500&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --primary: #d4af37;
@@ -14,26 +19,25 @@
     }
 
     body {
-      margin: 0;
-      padding: 2rem;
       background-color: var(--bg);
       font-family: 'Raleway', sans-serif;
       color: var(--text);
+      margin: 0;
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
     }
 
     .flyer {
       max-width: 600px;
-      background: #1a1a1a;
+      width: 100%;
       padding: 2rem;
       border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(212, 175, 55, 0.2);
+      background-color: #1a1a1a;
       text-align: center;
-      border: 1px solid var(--primary);
-      animation: fadeIn 1s ease-in-out;
+      box-shadow: 0 8px 24px rgba(212, 175, 55, 0.2);
+      animation: fadeIn 0.8s ease-in-out;
     }
 
     @keyframes fadeIn {
@@ -41,104 +45,99 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .flyer img {
-      max-width: 100%;
-      border-radius: 12px;
-      margin-bottom: 1rem;
-      border: 2px solid var(--primary);
-    }
-
     h1 {
       font-family: 'Playfair Display', serif;
+      font-size: 2rem;
       color: var(--primary);
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     h2 {
-      font-weight: 400;
-      font-size: 1.5rem;
-      margin: 0 0 1rem;
+      font-size: 1.2rem;
       color: #ccc;
+      margin-bottom: 1rem;
     }
 
     .details {
-      font-size: 1.1rem;
       color: #bbb;
+      font-size: 1rem;
       margin-bottom: 1.5rem;
     }
 
-    .btn {
+    .btn-custom {
       background: var(--primary);
       color: var(--secondary);
-      padding: 0.9rem 1.6rem;
-      border: none;
-      border-radius: 8px;
-      font-size: 1.1rem;
+      padding: 0.75rem 1.5rem;
       font-weight: 600;
-      cursor: pointer;
-      margin-top: 0.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      border: none;
       transition: all 0.3s ease;
     }
 
-    .btn:hover {
+    .btn-custom:hover {
       box-shadow: 0 0 12px var(--primary);
       transform: scale(1.05);
     }
 
     input[type="tel"] {
-      width: 90%;
-      padding: 0.8rem;
-      margin: 1rem 0;
-      border-radius: 8px;
-      border: 1px solid #555;
       background: #000;
+      border: 1px solid #555;
       color: var(--text);
-      font-size: 1rem;
+      border-radius: 8px;
+      padding: 0.6rem;
+    }
+
+    input::placeholder {
+      color: #aaa;
     }
 
     .legal {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: #888;
-      margin-top: 2rem;
+      margin-top: 1rem;
     }
 
-    .modal {
+    .modal-custom {
       position: fixed;
-      top: 30%;
+      top: 40%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: #000;
-      color: white;
+      background-color: var(--bg);
+      color: var(--text);
       padding: 2rem 3rem;
-      border-radius: 12px;
-      box-shadow: 0 0 30px rgba(255,255,255,0.2);
       font-size: 1.6rem;
       font-weight: bold;
+      border-radius: 12px;
       display: none;
-      z-index: 999;
+      z-index: 9999;
+      box-shadow: 0 0 30px rgba(255,255,255,0.15);
+      text-align: center;
     }
 
-    @media (max-width: 600px) {
-      h1 { font-size: 2rem; }
-      h2 { font-size: 1.2rem; }
-      .btn { font-size: 1rem; }
+    img#flyer-image {
+      width: 100%;
+      border-radius: 12px;
+      margin-bottom: 1rem;
     }
   </style>
 </head>
 <body>
-  <div class="modal" id="thankYouModal">THANK YOU 🎉</div>
-  <div class="flyer">
+  <div class="modal-custom" id="thankYouModal">THANK YOU 🎉</div>
+
+  <div class="flyer container-fluid">
     <img id="flyer-image" src="" alt="Event Banner" />
     <h1 id="event-title">RAW Lounge Night</h1>
     <h2 id="event-subtitle">🌙 A Chill Night for Believers</h2>
-    <p class="details" id="event-details">Loading event details...</p>
-    <a class="btn" id="calendar-link" href="#" download>Add to Calendar</a>
+    <div class="details" id="event-details">Loading event details...</div>
 
-    <p style="margin-top:1.5rem;">📱 Want a reminder?</p>
-    <input type="tel" id="phone" placeholder="e.g. +1 404 555 1234" />
-    <br />
-    <button class="btn" onclick="submitPhone()">Remind Me</button>
+    <a class="btn btn-custom" id="calendar-link" href="#" download>Add to Calendar</a>
+
+    <div class="mt-4">📱 Want a reminder?</div>
+    <input type="tel" id="phone" class="form-control my-2" placeholder="e.g. +1 404 555 1234" />
+    <button class="btn btn-custom" onclick="submitPhone()">Remind Me</button>
 
     <div class="legal">
       By entering your number, you agree to receive a reminder text. No spam. We respect your privacy.
@@ -151,6 +150,7 @@
         const res = await fetch("event_info.json");
         const data = await res.json();
 
+        // Apply colors dynamically
         document.documentElement.style.setProperty('--primary', data.colors.primary);
         document.documentElement.style.setProperty('--secondary', data.colors.secondary);
         document.documentElement.style.setProperty('--bg', data.colors.bg);
@@ -160,7 +160,9 @@
         document.getElementById('page-title').innerText = data.title;
         document.getElementById('event-title').innerText = data.title;
         document.getElementById('event-subtitle').innerText = data.subtitle;
-        document.getElementById('event-details').innerHTML = `📍 ${data.location}<br/>🗓 ${data.date}<br/>🕗 ${data.time}`;
+        document.getElementById('event-details').innerHTML = `
+          📍 ${data.location}<br/>🗓 ${data.date}<br/>🕗 ${data.time}
+        `;
         document.getElementById('flyer-image').src = data.image || "https://via.placeholder.com/500x300";
         document.getElementById('calendar-link').href = data.ics || "#";
       } catch (err) {
