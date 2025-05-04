@@ -127,8 +127,8 @@
     return urlParams.get(param);
   }
 
-  const appName = (getQueryParam('app') || 'Our App').trim();
-  const appLower = appName.toLowerCase().replace(/\s/g, '');
+  const appName.toUpperCase() = (getQueryParam('app') || 'Our App').trim();
+  const appLower = appName.toUpperCase().toLowerCase().replace(/\s/g, '');
 
   const loginEndpoints = {
     raw: 'https://raw-agentofgod.pythonanywhere.com/login_verification',
@@ -146,9 +146,9 @@
   const loginURL = loginEndpoints[appLower] || '';
   const deactivateURL = deactivateEndpoints[appLower] || '';
 
-  document.title = `Delete Account - ${appName}`;
-  document.getElementById('title').innerText = `Request Account Deletion for ${appName}`;
-  document.getElementById('description').innerText = `Follow the instructions below to delete your account and associated data from ${appName}.`;
+  document.title = `Delete Account - ${appName.toUpperCase()}`;
+  document.getElementById('title').innerText = `Request Account Deletion for ${appName.toUpperCase().toUpperCase()}`;
+  document.getElementById('description').innerText = `Follow the instructions below to delete your account and associated data from ${appName.toUpperCase()}.`;
   document.getElementById('contact').innerText = contactEmail;
 
   let storedUsername = "";
@@ -203,13 +203,13 @@
       if (res.status === 200) {
         document.body.innerHTML = `
           <h1 style="color:#ea5a28;">✅ Account Deletion Confirmed</h1>
-          <p>Your account and associated data have been permanently deleted from the <strong>${appName}</strong> system.</p>
+          <p>Your account and associated data have been permanently deleted from the <strong>${appName.toUpperCase()}</strong> system.</p>
           <p>This action is final. No recovery of account data is possible.</p>
           <p>If you have any questions, contact <strong>${contactEmail}</strong>.</p>
           <hr/>
           <p style="font-size:0.9rem; color:#666;">
             By using this form, you acknowledge that your account deletion is voluntary, final, and irreversible. 
-            ${appName} and its developer Tech & Faith, are not liable for any loss of access, data, or services 
+            ${appName.toUpperCase()} and its developer Tech & Faith, are not liable for any loss of access, data, or services 
             after deletion. This deletion was performed in compliance with data protection laws (GDPR, CCPA).
           </p>
         `;
