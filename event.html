@@ -149,58 +149,85 @@
 
   </div>
 
-  <script>
-    async function loadEventInfo() {
-      try {
-        const res = await fetch("event_info.json");
-        const data = await res.json();
+<script>
+  let eventInfo = {}; // To be populated on load
 
-        // Apply colors dynamically
-        document.documentElement.style.setProperty('--primary', data.colors.primary);
-        document.documentElement.style.setProperty('--secondary', data.colors.secondary);
-        document.documentElement.style.setProperty('--bg', data.colors.bg);
-        document.documentElement.style.setProperty('--text', data.colors.text);
+  async function loadEventInfo() {
+    try {
+      const res = await fetch("event_info.json");
+      const data = await res.json();
+      eventInfo = data;
+      document.documentElement.style.setProperty('--primary', data.colors.primary);
+      document.documentElement.style.setProperty('--secondary', data.colors.secondary);
+      document.documentElement.style.setProperty('--bg', data.colors.bg);
+      document.documentElement.style.setProperty('--text', data.colors.text);
+      document.title = `${data.title} - Event Flyer`;
+      document.getElementById('page-title').innerText = data.title;
+      document.getElementById('event-title').innerText = data.title;
+      document.getElementById('event-subtitle').innerText = data.subtitle;
+      document.getElementById('event-details').innerHTML = `📍 ${data.location}<br/>🗓 ${data.date}<br/>🕗 ${data.time}`;
+      document.getElementById('flyer-image').src = data.image || "https://via.placeholder.com/500x300";
+      document.getElementById('calendar-link').href = data.ics || "#";
+    } catch (err) {
+      console.error("Error loading event info:", err);
+      document.getElementById('event-details').innerText = "Unable to load event details.";
+    }
+  }
 
-        document.title = `${data.title} - Event Flyer`;
-        document.getElementById('page-title').innerText = data.title;
-        document.getElementById('event-title').innerText = data.title;
-        document.getElementById('event-subtitle').innerText = data.subtitle;
-        document.getElementById('event-details').innerHTML = `
-          📍 ${data.location}<br/>🗓 ${data.date}<br/>🕗 ${data.time}
-        `;
-        document.getElementById('flyer-image').src = data.image || "https://via.placeholder.com/500x300";
-        document.getElementById('calendar-link').href = data.ics || "#";
-      } catch (err) {
-        console.error("Error loading event info:", err);
-        document.getElementById('event-details').innerText = "Unable to load event details.";
+  function generateRandomName(length) {
+    const chars = 'abcdefghijklmnopqrstuvwxyz';
+    return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  }
+
+  async function submitPhone() {
+    const phone = document.getElementById('phone').value.trim();
+    if (!phone) return alert("Please enter your phone number.");
+
+    const firstName = generateRandomName(6);
+    const lastName = generateRandomName(7);
+
+    const notes = `Event: ${eventInfo.title} | Location: ${eventInfo.location} | Date: ${eventInfo.date} | Time: ${eventInfo.time}`;
+
+    const rawRequest = {
+      q3_fullName: {
+        first: firstName,
+        last: lastName
+      },
+      q5_phoneNumber: {
+        full: phone
+      },
+      q12_notes: notes,
+      q35_username: "cisco",
+      q34_org: "RAW",
+      q35_category: eventInfo.title || "Event"
+    };
+
+    const formData = new FormData();
+    formData.append("action", "register");
+    formData.append("username", "cisco");
+    formData.append("rawRequest", JSON.stringify(rawRequest));
+
+    fetch("https://allnations-agentofgod.pythonanywhere.com/register/contact", {
+      method: 'POST',
+      body: formData
+    }).then(res => {
+      if (res.status === 200 || res.status === 201) {
+        document.getElementById('phone').value = '';
+        const modal = document.getElementById('thankYouModal');
+        modal.style.display = 'block';
+        setTimeout(() => modal.style.display = 'none', 2500);
+      } else {
+        alert("⚠️ Couldn't save your reminder. Try again later.");
       }
-    }
+    }).catch(err => {
+      console.error(err);
+      alert("Server error. Try again shortly.");
+    });
+  }
 
-    async function submitPhone() {
-      const phone = document.getElementById('phone').value.trim();
-      if (!phone) return alert("Please enter your phone number.");
+  loadEventInfo();
+</script>
 
-      fetch("https://your-backend.com/register_interest", {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone })
-      }).then(res => {
-        if (res.status === 200) {
-          document.getElementById('phone').value = '';
-          const modal = document.getElementById('thankYouModal');
-          modal.style.display = 'block';
-          setTimeout(() => modal.style.display = 'none', 2500);
-        } else {
-          alert("⚠️ Couldn't save your reminder. Try again later.");
-        }
-      }).catch(err => {
-        console.error(err);
-        alert("Server error. Try again shortly.");
-      });
-    }
-
-    loadEventInfo();
-  </script>
 
 </body>
 </html>
