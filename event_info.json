@@ -1,15 +1,15 @@
 {
   "title": "RAW Lounge ATL",
-  "subtitle": "A safe place where believers can have a good time on the weekends",
+  "subtitle": "Unapologetically holy. Undeniably lit.",
   "location": "110 Technology Pkwy Suite 200, Peachtree Corners, GA 30092",
   "date": "Friday, July 19, 2025",
   "time": "8:00 PM – 01:00 AM",
-  "image": "https://images.pexels.com/photos/772650/pexels-photo-772650.jpeg?auto=compress&cs=tinysrgb&w=1600", 
+  "image": "https://res.cloudinary.com/dxhcnn7k3/image/upload/v1721060745/raw-random/453A9477_kav9mw.jpg", 
   "redirect": "https://youtu.be/rODsZjXICsY",
   "ics": "event.ics",  
   "theme": "dark-glow", 
   "colors": {
-    "primary": "#D3AF37",
+    "primary": "#F1B33A",
     "secondary": "#80020",
     "bg": "#000000",
     "text": "#fff"
