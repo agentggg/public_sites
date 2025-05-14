@@ -1,11 +1,11 @@
 BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//RAW Ministry//RAW Lounge ATL Events//EN
+PRODID:-//RAW Ministry//Surrendered Hearts//EN
 CALSCALE:GREGORIAN
 
 BEGIN:VEVENT
-UID:raw-lounge-3rd@rawministry.com
-SUMMARY:RAW Lounge ATL
+UID:surrendered-hearts-3rd@rawministry.com
+SUMMARY: Surrendered Hearts
 DTSTART;TZID=America/New_York:20250615T150000
 DTEND;TZID=America/New_York:20250615T170000
 RRULE:FREQ=MONTHLY;BYDAY=3SU
@@ -15,19 +15,19 @@ DESCRIPTION:You are here for a reason! God did not create you to merely sit at h
 BEGIN:VALARM
 TRIGGER:-P1D
 ACTION:DISPLAY
-DESCRIPTION:Reminder: RAW Lounge ATL is tomorrow at 3 PM!
+DESCRIPTION:Reminder: Surrendered Hearts is tomorrow at 3 PM!
 END:VALARM
 
 BEGIN:VALARM
 TRIGGER;TZID=America/New_York:20250615T110000
 ACTION:DISPLAY
-DESCRIPTION:Reminder: RAW Lounge ATL is today at 3 PM!
+DESCRIPTION:Reminder: Surrendered Hearts is today at 3 PM!
 END:VALARM
 END:VEVENT
 
 BEGIN:VEVENT
-UID:raw-lounge-1st@rawministry.com
-SUMMARY:RAW Lounge ATL
+UID:surrendered-hearts-1st@rawministry.com
+SUMMARY: Surrendered Hearts
 DTSTART;TZID=America/New_York:20250707T150000
 DTEND;TZID=America/New_York:20250707T170000
 RRULE:FREQ=MONTHLY;BYDAY=1SU
@@ -37,13 +37,13 @@ DESCRIPTION:You are here for a reason! God did not create you to merely sit at h
 BEGIN:VALARM
 TRIGGER:-P1D
 ACTION:DISPLAY
-DESCRIPTION:Reminder: RAW Lounge ATL is tomorrow at 3 PM!
+DESCRIPTION:Reminder: Surrendered Hearts is tomorrow at 3 PM!
 END:VALARM
 
 BEGIN:VALARM
 TRIGGER;TZID=America/New_York:20250707T110000
 ACTION:DISPLAY
-DESCRIPTION:Reminder: RAW Lounge ATL is today at 3 PM!
+DESCRIPTION:Reminder: Surrendered Hearts is today at 3 PM!
 END:VALARM
 END:VEVENT
 
