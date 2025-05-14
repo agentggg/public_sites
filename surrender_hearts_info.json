@@ -8,8 +8,8 @@
   "redirect": "https://youtu.be/N1GJKs7Ur8E",
   "ics": "surrender_hearts.ics",  
   "colors": {
-    "primary": "#800022",
-    "secondary": "#00",
+    "primary": "#ffc107",
+    "secondary": "#000",
     "bg": "#000",
     "text": "#fff"
   }
