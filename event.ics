@@ -2,22 +2,27 @@ BEGIN:VCALENDAR
 VERSION:2.0
 BEGIN:VEVENT
 SUMMARY:RAW Lounge ATL
-DTSTART;TZID=America/New_York:20250615T150000
-DTEND;TZID=America/New_York:20250615T170000
-RRULE:FREQ=MONTHLY;BYDAY=SU;BYSETPOS=1,3
-LOCATION:4615 Lawrenceville Rd Loganville, GA 30052
-DESCRIPTION:You are here for a reason! God did not create you to merely sit at home, binge-watch Netflix, go to work, and return home. You have a God-given destiny that is crucial in this time and age. This is your confirmation: you are called to lead the lost to Christ. Join us at the designated address, where we will pray for you and with you, as well as for those who are lost and trapped in the world. Remember, you are a Champion in Jesus' name, and God WILL accomplish GREAT things through you during your time on this earth, in Jesus' name! \n\n https://youtu.be/N1GJKs7Ur8E?si=sLLdUKPyNNHD6svb
+DTSTART;TZID=America/New_York:20250719T200000
+DTEND;TZID=America/New_York:20250720T010000
+LOCATION:110 Technology Pkwy Suite 200, Peachtree Corners, GA 30092
+DESCRIPTION:More than a night out, RAW Lounge is a heartbeat of hope, soundtracked by grace and stirred by the Spirit. Check out the link for more info on what to expect at RAW Lounge. \n\n https://youtu.be/rODsZjXICsY
 
 BEGIN:VALARM
-TRIGGER:-P1D
+TRIGGER:-P7D
 ACTION:DISPLAY
-DESCRIPTION:Reminder: Surrendered Hearts is happening tomorrow!
+DESCRIPTION:Reminder: RAW Lounge Night is in 1 week!
 END:VALARM
 
 BEGIN:VALARM
-TRIGGER;TZID=America/New_York:20250615T110000
+TRIGGER:-P3D
 ACTION:DISPLAY
-DESCRIPTION:Reminder: Surrendered Hearts - God wants your attention 3 PM!
+DESCRIPTION:Reminder: RAW Lounge Night is in 3 days!
+END:VALARM
+
+BEGIN:VALARM
+TRIGGER:-P0D
+ACTION:DISPLAY
+DESCRIPTION:Reminder: RAW Lounge Night is today!
 END:VALARM
 
 END:VEVENT
