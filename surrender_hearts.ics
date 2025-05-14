@@ -1,24 +1,49 @@
 BEGIN:VCALENDAR
 VERSION:2.0
+PRODID:-//RAW Ministry//RAW Lounge ATL Events//EN
+
 BEGIN:VEVENT
 SUMMARY:RAW Lounge ATL
-DTSTART;TZID=America/New_York:20250615T150000
-DTEND;TZID=America/New_York:20250615T170000
-RRULE:FREQ=MONTHLY;BYDAY=SU;BYSETPOS=1,3
+DTSTART;TZID=America/New_York:20250602T150000
+DTEND;TZID=America/New_York:20250602T170000
+RRULE:FREQ=MONTHLY;BYDAY=1SU
 LOCATION:4615 Lawrenceville Rd Loganville, GA 30052
-DESCRIPTION:You are here for a reason! God did not create you to merely sit at home, binge-watch Netflix, go to work, and return home. You have a God-given destiny that is crucial in this time and age. This is your confirmation: you are called to lead the lost to Christ. Join us at the designated address, where we will pray for you and with you, as well as for those who are lost and trapped in the world. Remember, you are a Champion in Jesus' name, and God WILL accomplish GREAT things through you during your time on this earth, in Jesus' name! \n\n https://youtu.be/N1GJKs7Ur8E?si=sLLdUKPyNNHD6svb
+DESCRIPTION:You are here for a reason! God did not create you to merely sit at home, binge-watch Netflix, go to work, and return home. You have a God-given destiny that is crucial in this time and age. This is your confirmation: you are called to lead the lost to Christ. Join us at the designated address, where we will pray for you and with you, as well as for those who are lost and trapped in the world. Remember, you are a Champion in Jesus' name, and God WILL accomplish GREAT things through you during your time on this earth, in Jesus' name!\n\n https://youtu.be/N1GJKs7Ur8E?si=sLLdUKPyNNHD6svb
 
 BEGIN:VALARM
 TRIGGER:-P1D
 ACTION:DISPLAY
-DESCRIPTION:Reminder: Surrendered Hearts is happening tomorrow!
+DESCRIPTION:Reminder: RAW Lounge ATL is happening tomorrow at 3 PM!
 END:VALARM
 
 BEGIN:VALARM
-TRIGGER;TZID=America/New_York:20250615T110000
+TRIGGER;TZID=America/New_York:20250602T110000
 ACTION:DISPLAY
-DESCRIPTION:Reminder: Surrendered Hearts - God wants your attention 3 PM!
+DESCRIPTION:Reminder: RAW Lounge ATL is today at 3 PM!
 END:VALARM
 
 END:VEVENT
+
+BEGIN:VEVENT
+SUMMARY:RAW Lounge ATL
+DTSTART;TZID=America/New_York:20250616T150000
+DTEND;TZID=America/New_York:20250616T170000
+RRULE:FREQ=MONTHLY;BYDAY=3SU
+LOCATION:4615 Lawrenceville Rd Loganville, GA 30052
+DESCRIPTION:You are here for a reason! God did not create you to merely sit at home, binge-watch Netflix, go to work, and return home. You have a God-given destiny that is crucial in this time and age. This is your confirmation: you are called to lead the lost to Christ. Join us at the designated address, where we will pray for you and with you, as well as for those who are lost and trapped in the world. Remember, you are a Champion in Jesus' name, and God WILL accomplish GREAT things through you during your time on this earth, in Jesus' name!\n\n https://youtu.be/N1GJKs7Ur8E?si=sLLdUKPyNNHD6svb
+
+BEGIN:VALARM
+TRIGGER:-P1D
+ACTION:DISPLAY
+DESCRIPTION:Reminder: RAW Lounge ATL is happening tomorrow at 3 PM!
+END:VALARM
+
+BEGIN:VALARM
+TRIGGER;TZID=America/New_York:20250616T110000
+ACTION:DISPLAY
+DESCRIPTION:Reminder: RAW Lounge ATL is today at 3 PM!
+END:VALARM
+
+END:VEVENT
+
 END:VCALENDAR
