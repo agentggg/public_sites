@@ -1,0 +1,29 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:RAW Lounge ATL
+DTSTART;TZID=America/New_York:20250719T200000
+DTEND;TZID=America/New_York:20250720T010000
+LOCATION:110 Technology Pkwy Suite 200, Peachtree Corners, GA 30092
+DESCRIPTION:More than a night out, RAW Lounge is a heartbeat of hope, soundtracked by grace and stirred by the Spirit. Check out the link for more info on what to expect at RAW Lounge. \n\n https://youtu.be/rODsZjXICsY
+
+BEGIN:VALARM
+TRIGGER:-P7D
+ACTION:DISPLAY
+DESCRIPTION:Reminder: RAW Lounge Night is in 1 week!
+END:VALARM
+
+BEGIN:VALARM
+TRIGGER:-P3D
+ACTION:DISPLAY
+DESCRIPTION:Reminder: RAW Lounge Night is in 3 days!
+END:VALARM
+
+BEGIN:VALARM
+TRIGGER:-P0D
+ACTION:DISPLAY
+DESCRIPTION:Reminder: RAW Lounge Night is today!
+END:VALARM
+
+END:VEVENT
+END:VCALENDAR

@@ -1,0 +1,16 @@
+{
+  "title": "Surrendered Hearts",
+  "subtitle": "Winning souls to the Lord",
+  "location": "4615 Lawrenceville Rd Loganville, GA 30052",
+  "date": "Every 1st and 3rd Sunday",
+  "time": "3p - 5p",
+  "image": "https://res.cloudinary.com/dxhcnn7k3/image/upload/v1747242078/DONT%20DELETE/God%20wants%20your%20attention.png", 
+  "redirect": "https://youtu.be/N1GJKs7Ur8E",
+  "ics": "surrender_hearts.ics",  
+  "colors": {
+    "primary": "#800022",
+    "secondary": "#00",
+    "bg": "#000",
+    "text": "#fff"
+  }
+}

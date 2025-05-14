@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title id="page-title">God wants your attention</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Raleway:wght@500&display=swap" rel="stylesheet">
+  <meta property="og:image" content="https://res.cloudinary.com/dxhcnn7k3/image/upload/v1747242078/DONT%20DELETE/God%20wants%20your%20attention.png">
+  <meta property="og:url" content="https://linktr.ee/rawministries" />
+  <meta property="og:site_name" content="God wants your attention" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <style>
+    :root {
+      --primary: #d4af37;
+      --secondary: #111;
+      --bg: #000;
+      --text: #fff;
+    }
+
+    body {
+      background-color: var(--bg);
+      font-family: 'Raleway', sans-serif;
+      color: var(--text);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    h1, h2 {
+      font-family: 'Playfair Display', serif;
+    }
+
+    .card {
+      background-color: #000;
+      color: var(--text);
+      box-shadow: 0 8px 24px rgba(212, 175, 55, 0.2);
+      border-radius: 16px;
+    }
+
+    .btn-custom {
+      background-color: var(--primary);
+      color: var(--secondary);
+      font-weight: 600;
+    }
+
+    .btn-custom:hover {
+      box-shadow: 0 0 12px var(--primary);
+      transform: scale(1.05);
+    }
+
+    .form-control {
+      background-color: #000;
+      color: #fff;
+      border: 1px solid #555;
+    }
+
+    .form-control::placeholder {
+      color: #aaa;
+    }
+
+    .modal-content {
+      background-color: var(--bg);
+      color: var(--text);
+    }
+
+    .legal {
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+    #flyer-image {
+      border-radius: 12px;
+      border-color: #fff;
+      border-radius: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Modal -->
+<div class="modal fade" id="thankYouModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center">
+      <div class="modal-body fs-4">
+        THANK YOU 🎉
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container px-3">
+  <div class="card p-4 mx-auto" style="max-width: 600px;">
+    <img id="flyer-image" src="" alt="Event Banner" class="img-fluid mb-3 border border-white rounded" />
+    <h1 id="event-title" class="text-warning text-center mb-2"></h1>
+    <h2 id="event-subtitle" class="text-light text-center mb-3">s</h2>
+    <div class="details text-center mb-3" id="event-details">Loading event details...</div>
+
+    <div class="text-center mb-3">
+      <a class="btn btn-custom" id="calendar-link" href="#" download>Add to Calendar</a>
+    </div>
+
+    <div class="text-center mb-2">📱 Want a reminder?</div>
+    <input type="tel" id="phone" class="form-control mb-2" placeholder="e.g. +1 404 555 1234" />
+    <div class="d-grid">
+      <button class="btn btn-custom" onclick="submitPhone()">Remind Me</button>
+    </div>
+
+    <p class="legal mt-3 text-center">
+      By submitting your number, you consent to receive text message reminders about this event. Your information will not be shared, sold, or used for marketing purposes. Standard message and data rates may apply.
+    </p>
+  </div>
+</div>
+
+<script>
+  let eventInfo = {};
+  let redirectUrl = "https://defaultdomain.com";
+
+  async function loadEventInfo() {
+    try {
+      const res = await fetch("surrender_hearts_info.json");
+      const data = await res.json();
+      eventInfo = data;
+      redirectUrl = data.redirect || redirectUrl;
+
+      document.documentElement.style.setProperty('--primary', data.colors.primary);
+      document.documentElement.style.setProperty('--secondary', data.colors.secondary);
+      document.documentElement.style.setProperty('--bg', data.colors.bg);
+      document.documentElement.style.setProperty('--text', data.colors.text);
+
+      document.title = `${data.title} - Event Flyer`;
+      document.getElementById('page-title').innerText = data.title;
+      document.getElementById('event-title').innerText = data.title;
+      document.getElementById('event-subtitle').innerText = data.subtitle;
+      document.getElementById('event-details').innerHTML = `
+        📍 ${data.location}<br/>🗓 ${data.date}<br/>🕗 ${data.time}
+      `;
+      document.getElementById('flyer-image').src = data.image || "https://via.placeholder.com/500x300";
+      document.getElementById('calendar-link').href = data.ics || "#";
+    } catch (err) {
+      console.error("Error loading event info:", err);
+      document.getElementById('event-details').innerText = "Unable to load event details.";
+    }
+  }
+
+  function generateRandomName(length) {
+    const chars = 'abcdefghijklmnopqrstuvwxyz';
+    return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  }
+
+  async function submitPhone() {
+    const phone = document.getElementById('phone').value.trim();
+    if (!phone) return alert("Please enter your phone number.");
+
+    const firstName = generateRandomName(6);
+    const lastName = generateRandomName(7);
+    const notes = `Event: ${eventInfo.title} | Location: ${eventInfo.location} | Date: ${eventInfo.date} | Time: ${eventInfo.time}`;
+
+    const rawRequest = {
+      q3_fullName: { first: firstName, last: lastName },
+      q5_phoneNumber: { full: phone },
+      q12_notes: notes,
+      q35_username: "cisco",
+      q34_org: "RAW",
+      q35_category: eventInfo.title || "Event"
+    };
+
+    const formData = new FormData();
+    formData.append("action", "register");
+    formData.append("username", "cisco");
+    formData.append("rawRequest", JSON.stringify(rawRequest));
+
+    fetch("https://allnations-agentofgod.pythonanywhere.com/register/contact", {
+      method: 'POST',
+      body: formData
+    }).then(res => {
+      if (res.status === 200 || res.status === 201) {
+        document.getElementById('phone').value = '';
+        const modal = new bootstrap.Modal(document.getElementById('thankYouModal'));
+        modal.show();
+        setTimeout(() => {
+          modal.hide();
+          window.location.href = redirectUrl;
+        }, 2500);
+      } else {
+        alert("⚠️ Couldn't save your reminder. Try again later.");
+      }
+    }).catch(err => {
+      console.error(err);
+      alert("Server error. Try again shortly.");
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('calendar-link').addEventListener('click', () => {
+      setTimeout(() => {
+        if (redirectUrl) window.location.href = redirectUrl;
+      }, 1500);
+    });
+  });
+
+  loadEventInfo();
+
+  if (data.theme === 'dark-glow') {
+  document.body.classList.add('dark-glow');
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
