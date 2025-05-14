@@ -4,7 +4,7 @@ BEGIN:VEVENT
 SUMMARY:RAW Lounge Night
 DTSTART;TZID=America/New_York:20250719T190000
 DTEND;TZID=America/New_York:20250719T230000
-LOCATION:Antioch Winder
+LOCATION:110 Technology Pkwy Suite 200, Peachtree Corners, GA 30092
 DESCRIPTION:A chill night of music, food, and fun for believers. RAW Lounge Night.
 
 BEGIN:VALARM
