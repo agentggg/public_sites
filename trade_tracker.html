@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Money Trade Validator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <style>
+    #chart { height: 500px; }
+    textarea { resize: none; }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h4 class="card-title text-primary">Trade Validator</h4>
+            <p class="small text-muted">
+              <strong>Instructions:</strong> Select a ticker and date. Enter relevant times <b>in UTC</b>. Validator checks price action +/- 15 minutes.<br>
+              All times are in UTC. Use EST = UTC - 4 hours (daylight savings) or UTC - 5 hours (standard). <br>
+              Example: 11:03 AM EST = 15:03 UTC during daylight savings.
+            </p>
+            <p class="fw-bold text-danger" id="currentTimeInfo"></p>
+
+            <label class="form-label mt-2">Ticker</label>
+            <select id="ticker" class="form-select">
+              <option value="NAS100">NASDAQ 100 (NAS100)</option>
+              <option value="SPX500">S&P 500 (SPX500)</option>
+              <option value="US30">Dow Jones (US30)</option>
+            </select>
+
+            <label class="form-label mt-2">Start DateTime (24-hour UTC)</label>
+            <input type="datetime-local" id="startDatetime" class="form-control" />
+
+            <label class="form-label mt-2">End DateTime (24-hour UTC)</label>
+            <input type="datetime-local" id="endDatetime" class="form-control" />
+
+            <button onclick="checkTradeSetup()" class="btn btn-primary w-100 mt-3">Validate Trade</button>
+            <div id="validationResult" class="mt-3 fw-bold text-center"></div>
+
+            <label class="form-label mt-3">GPT Prompt</label>
+            <textarea id="gptPrompt" class="form-control" rows="6" readonly></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-8">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h4 class="card-title text-secondary">Price Chart</h4>
+            <div id="chart"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let chart, candleSeries;
+    let candles = [];
+
+function initChart() {
+  chart = LightweightCharts.createChart(document.getElementById('chart'), {
+    height: 500,
+    timeScale: {
+      timeVisible: true,
+      secondsVisible: true
+    }
+  });
+  // Force EST on X-axis tick labels
+  chart.applyOptions({
+    timeScale: {
+      timeVisible: true,
+      secondsVisible: true
+    }
+  });
+  candleSeries = chart.addCandlestickSeries();
+
+  // Add crosshair and time display logic
+  // Create time label below chart
+  const timeLabel = document.createElement('div');
+  timeLabel.style.cssText = 'margin-top: 5px; font-size: 14px; color: #333;';
+  document.getElementById('chart').appendChild(timeLabel);
+
+  chart.subscribeCrosshairMove(param => {
+    if (!param || !param.time || !param.seriesData) {
+      timeLabel.innerText = '';
+      return;
+    }
+    const time = param.time;
+    // Manually convert UTC to EST (UTC-5)
+    const date = new Date(time * 1000);
+    const formatted = `${date.toLocaleDateString('en-US')} ${date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    })}`;
+    timeLabel.innerText = `Cursor Time: ${formatted}`;
+    console.log("Cursor Time:", formatted);
+  });
+
+  chart.subscribeClick((param) => {
+    const seriesData = param.seriesData;
+    if (!seriesData || !seriesData.values) return;
+    const candle = Array.from(seriesData.values())[0];
+    const time = param.time;
+
+    if (!candle || !time) return;
+
+    alert(`Clicked candle time (UTC): ${new Date(time * 1000).toISOString()}`);
+  });
+}
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initChart();
+
+      flatpickr(".flatpickr", {
+        enableTime: true,
+        time_24hr: true,
+        dateFormat: "Y-m-d H:i",
+        utc: true
+      });
+
+      function updateCurrentTimes() {
+        const nowUTC = new Date();
+        const nowEST = new Date(nowUTC.toLocaleString("en-US", { timeZone: "America/New_York" }));
+
+        const format = date => `${date.toLocaleDateString('en-US')} ${date.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        })}`;
+
+        const info = `EST:${format(nowEST)} - UTC:${format(nowUTC)}`;
+        document.getElementById('currentTimeInfo').innerText = info;
+      }
+
+      updateCurrentTimes();
+      document.getElementById('startDatetime').value = '2025-05-14T19:29';
+      document.getElementById('endDatetime').value = '2025-05-15T19:30';
+      // document.getElementById('ivg').value = '2025-05-15 18:30';
+      setInterval(updateCurrentTimes, 60000); // refresh every minute
+    });
+
+    function addMinutesToDate(date, minutes) {
+      return new Date(date.getTime() + minutes * 60000);
+    }
+
+    function timeExists(candles, datetimeStr) {
+      return candles.some(c => {
+        const t = new Date(c.time * 1000).toISOString().slice(0,16);
+        return t === datetimeStr;
+      });
+    }
+
+    function buildUTCDateTime(dateStr, timeStr) {
+      return new Date(`${dateStr}T${timeStr}:00Z`).toISOString().slice(0, 16);
+    }
+
+    async function checkTradeSetup() {
+      const base = document.getElementById('ticker').value + 'USD';
+
+      const startInput = document.getElementById('startDatetime').value;
+      const endInput = document.getElementById('endDatetime').value;
+
+      if (!startInput || !endInput) {
+        document.getElementById('validationResult').innerText = '❌ Enter both start and end datetime.';
+        return;
+      }
+
+      let fromDate = new Date(startInput);
+      let toDate = new Date(endInput);
+
+      const format = d => `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}-${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+
+      const from = format(fromDate);
+      const to = format(toDate);
+
+      const key = 'RE9uXPMY-QNC8qIzVQ5p';
+      const url = `https://marketdata.tradermade.com/api/v1/timeseries?api_key=${key}&currency=${base}&start_date=${from}&end_date=${to}&interval=minute`;
+
+      try {
+        const res = await fetch(url);
+        const json = await res.json();
+        if (!json.quotes || !Array.isArray(json.quotes)) throw new Error();
+
+        candles = json.quotes.map(c => ({
+        time: Math.floor(new Date(c.date + 'Z').getTime() / 1000),
+        open: c.open,
+        high: c.high,
+        low: c.low,
+        close: c.close
+        }));
+        candleSeries.setData([]);
+        candleSeries.setData(candles);
+
+        const results = [];
+        document.getElementById('validationResult').innerText = results.join('\n');
+        document.getElementById('gptPrompt').value = `Trade Review:\n- Ticker: ${base}\n\nPlease analyze this using Smart Money Concepts.`;
+      } catch {
+        document.getElementById('validationResult').innerText = '❌ Data fetch failed.';
+      }
+    }
+  </script>
+</body>
+</html>
