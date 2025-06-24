@@ -2,12 +2,13 @@ BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//RAW Ministry//Surrendered Hearts//EN
 CALSCALE:GREGORIAN
+METHOD:PUBLISH
 
 BEGIN:VEVENT
 UID:surrendered-hearts-1st@rawministry.com
 SUMMARY:Surrendered Hearts
-DTSTART;TZID=America/New_York:20250706T150000
-DTEND;TZID=America/New_York:20250706T170000
+DTSTART;TZID=America/New_York:20250707T150000
+DTEND;TZID=America/New_York:20250707T170000
 RRULE:FREQ=MONTHLY;BYDAY=1SU
 LOCATION:4615 Lawrenceville Rd Loganville, GA 30052
 DESCRIPTION:You are here for a reason! God did not create you to merely sit at home, binge-watch Netflix, go to work, and return home. You have a God-given destiny that is crucial in this time and age. This is your confirmation: you are called to lead the lost to Christ.\n\nhttps://youtu.be/N1GJKs7Ur8E?si=sLLdUKPyNNHD6svb
@@ -28,8 +29,8 @@ END:VEVENT
 BEGIN:VEVENT
 UID:surrendered-hearts-3rd@rawministry.com
 SUMMARY:Surrendered Hearts
-DTSTART;TZID=America/New_York:20250720T150000
-DTEND;TZID=America/New_York:20250720T170000
+DTSTART;TZID=America/New_York:20250721T150000
+DTEND;TZID=America/New_York:20250721T170000
 RRULE:FREQ=MONTHLY;BYDAY=3SU
 LOCATION:4615 Lawrenceville Rd Loganville, GA 30052
 DESCRIPTION:You are here for a reason! God did not create you to merely sit at home, binge-watch Netflix, go to work, and return home. You have a God-given destiny that is crucial in this time and age. This is your confirmation: you are called to lead the lost to Christ.\n\nhttps://youtu.be/N1GJKs7Ur8E?si=sLLdUKPyNNHD6svb
