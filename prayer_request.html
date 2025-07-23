@@ -1,154 +1,200 @@
-html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Intake Form</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        label {
-            display: block;
-            margin: 15px 0 5px;
-            font-weight: bold;
-        }
-        input[type="text"],
-        input[type="email"],
-        input[type="tel"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .radio-group {
-            margin: 10px 0;
-        }
-        .radio-group label {
-            display: inline-block;
-            margin-right: 10px;
-        }
-        select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .submit-btn {
-            width: 100%;
-            padding: 10px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 20px;
-        }
-        .submit-btn:hover {
-            background-color: #218838;
-        }
-        .popup {
-            display: none;
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .popup-content {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        .close-btn {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prayer Call Intake</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background: linear-gradient(to right, #ffd9cc, #ffe6e6, #fef6f0);
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px 20px;
+    }
+
+    .card-style {
+      background-color: #fff8f3;
+      border-radius: 20px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12);
+      padding: 40px;
+      max-width: 850px;
+      margin: auto;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .card-style:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      font-weight: 700;
+      color: #4a2d19;
+    }
+
+    .form-description {
+      text-align: center;
+      font-size: 1.05rem;
+      color: #5e3d2e;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+
+    .form-label {
+      font-weight: 600;
+      color: #4e382e;
+    }
+
+    .form-check-label {
+      font-weight: 500;
+      color: #3a2c25;
+    }
+
+    .form-control {
+      border-radius: 10px;
+      border: 1px solid #e8cfcf;
+    }
+
+    .btn-submit {
+      background-color: #ea5a28;
+      border: none;
+      padding: 12px 20px;
+      font-weight: 600;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      color: white;
+    }
+
+    .btn-submit:hover {
+      background-color: #d44f1f;
+      transform: scale(1.02);
+    }
+
+    .closing-message {
+      margin-top: 40px;
+      background: #fff0e8;
+      padding: 20px 25px;
+      border-left: 6px solid #ea5a28;
+      border-radius: 12px;
+      color: #6a4730;
+      font-style: italic;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Intake Form</h1>
-    <p>We care for you! Please fill out this form to allow one of our trained ministers to contact you for a prayer session.</p>
-    
-    <form id="prayerForm">
-        <label for="firstName">First Name</label>
-        <input type="text" id="firstName" name="firstName" required>
+  <div class="card-style">
+    <h2>We Want to Pray With You</h2>
 
-        <label for="lastName">Last Name</label>
-        <input type="text" id="lastName" name="lastName" required>
+    <p class="form-description">
+      Our calls are quick, heartfelt, and meaningful, around 30 minutes. You’ll receive a Zoom link in your email (check spam too!) titled <strong>“I want to pray for you”</strong> about 15 minutes after submitting. We look forward to standing with you in prayer!
+    </p>
 
-        <label>Gender</label>
-        <div class="radio-group">
-            <label><input type="radio" name="gender" value="male" required> Male</label>
-            <label><input type="radio" name="gender" value="female" required> Female</label>
+    <form id="prayerForm" autocomplete="on">
+      <div class="mb-3">
+        <label class="form-label">First Name</label>
+        <input type="text" class="form-control" name="firstName" required autocomplete="given-name">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Last Name</label>
+        <input type="text" class="form-control" name="lastName" required autocomplete="family-name">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Gender</label><br />
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="gender" id="male" value="Male" required>
+          <label class="form-check-label" for="male">Male</label>
         </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="gender" id="female" value="Female" required>
+          <label class="form-check-label" for="female">Female</label>
+        </div>
+      </div>
 
-        <label for="phone">Phone Number</label>
-        <input type="tel" id="phone" name="phone" required>
+      <div class="mb-3">
+        <label class="form-label">Phone Number</label>
+        <input type="tel" class="form-control" name="phone" required pattern="[0-9]{10,15}" autocomplete="tel">
+      </div>
 
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" required>
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" name="email" required autocomplete="email">
+      </div>
 
-        <label for="contactTime">Best Time to Contact You</label>
-        <select id="contactTime" name="contactTime" required>
-            <option value="">Select a time</option>
-            <option value="Morning (9a - 12p)">Morning (9a - 12p)</option>
-            <option value="Afternoon (12p - 5p)">Afternoon (12p - 5p)</option>
-            <option value="Evening (6p - 9p)">Evening (6p - 9p)</option>
-            <option value="Night time (9p - 11p)">Night time (9p - 11p)</option>
-        </select>
+      <div class="mb-3">
+        <label class="form-label">Preferred Days</label>
+        <div class="row">
+          <div class="col-sm-6">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="days" value="Monday"> <label class="form-check-label">Monday</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="days" value="Tuesday"> <label class="form-check-label">Tuesday</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="days" value="Wednesday"> <label class="form-check-label">Wednesday</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="days" value="Thursday"> <label class="form-check-label">Thursday</label></div>
+          </div>
+          <div class="col-sm-6">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="days" value="Friday"> <label class="form-check-label">Friday</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="days" value="Saturday"> <label class="form-check-label">Saturday</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="days" value="Sunday"> <label class="form-check-label">Sunday</label></div>
+          </div>
+        </div>
+      </div>
 
-        <button type="submit" class="submit-btn">Submit</button>
+      <div class="mb-3">
+        <label class="form-label">Preferred Time of Day</label>
+        <div class="form-check"><input class="form-check-input" type="checkbox" name="time" value="Morning"> <label class="form-check-label">Morning (9a - 12p)</label></div>
+        <div class="form-check"><input class="form-check-input" type="checkbox" name="time" value="Afternoon"> <label class="form-check-label">Afternoon (12p - 5p)</label></div>
+        <div class="form-check"><input class="form-check-input" type="checkbox" name="time" value="Evening"> <label class="form-check-label">Evening (6p - 9p)</label></div>
+        <div class="form-check"><input class="form-check-input" type="checkbox" name="time" value="Night"> <label class="form-check-label">Night (9p - 11p)</label></div>
+      </div>
+
+      <button type="submit" class="btn btn-submit w-100 mt-3">Submit</button>
     </form>
-</div>
 
-<div class="popup" id="popup">
-    <div class="popup-content">
-        <h2>Thank You!</h2>
-        <p>One of our trained ministers will call you to pray with you. Remember, you are not a prayer request; you are a valued individual and we genuinely care for you.</p>
-        <p>Please check your email in about 15 minutes for the Zoom link. Look for "I want to pray for you".</p>
-        <button class="close-btn" onclick="closePopup()">Close</button>
+    <div class="closing-message">
+      You are not just a checkbox or form entry, you are God’s beloved. When you reach out, He listens. And so do we. Thank you for trusting us to pray with you. 💛
     </div>
-</div>
+  </div>
 
-<script>
-    document.getElementById('prayerForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        document.getElementById('popup').style.display = 'flex';
+  <script>
+    const form = document.getElementById('prayerForm');
+
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      const formData = new FormData(form);
+      const data = {
+        first_name: formData.get('firstName'),
+        last_name: formData.get('lastName'),
+        gender: formData.get('gender'),
+        phone: formData.get('phone'),
+        email: formData.get('email'),
+        days: formData.getAll('days'),
+        time: formData.getAll('time')
+      };
+
+      try {
+        const response = await fetch('http://127.0.0.1:8000/submit_prayer_request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+          alert("✅ Thank you! A minister will reach out via Zoom.\n\nYou are not just a prayer request — you're deeply cared for.");
+          form.reset();
+        } else {
+          alert("❌ Something went wrong. Please try again.");
+        }
+      } catch (err) {
+        alert("❌ Could not reach the server. Please check your connection.");
+        console.error(err);
+      }
     });
-
-    function closePopup() {
-        document.getElementById('popup').style.display = 'none';
-    }
-</script>
+  </script>
 
 </body>
 </html>
