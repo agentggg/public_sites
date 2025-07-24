@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Send Message</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #000;
+      font-family: Arial, sans-serif;
+      color: #fff;
+      padding: 20px;
+    }
+    h2 {
+      color: #ea5a28;
+      text-align: center;
+    }
+    .dropdown-menu {
+      background-color: #1e1e1e;
+      color: #fff;
+      border: 1px solid #444;
+    }
+    .dropdown-menu label {
+      color: #fff;
+      font-weight: normal;
+    }
+    .dropdown-menu input[type="checkbox"] {
+      margin-right: 10px;
+    }
+    #recipientsPreview span {
+      display: inline-block;
+      background-color: #333;
+      color: #fff;
+      padding: 6px 12px;
+      margin: 4px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    .form-wrapper {
+      max-width: 700px;
+      margin: auto;
+      background-color: #111;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="form-wrapper">
+    <h2>Send Message</h2>
+    <div class="d-flex justify-content-end">
+      <button class="btn btn-outline-light mt-3" onclick="logout()">Logout</button>
+    </div>
+    <div class="mb-3">
+      <label for="contactType" class="form-label">Send by:</label>
+      <select id="contactType" class="form-select" onchange="fetchContactOptions()">
+        <option value="contacts_contacts">Contact Name</option>
+        <option value="categories_contacts">Category</option>
+        <option value="ambassador_contacts">Ambassador</option>
+        <option value="all_outreach_contacts">Outreach Contact</option>
+      </select>
+    </div>
+    <div class="mb-3" id="groupSelectContainer" style="display: none;">
+      <label for="groupSelect" class="form-label" id="groupSelectLabel">Select Group:</label>
+      <select id="groupSelect" class="form-select" onchange="fetchGroupContacts()">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+    <div class="mb-3" id="recipientsContainer" style="display: none;">
+      <label for="contactInputContainer" class="form-label">Select Recipient(s):</label>
+      <div class="dropdown w-100">
+        <button class="btn btn-dark dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          Select Recipients
+        </button>
+        <ul class="dropdown-menu w-100 px-3" id="contactInputContainer" style="max-height: 200px; overflow-y: auto;"></ul>
+      </div>
+      <button class="btn btn-warning mt-2 w-100" onclick="selectAllRecipients()">Send to All</button>
+    </div>
+    <div class="mb-3">
+      <label for="message" class="form-label">Message:</label>
+      <textarea id="message" rows="6" class="form-control" placeholder="Your message here..."></textarea>
+    </div>
+    <div class="mb-3">
+      <label for="imageFile" class="form-label">Upload Image (optional):</label>
+      <input type="file" id="imageFile" class="form-control" />
+    </div>
+    <div class="mb-3">
+      <label for="scheduleTime" class="form-label">Schedule Time (optional):</label>
+      <input type="text" id="scheduleTime" class="form-control" placeholder="MM/DD/YYYY HH:MM AM/PM" />
+    </div>
+    <div class="d-grid">
+      <button class="btn btn-danger" onclick="sendMessage()">Send</button>
+    </div>
+    <div class="mt-4" id="recipientsPreview">
+      <strong>Recipients Preview:</strong><br />
+      <div id="recipientsList" class="mt-2">Loading...</div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const ipAddress = 'https://allnations-agentofgod.pythonanywhere.com';
+    // const ipAddress = 'http://127.0.0.1:8000';
+    function logout() {
+      localStorage.removeItem("authToken"); // Remove the stored auth data
+      alert("You have been logged out.");
+      window.location.href = "login.html"; // Adjust if your login page is named differently
+    }
+    const auth = JSON.parse(localStorage.getItem("authToken"));
+    const token = auth?.token || '';
+    const username = auth?.username || '';
+    const org = auth?.org || '';
+
+    function renderRecipients(listItems, container, recipientsList) {
+      if (typeof listItems[0] === 'string') {
+        recipientsList.innerHTML = listItems.map(label => `<span>${label}</span>`).join('');
+      } else {
+        container.innerHTML = listItems.map(item =>
+          `<li>
+            <label class="form-check-label d-block">
+              <input type="checkbox" class="form-check-input recipientCheckbox me-2" value="${item.value}" />
+              ${item.label}
+            </label>
+          </li>`).join('');
+        recipientsList.innerHTML = listItems.map(item => `<span>${item.label}</span>`).join('');
+      }
+    }
+
+    async function fetchContactOptions() {
+      const contactType = document.getElementById("contactType").value;
+      const container = document.getElementById("contactInputContainer");
+      const recipientsList = document.getElementById("recipientsList");
+      const groupSelectContainer = document.getElementById("groupSelectContainer");
+      const recipientsContainer = document.getElementById("recipientsContainer");
+      const groupSelect = document.getElementById("groupSelect");
+      const groupLabel = document.getElementById("groupSelectLabel");
+
+      container.innerHTML = '<li>Loading...</li>';
+      recipientsList.innerHTML = 'Loading...';
+      groupSelectContainer.style.display = "none";
+      recipientsContainer.style.display = contactType === 'contacts_contacts' ? 'block' : 'none';
+      groupSelect.innerHTML = "";
+
+      try {
+        const response = await fetch(`${ipAddress}/${contactType}?format=json`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `token ${token}`
+          },
+          body: JSON.stringify({ org, username, pageName: contactType, setView: 'all_contacts' })
+        });
+
+        if (!response.ok) throw new Error("Response not OK");
+        const data = await response.json();
+        let listItems = [];
+
+        if (contactType === "categories_contacts" || contactType === "ambassador_contacts") {
+          const groups = contactType === 'categories_contacts'
+            ? [...new Set(data.map(item => item.category))]
+            : [...new Set(data.map(item => item.name))];
+
+          groupSelect.innerHTML = groups.map(g => `<option value="${g}">${g}</option>`).join('');
+          groupSelectContainer.style.display = 'block';
+          groupLabel.textContent = contactType.includes("category") ? "Select Category:" : "Select Ambassador:";
+          return;
+        }
+
+        listItems = data.map(item => ({
+          label: item.name || item.first_name || item.phone_number,
+          value: item.phone_number
+        }));
+        renderRecipients(listItems, container, recipientsList);
+
+      } catch (err) {
+        console.error("❌ Error loading contacts:", err);
+        container.innerHTML = '<li>Error loading</li>';
+        recipientsList.innerHTML = '<span>Error loading recipients</span>';
+      }
+    }
+
+    async function fetchGroupContacts() {
+      const groupSelect = document.getElementById("groupSelect");
+      const contactType = document.getElementById("contactType").value;
+      const groupValue = groupSelect.value;
+      const container = document.getElementById("contactInputContainer");
+      const recipientsList = document.getElementById("recipientsList");
+
+      if (!groupValue) return;
+
+      try {
+        const response = await fetch(`${ipAddress}/view_recipient`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `token ${token}`
+          },
+          body: JSON.stringify({ org, username, groupType: contactType, contactType: [groupValue] })
+        });
+        const groupData = await response.json();
+        const items = contactType === "categories_contacts" ? groupData : groupData.map(item => ({
+          label: item.first_name,
+          value: item.phone_number
+        }));
+        renderRecipients(items, container, recipientsList);
+      } catch (err) {
+        console.error("❌ Failed to load group contacts:", err);
+        container.innerHTML = '<li>Error loading</li>';
+        recipientsList.innerHTML = '<span>Error loading recipients</span>';
+      }
+    }
+
+    function getSelectedRecipients() {
+      return Array.from(document.querySelectorAll(".recipientCheckbox"))
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
+    }
+
+    function selectAllRecipients() {
+      document.querySelectorAll(".recipientCheckbox").forEach(cb => cb.checked = true);
+    }
+
+    function validateDateTime(dateTime) {
+      const regex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}\s(0[1-9]|1[0-2]):([0-5][0-9])\s(AM|PM)$/i;
+      return regex.test(dateTime);
+    }
+
+    async function sendMessage() {
+      const message = document.getElementById("message").value;
+      const scheduleTime = document.getElementById("scheduleTime").value;
+      const contactType = document.getElementById("contactType").value;
+      const groupValue = document.getElementById("groupSelect").value;
+      const fileInput = document.getElementById("imageFile").files[0];
+      const selectedRecipients = getSelectedRecipients();
+
+      if (!message) return alert("Please enter a message.");
+      if (scheduleTime && !validateDateTime(scheduleTime)) return alert("❌ Invalid date format. Use MM/DD/YYYY HH:MM AM/PM");
+      if (contactType === "contacts_contacts" && selectedRecipients.length === 0) return alert("❌ Please select at least one recipient.");
+
+      let endpoint = scheduleTime ? '/scheduled_messages'
+        : contactType === 'contacts_contacts' ? '/contact_text'
+        : contactType === 'categories_contacts' ? '/category_text'
+        : contactType === 'ambassador_contacts' ? '/ambassador_text'
+        : contactType === 'all_outreach_contacts' ? '/all_outreach_text'
+        : null;
+
+      if (!endpoint) return alert("❌ Invalid contact selection.");
+
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("org", org);
+      formData.append("message", message);
+      formData.append("scheduledDateTime", scheduleTime);
+      formData.append("selectOption", contactType);
+
+      if (contactType === "contacts_contacts") {
+        formData.append("contactSelection", new Blob([JSON.stringify({ contact: selectedRecipients })], { type: "application/json" }));
+      } else {
+        formData.append("contactSelection", new Blob([JSON.stringify({ contact: [groupValue] })], { type: "application/json" }));
+      }
+
+      if (fileInput) formData.append("file", fileInput);
+
+      try {
+        const response = await fetch(`${ipAddress}${endpoint}`, {
+          method: "POST",
+          headers: { Authorization: `token ${token}` },
+          body: formData
+        });
+        if (!response.ok) throw new Error("Failed to send");
+        alert("✅ Message sent successfully!");
+        document.getElementById("message").value = '';
+        document.getElementById("scheduleTime").value = '';
+        document.getElementById("imageFile").value = '';
+      } catch (err) {
+        alert("❌ Message failed to send.");
+        console.error(err);
+      }
+    }
+
+    fetchContactOptions();
+  </script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+  <style>
+    body {
+      background-color: #000;
+      font-family: Arial, sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px;
+      font-size: 16px;
+      width: 250px;
+    }
+    button {
+      background-color: #ea5a28;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .tooltip-error {
+      color: #ff4d4d;
+      background-color: #1a1a1a;
+      padding: 8px 12px;
+      border-radius: 5px;
+      margin-top: 5px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Reaching the Nations</h1>
+  <img src="glassLogo.jpg" alt="Logo" width="200" />
+  <input type="text" id="username" placeholder="Username" />
+  <input type="password" id="password" placeholder="Password" />
+  <button onclick="login()">Login</button>
+  <div id="tooltipError" class="tooltip-error">❌ Wrong username or password</div>
+
+  <script>
+    const ipAddress = 'https://allnations-agentofgod.pythonanywhere.com';
+
+    async function login() {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const tooltip = document.getElementById("tooltipError");
+      tooltip.style.display = "none"; // Hide on retry
+
+      try {
+        const response = await fetch(`${ipAddress}/login_verification`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        if (!response.ok) throw new Error("Invalid login");
+
+        const data = await response.json();
+        localStorage.setItem("authToken", JSON.stringify(data));
+
+        await fetch(`${ipAddress}/save_push_token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username,
+            deviceMake: "Computer",
+            deviceModel: "Web Browser",
+            token: "NOT_APPLICABLE"
+          })
+        });
+
+        window.location.href = 'send.html';
+      } catch (err) {
+        tooltip.style.display = "block"; // Show tooltip
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>

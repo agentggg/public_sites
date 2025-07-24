@@ -1,0 +1,84 @@
+body {
+  background-color: #000;
+  font-family: 'Arial', sans-serif;
+  color: #fff;
+  margin: 0;
+  padding: 20px;
+}
+
+h1, h2 {
+  text-align: center;
+  color: #ea5a28;
+  font-weight: 900;
+}
+
+img {
+  display: block;
+  margin: 20px auto;
+  max-width: 250px;
+}
+
+input, select, textarea, button {
+  width: 100%;
+  padding: 12px;
+  margin: 12px 0;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  box-sizing: border-box;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="file"],
+textarea,
+select {
+  background-color: #222;
+  color: #fff;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+button {
+  background-color: #ea5a28;
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #ff6a2e;
+}
+
+.error {
+  color: red;
+  font-size: 14px;
+  margin-top: -10px;
+}
+
+.success {
+  color: #00ff99;
+  font-size: 14px;
+  margin-top: -10px;
+}
+
+label {
+  margin-top: 10px;
+  display: block;
+  font-weight: bold;
+  color: #fff;
+}
+
+.form-wrapper {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #111;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+}
