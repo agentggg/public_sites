@@ -45,6 +45,25 @@
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
     }
+    .form-check-input {
+      background-color: #333;
+      border-color: #ea5a28;
+    }
+    .form-check-input:checked {
+      background-color: #ea5a28;
+      border-color: #ea5a28;
+    }
+    .form-check-label {
+      color: #fff;
+    }
+    .recipientCheckbox:disabled + label {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .gray-out {
+      opacity: 0.5;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -76,7 +95,17 @@
         </button>
         <ul class="dropdown-menu w-100 px-3" id="contactInputContainer" style="max-height: 200px; overflow-y: auto;"></ul>
       </div>
-      <button class="btn btn-warning mt-2 w-100" onclick="selectAllRecipients()">Send to All</button>
+      <div class="form-check mt-2">
+        <input 
+          class="form-check-input" 
+          type="checkbox" 
+          id="sendToAllCheckbox" 
+          onchange="toggleSendToAll(this)"
+        >
+        <label class="form-check-label" for="sendToAllCheckbox">
+          Send to All
+        </label>
+      </div>
     </div>
     <div class="mb-3">
       <label for="message" class="form-label">Message:</label>
@@ -100,8 +129,8 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const ipAddress = 'https://allnations-agentofgod.pythonanywhere.com';
-    // const ipAddress = 'http://127.0.0.1:8000';
+    // const ipAddress = 'https://allnations-agentofgod.pythonanywhere.com';
+    const ipAddress = 'http://127.0.0.1:8000';
     function logout() {
       localStorage.removeItem("authToken"); // Remove the stored auth data
       alert("You have been logged out.");
@@ -111,7 +140,27 @@
     const token = auth?.token || '';
     const username = auth?.username || '';
     const org = auth?.org || '';
+    let sendToAllFlag = false;
 
+    function toggleSendToAll(checkbox) {
+      sendToAllFlag = checkbox.checked;
+      const recipientCheckboxes = document.querySelectorAll(".recipientCheckbox");
+      const previewContainer = document.getElementById("recipientsList");
+
+      recipientCheckboxes.forEach(cb => {
+        cb.disabled = sendToAllFlag; // Disable individual selections
+        cb.checked = false;          // Uncheck all when disabled
+      });
+
+      // Add or remove gray-out effect
+      if (sendToAllFlag) {
+        previewContainer.classList.add("gray-out");
+      } else {
+        previewContainer.classList.remove("gray-out");
+      }
+
+      console.log("Send to All:", sendToAllFlag);
+    }
     function renderRecipients(listItems, container, recipientsList) {
       if (typeof listItems[0] === 'string') {
         recipientsList.innerHTML = listItems.map(label => `<span>${label}</span>`).join('');
@@ -218,7 +267,7 @@
     }
 
     function selectAllRecipients() {
-      document.querySelectorAll(".recipientCheckbox").forEach(cb => cb.checked = true);
+      sendToAllFlag = true; 
     }
 
     function validateDateTime(dateTime) {
@@ -232,7 +281,12 @@
       const contactType = document.getElementById("contactType").value;
       const groupValue = document.getElementById("groupSelect").value;
       const fileInput = document.getElementById("imageFile").files[0];
-      const selectedRecipients = getSelectedRecipients();
+      let selectedRecipients;
+      if (sendToAllFlag) {
+        selectedRecipients = ['All']
+      } else {
+        selectedRecipients = getSelectedRecipients(); // only checked ones
+      }
 
       if (!message) return alert("Please enter a message.");
       if (scheduleTime && !validateDateTime(scheduleTime)) return alert("❌ Invalid date format. Use MM/DD/YYYY HH:MM AM/PM");
@@ -263,16 +317,29 @@
       if (fileInput) formData.append("file", fileInput);
 
       try {
-        const response = await fetch(`${ipAddress}${endpoint}`, {
+        console.log("Sending to recipients:", selectedRecipients);
+
+        const response = await fetch(`ASDFA${ipAddress}${endpoint}`, {
           method: "POST",
           headers: { Authorization: `token ${token}` },
           body: formData
         });
         if (!response.ok) throw new Error("Failed to send");
         alert("✅ Message sent successfully!");
+        document.getElementById('sendToAllCheckbox').checked = false;
+        sendToAllFlag = false;
+
+        // Re-enable recipient checkboxes
+        document.querySelectorAll(".recipientCheckbox").forEach(cb => {
+          cb.disabled = false;
+        });
+
+        // Remove gray-out effect
+        document.getElementById("recipientsList").classList.remove("gray-out");
         document.getElementById("message").value = '';
         document.getElementById("scheduleTime").value = '';
         document.getElementById("imageFile").value = '';
+
       } catch (err) {
         alert("❌ Message failed to send.");
         console.error(err);
