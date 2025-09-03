@@ -73,12 +73,8 @@
       <button class="btn btn-outline-light mt-3" onclick="logout()">Logout</button>
     </div>
     <div class="mb-3">
-      <label for="contactType" class="form-label">Send by:</label>
+      <label for="contactType" class="form-label">Send by selected contacts:</label>
       <select id="contactType" class="form-select" onchange="fetchContactOptions()">
-        <option value="contacts_contacts">Contact Name</option>
-        <option value="categories_contacts">Category</option>
-        <option value="ambassador_contacts">Ambassador</option>
-        <option value="all_outreach_contacts">Outreach Contact</option>
       </select>
     </div>
     <div class="mb-3" id="groupSelectContainer" style="display: none;">
@@ -190,7 +186,7 @@
       groupSelect.innerHTML = "";
 
       try {
-        const response = await fetch(`${ipAddress}/${contactType}?format=json`, {
+        const response = await fetch(`${ipAddress}/contacts_contacts?format=json`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -202,17 +198,6 @@
         if (!response.ok) throw new Error("Response not OK");
         const data = await response.json();
         let listItems = [];
-
-        if (contactType === "categories_contacts" || contactType === "ambassador_contacts") {
-          const groups = contactType === 'categories_contacts'
-            ? [...new Set(data.map(item => item.category))]
-            : [...new Set(data.map(item => item.name))];
-
-          groupSelect.innerHTML = groups.map(g => `<option value="${g}">${g}</option>`).join('');
-          groupSelectContainer.style.display = 'block';
-          groupLabel.textContent = contactType.includes("category") ? "Select Category:" : "Select Ambassador:";
-          return;
-        }
 
         listItems = data.map(item => ({
           label: item.name || item.first_name || item.phone_number,
