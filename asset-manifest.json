@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/public_sites/all_nations/static/css/main.9e11355e.css",
+    "main.js": "/public_sites/all_nations/static/js/main.954c3701.js",
+    "static/js/453.494645f8.chunk.js": "/public_sites/all_nations/static/js/453.494645f8.chunk.js",
+    "static/media/glassLogo.jpg": "/public_sites/all_nations/static/media/glassLogo.f9093f74101ea070aee9.jpg",
+    "index.html": "/public_sites/all_nations/index.html",
+    "main.9e11355e.css.map": "/public_sites/all_nations/static/css/main.9e11355e.css.map",
+    "main.954c3701.js.map": "/public_sites/all_nations/static/js/main.954c3701.js.map",
+    "453.494645f8.chunk.js.map": "/public_sites/all_nations/static/js/453.494645f8.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.9e11355e.css",
+    "static/js/main.954c3701.js"
+  ]
+}
