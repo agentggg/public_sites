@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta property="og:title" content="E-learn">
+  <meta property="og:description" content="Exploring Jesus in Today">
+  <meta property="og:image" content="stevo.png">
+  <meta charset="UTF-8">
+  <title>Flashcards | E-Learning by Stevenson Gerard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      box-sizing: border-box;
+      padding: 0;
+      margin: 0;
+    }
+
+    body {
+      background: linear-gradient(to bottom right, #0f0f0f, #2c2c2c);
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+      min-height: 100vh;
+      padding: 20px;
+      position: relative;
+    }
+
+    .top-instructor {
+      position: absolute;
+      top: 50px;
+      left: 20px;
+      font-size: 0.85em;
+      font-weight: bold;
+      color: #f5dfbd;
+      display: none;
+    }
+
+        .avatar {
+      width: 250px;
+      height: 250px;
+      border-radius: 50%;
+      margin-bottom: 30px;
+      object-fit: cover;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      transition: all 0.5s ease;
+    }
+
+    .avatar.small {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      position: absolute;
+      top: 40px;
+      right: 20px;
+      margin: 0;
+    }
+
+    .subtitle-container {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 20px;
+      transition: opacity 0.4s ease;
+    }
+
+    .subtitle {
+      font-size: 1.5em;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      font-family: 'Segoe UI Semibold', 'Segoe UI', sans-serif;
+    }
+
+    .card-container {
+      perspective: 1000px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .card {
+      background: white;
+      color: #000000;
+      border-radius: 20px;
+      padding: 30px 20px;
+      width: 90%;
+      max-width: 500px;
+      font-size: 1.2em;
+      font-weight: 600;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.3);
+      transition: transform 0.6s ease-in-out, font-size 0.4s ease-in-out;
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+      cursor: pointer;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+    }
+
+    .hint {
+      margin-top: 25px;
+      font-size: 0.95em;
+      color: #f5dfbd;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+      100% { transform: scale(1); }
+    }
+
+    .card:hover {
+      animation: pulse 0.8s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+    <button onclick="history.back()" style="position:absolute; top:80px; left:20px; background:#f5dfbd; color:black; border:none; padding:10px 16px; border-radius:8px; cursor:pointer;">
+    ⬅️⬅️ Go Back
+  </button>
+  <div class="top-instructor" id="instructor-label">Instructor: The Holy Spirit</div>
+
+  <img id="avatar" src="stevo.png" alt="Avatar" class="avatar" id="avatar" />
+
+  <div id="subtitles" class="subtitle-container">
+    <div class="subtitle"><span style="color:#f5dfbd">Crafted by:</span> Stevenson Gerard</div>
+    <div class="subtitle"><span style="color:#f5dfbd">Instructor:</span> The Holy Spirit</div>
+  </div>
+
+  <div class="card-container">
+    <div class="card" id="flashcard">Tap to begin</div>
+  </div>
+
+  <div class="hint" id="hint">Tap the card to reveal the next flash 🔄</div>
+
+<script>
+  const card = document.getElementById('flashcard');
+  const avatar = document.getElementById('avatar');
+  const instructorLabel = document.getElementById('instructor-label');
+  const subtitleContainer = document.getElementById('subtitles');
+  const hint = document.getElementById('hint');
+
+  let flashcards = [];
+  let index = 0;
+
+function updateSlide() {
+  card.style.transform = 'rotateY(180deg)';
+  setTimeout(() => {
+    const content = flashcards[index];
+    card.textContent = content;
+    card.style.transform = 'rotateY(0deg)';
+
+    const isFirst = index === 0;
+    const isLast = index === flashcards.length - 1;
+
+    avatar.classList.toggle('small', !isFirst && !isLast);
+    instructorLabel.style.display = (!isFirst && !isLast) ? 'block' : 'none';
+    subtitleContainer.style.display = isFirst ? 'flex' : 'none';
+    hint.textContent = isLast ? '🎊 You’ve reached the end.' : 'Tap the card to reveal the next flash 🔄';
+    card.style.fontSize = content.length > 180 ? '1em' : '1.2em';
+
+    // ⬇️ Redirect if user taps after last slide
+    if (index === flashcards.length - 1) {
+      setTimeout(function() {
+        window.location.href = "https://www.youtube.com/@evangeliststevensongerard";
+      }, 3000);
+    } else {
+      index++;
+    }
+  }, 300);
+}
+
+
+  card.addEventListener('click', updateSlide);
+
+  // Load flashcards based on filename
+  const pageName = location.pathname.split("/").pop().replace(".html", "").toLowerCase();
+  fetch(`flashcards/${pageName}.json`)
+    .then(res => res.json())
+    .then(data => {
+      const courseTitle = data[0];        // First row = course title
+      const contentSlides = data.slice(1); // Remove title from flashcard body
+
+      flashcards = [
+        `👋 ${courseTitle}`,
+        ...contentSlides,
+        `🎉 Thank you for reading!
+        ${courseTitle}. 
+        I hope it blessed you!`
+      ];
+
+      card.textContent = flashcards[0]; // show first
+    })
+    .catch(err => {
+      console.error("Could not load flashcards:", err);
+      card.textContent = "⚠️ Could not load flashcards";
+    });
+</script>
+
+
+</body>
+</html>

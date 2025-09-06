@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <!-- SEO Meta -->
+  <meta name="title" content="Micro | E-Learning by Stevenson Gerard">
+  <meta name="description" content="Exploring Jesus in Today. Join us in discovering Kingdom truths through guided flashcards.">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="E-learn by Stevenson Gerard">
+  <meta property="og:description" content="Exploring Jesus in Today. Tap into Kingdom Tech flashcards.">
+  <meta property="og:image" content="https://e-learn.stevensongerard.tech/coverimage/meta.png">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="E-learn by Stevenson Gerard">
+  <meta name="twitter:description" content="Exploring Jesus in Today. Tap into Kingdom Tech flashcards.">
+  <meta name="twitter:image" content="https://e-learn.stevensongerard.tech/coverimage/meta.png">
+
+  <title>Micro | E-Learning by Stevenson Gerard</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+    
+    <style>
+      body {
+        background: linear-gradient(to bottom right, #0f0f0f, #2c2c2c);
+        color: white;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden; /* prevent scroll */
+      }
+      
+      .container {
+        flex: 1;
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      
+      .card-container {
+        perspective: 1000px;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+      }
+  
+      .card {
+        background: white;
+        color: black;
+        border-radius: 20px;
+        padding: 30px 20px;
+        width: 90%;
+        max-width: 500px;
+        font-size: 1.2em;
+        font-weight: bold;
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.1), 0 0 25px rgba(100, 100, 100, 0.2), 0 40px 60px rgba(0, 0, 0, 0.5);
+        transition: transform 0.6s ease-in-out, box-shadow 0.4s ease-in-out;
+        transform-style: preserve-3d;
+        backface-visibility: hidden;
+        cursor: pointer;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-width: 600px; 
+      }
+  
+      .card:hover {
+        transform: scale(1.03) rotateX(3deg) rotateY(-3deg);
+      }
+  
+      .feedback button:hover {
+        transform: scale(1.05);
+      }
+  
+      .top-instructor {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 0.85em;
+        font-weight: bold;
+        color: #000;
+        display: none;
+      }
+  
+      .back-btn {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: #f5dfbd;
+        color: black;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-weight: bold;
+      }
+  
+      .hint {
+        color: #f5dfbd;
+      }
+  
+      #subscribe-button-popup {
+        display: none;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+        justify-content: center;
+        margin-top: 15px;
+      }
+      
+      #subscribe-button-popup.show {
+        display: flex;
+        opacity: 1;
+        transform: translateY(0);
+      }
+      
+  
+      .card.single-line {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 1rem;
+      }
+      
+      .popup {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        justify-content: center;
+        align-items: center;
+      }
+  
+      .form-box {
+        background: white;
+        color: black;
+        padding: 30px;
+        border-radius: 10px;
+        max-width: 400px;
+        width: 90%;
+        animation: pop 0.3s ease-in-out;
+      }
+  
+      .form-box input, .form-box select {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+  
+      .form-box .actions {
+        margin-top: 20px;
+        text-align: right;
+      }
+  
+      @keyframes pop {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+  
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-10px); }
+        40%, 80% { transform: translateX(10px); }
+      }
+  
+      .shake {
+        animation: shake 0.5s;
+      }
+      .floating-emoji {
+        position: fixed;
+        font-size: 2rem;
+        z-index: 9999;
+        pointer-events: none;
+        animation: emoji-burst 1.3s ease-out forwards;
+      }
+      
+      @keyframes emoji-burst {
+        0% {
+          opacity: 0;
+          transform: translate(0, 0) scale(0.4);
+        }
+        40% {
+          opacity: 1;
+          transform: scale(1.2);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(var(--x-move), var(--y-move)) scale(0.4);
+        }
+      }
+      .popup.show {
+        animation: pop 0.3s ease-in-out;
+      }
+      @media (max-height: 700px) {
+        #avatar {
+          width: 120px;
+          height: 120px;
+        }
+        #subtitles h5 {
+          font-size: 0.8rem;
+        }
+        .card {
+          padding: 20px 15px;
+          font-size: 1rem;
+        }
+        .hint {
+          font-size: 0.8rem;
+        }
+      }
+
+      
+      
+      
+
+      
+      
+      
+      
+      
+      
+      
+    </style>
+</head>
+
+<body class="position-relative p-3 d-flex flex-column align-items-center justify-content-center">
+  <button class="back-btn" onclick="handleBack()">⬅️⬅️ Back</button>
+  <div class="top-instructor text-light" id="instructor-label">
+    Powered by: <strong>The Holy Spirit</strong><br>
+    Inspired by: <strong class="text-warning">Tech & Faith</strong>
+  </div>
+ 
+  <div class="container text-center">
+      <img 
+        src="coverimage/meta.png" 
+        alt="Avatar"
+        id="avatar"
+        class="rounded-circle d-block mx-auto shadow mb-5"
+        style="width: 230px; height: 230px; object-fit: cover; object-position: top center;">
+      <div id="subtitles" class="mb-4">
+      <h5 class="text-warning">Crafted by: Stevenson Gerard</h5>
+      <h5 class="text-warning">Instructor for Today: The Holy Spirit</h5>
+    </div>
+
+    <div class="card-container">
+      <div class="card custom text-center p-3 mb=3" id="flashcard">
+        <strong>Tap to begin</strong>
+      </div>
+    </div>
+    <div class="hint m-4" id="hint">Tap the card to reveal the next flash 🔄</div>
+    <div id="progress" class="text-warning my-2 fw-bold"></div>
+    
+    
+    <div class="d-flex justify-content-center mb-1 mt-1" id="subscribe-button-popup">
+      <button onclick="showSubscribe()" class="btn border-primary btn-sm text-dark fw-bold">
+        <span class="text-warning h5">👨🏽‍💻 Subscribe 📲 to Kingdom Tech</span>
+      </button>
+    </div>
+    <div class="d-flex flex-wrap justify-content-center gap-2 my-4 d-none" id="feedback-buttons">
+      <button class="btn btn-warning bg-dark text-danger" onclick="sendFeedback('like')">♥️ This is Good</button>
+      <button class="btn btn-warning bg-dark text-warning" onclick="sendFeedback('dislike')">👎 Didn't Help</button>
+      <button class="btn btn-warning bg-dark text-light" onclick="sendFeedback('neutral')">😐 Neutral</button>
+      
+    </div>
+
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script> 
+  <script src="./config.js"></script>
+  <script>
+    const avatar = document.getElementById('avatar');
+    const instructorLabel = document.getElementById('instructor-label');
+    const subtitleContainer = document.getElementById('subtitles');
+    const hint = document.getElementById('hint');
+    const feedback = document.getElementById('feedback-buttons');
+    const subscribeButton = document.getElementById('subscribe-button-popup');
+    const progress = document.getElementById('progress');
+    const form = document.getElementById('subscribe-form');
+    const popup = document.getElementById('subscribe-popup'); // ✅ Add this at the top of your script
+
+    const courseId = new URLSearchParams(window.location.search).get('courseId');
+    const database_id = new URLSearchParams(window.location.search).get('database_id');
+  
+    let flashcards = [];
+    let index = 0;
+    let courseSlug = courseId;
+    let startTime = Date.now();
+  
+    const card = document.getElementById('flashcard');
+    card.addEventListener('click', () => {
+      if (index < flashcards.length) {
+        updateSlide();
+        index++; // ✅ advance after showing
+      }
+    });
+    
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      feedback.classList.add('d-none');
+      subscribeButton.classList.remove('show');
+    });
+    
+
+  
+    function toggleVisibility(el, show) {
+      el.style.display = show ? 'block' : 'none';
+    }
+  
+    function updateSlide() {
+      const content = flashcards[index];
+      const isFirst = index === 0;
+      const isLast = index === flashcards.length - 1;
+    
+      progress.textContent = `${index + 1}/${flashcards.length}`;
+      card.classList.toggle('single-line', isFirst);
+      card.textContent = content;
+    
+      toggleVisibility(instructorLabel, !isFirst && !isLast);
+      toggleVisibility(subtitleContainer, isFirst);
+      toggleVisibility(hint, !isLast);
+      subscribeButton.classList.remove('show');
+    
+      avatar.classList.toggle('w-26', !isFirst && !isLast);
+      hint.textContent = 'Tap the card to reveal the next flash 🔄';
+      card.style.fontSize = content.length > 180 && !isFirst ? '1em' : isFirst ? '1rem' : '1.2em';
+    
+      if (isLast) {
+        showSubscribeButton();
+        sendAnalytics();
+        feedback.classList.remove('d-none');
+      } else {
+        feedback.classList.add('d-none');
+      }
+    }
+
+    
+    function showSubscribeButton() {
+      subscribeButton.classList.add('show');
+    }
+  
+    function showSubscribe() {
+      document.getElementById('subscribe-popup').style.display = 'flex';
+      subscribeButton.classList.remove('show');
+    }
+    
+    function hidePopup(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.display = 'none';
+        el.classList.remove('show');
+    
+        if (id === 'subscribe-popup') {
+          subscribeButton.classList.add('show'); // optional
+        }
+      }
+    }
+    
+    function launchEmojiRain() {
+      const emojis = ['❤️', '🙏🏾', '🕊️', '🔥', '💃🏽'];
+      let count = 0;
+      const max = 70;
+      const interval = setInterval(() => {
+        const emoji = document.createElement('div');
+        emoji.className = 'floating-emoji';
+        emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    
+        const startX = Math.random() * window.innerWidth;
+        const startY = Math.random() * window.innerHeight;
+        const moveX = `${(Math.random() - 0.5) * 300}px`;
+        const moveY = `${(Math.random() - 0.5) * 300}px`;
+    
+        emoji.style.left = `${startX}px`;
+        emoji.style.top = `${startY}px`;
+        emoji.style.setProperty('--x-move', moveX);
+        emoji.style.setProperty('--y-move', moveY);
+        emoji.style.fontSize = `${1 + Math.random() * 2}rem`;
+    
+        document.body.appendChild(emoji);
+        setTimeout(() => emoji.remove(), 2500);
+    
+        count++;
+        if (count >= max) clearInterval(interval);
+      }, 50); // popcorn timing: one every 100ms
+    }
+    
+    
+    
+    
+    function handleBack() {
+      if (index > 1) {
+        index -= 2;
+        updateSlide();
+      } else {
+        window.location.href = "index.html";
+      }
+    }
+  
+    function submitSubscribe() {
+      const data = {
+        first_name: document.getElementById('sub-fn').value.trim(),
+        last_name: document.getElementById('sub-ln').value.trim(),
+        email: document.getElementById('sub-email').value.trim(),
+        phone: document.getElementById('sub-phone').value.trim(),
+        referral: document.getElementById('sub-ref').value
+      };
+  
+      if (!data.first_name || !data.last_name || !data.email || !data.phone || !data.referral) {
+        form.classList.add('shake');
+        setTimeout(() => form.classList.remove('shake'), 500);
+        alert("😅 Oops! All fields must be filled out.");
+        return;
+      }
+  
+      fetch(`${CONFIG.API_BASE}/elearn/subscribe`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(async response => {
+        if (!response.ok) {
+          const errorData = await response.json();
+          showPopupError(errorData.error || 'An unexpected error occurred.');
+          throw new Error(errorData.error);
+        } else {
+          window.location.href = CONFIG.REDIRECT_AFTER_SUBSCRIBE;
+        }
+      })
+      .catch(err => {
+        console.error('❌ Subscription error:', err);
+      });
+    }
+       
+
+
+    function sendFeedback(type) {
+      fetch(`${CONFIG.API_BASE}/elearn/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ course: courseSlug, cardIndex: index, feedback: type })
+      });
+    
+      if (type === 'like') {
+        launchEmojiRain();
+      }
+    
+      setTimeout(() => {
+        card.textContent = '🙏 Thanks for your feedback!';
+        feedback.classList.add('d-none');
+    
+        const share = document.getElementById('share-container');
+        if (share) share.classList.remove('d-none');
+    
+        // ✅ Do NOT touch subscribeButton here
+      }, 300);
+    }
+    
+    
+    function showSubscribe() {
+      const popup = document.getElementById('subscribe-popup');
+      popup.style.display = 'flex';
+      popup.classList.add('show');
+    }
+    
+    
+    function shareCourse() {
+      const shareUrl = window.location.href;
+      if (navigator.share) {
+        navigator.share({
+          title: 'E-Learning by Stevenson Gerard',
+          text: 'Check out this course I just completed!',
+          url: shareUrl
+        }).catch(console.error);
+      } else {
+        alert('Sharing is not supported on this device. Please copy the link manually.');
+      }
+    }
+  
+    function sendAnalytics() {
+      const duration = Math.floor((Date.now() - startTime) / 1000);
+      const screen = `${window.screen.width}x${window.screen.height}`;
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const userAgent = navigator.userAgent;
+      const language = navigator.language;
+      const platform = navigator.platform;
+      const deviceMemory = navigator.deviceMemory || 'unknown';
+  
+      fetch('https://ipapi.co/json/')
+        .then(res => res.json())
+        .then(ipData => {
+          fetch(`${CONFIG.API_BASE}/elearn/analytics`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              course: database_id,
+              visitedAt: new Date().toISOString(),
+              duration,
+              userAgent,
+              screen,
+              timezone,
+              language,
+              platform,
+              deviceMemory,
+              ip: ipData.ip,
+              city: ipData.city,
+              region: ipData.region,
+              country: ipData.country_name,
+              org: ipData.org
+            })
+          });
+        });
+    }
+  
+    card.addEventListener('click', () => {
+      if (index < flashcards.length) {
+        updateSlide();
+      }
+    });
+  
+    function showPopupError(message) {
+      const errorDiv = document.createElement('div');
+      errorDiv.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: #dc3545;
+          color: white;
+          padding: 15px 20px;
+          border-radius: 8px;
+          font-weight: bold;
+          box-shadow: 0 0 10px rgba(0,0,0,0.3);
+          z-index: 9999;
+        ">
+          ❌ ${message}
+        </div>
+      `;
+      document.body.appendChild(errorDiv);
+      setTimeout(() => {
+        errorDiv.remove();
+      }, 4000);
+    }
+    
+  
+
+    fetch(`${CONFIG.API_BASE}/elearn/get_course/${courseId}`)
+      .then(res => res.json())
+      .then(data => {
+        const courseTitle = data.cards[0];
+        const contentSlides = data.cards.slice(1);
+        flashcards = [
+          `${courseTitle}`,
+          ...contentSlides,
+          `🎉 Thank you for reading!\n${decodeURIComponent(courseTitle)}.\nI hope it blessed you!`
+        ];
+        index = 0;
+        updateSlide();
+      });
+  </script>
+  <div class="popup" id="subscribe-popup">
+    <div class="form-box bg-light text-dark shadow-lg border border-3 border-warning">
+      <h4 class="mb-3 text-center fw-bold text-warning">Kingdom Tech Expansion 🚀</h4>
+      <p class="text-center small mb-4">Let's get you plugged into the Kingdom Tech Space 🔥</p>
+      
+      <div class="mb-3">
+        <input type="text" id="sub-fn" class="form-control" placeholder="First Name">
+      </div>
+      <div class="mb-3">
+        <input type="text" id="sub-ln" class="form-control" placeholder="Last Name">
+      </div>
+      <div class="mb-3">
+        <input type="email" id="sub-email" class="form-control" placeholder="Email">
+      </div>
+      <div class="mb-3">
+        <input type="tel" id="sub-phone" class="form-control" placeholder="Phone Number">
+      </div>
+      <div class="mb-3">
+        <select id="sub-ref" class="form-select">
+          <option value="">How did you hear about us?</option>
+          <option value="Friend">Friend</option>
+          <option value="Church">Event</option>
+          <option value="Instagram">Social Media</option>
+          <option value="Text">Text</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      
+      <div class="d-flex justify-content-between mt-4">
+        <button class="btn btn-dark" onclick="submitSubscribe()">✅  Join</button>
+        <button class="btn btn-outline-danger" onclick="hidePopup('subscribe-popup')">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
+  
+</body>
+</html>
