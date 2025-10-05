@@ -11,14 +11,14 @@ BEGIN:DAYLIGHT
 TZOFFSETFROM:-0500
 TZOFFSETTO:-0400
 TZNAME:EDT
-DTSTART:19700308T020000
+DTSTART:20250706T160000
 RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU
 END:DAYLIGHT
 BEGIN:STANDARD
 TZOFFSETFROM:-0400
 TZOFFSETTO:-0500
 TZNAME:EST
-DTSTART:19701101T020000
+DTSTART:20250706T160000
 RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU
 END:STANDARD
 END:VTIMEZONE
@@ -26,10 +26,10 @@ END:VTIMEZONE
 BEGIN:VEVENT
 UID:surrendered-hearts-1st@rawministry.com
 SUMMARY:Surrendered Hearts
-DTSTART;TZID=America/New_York:20250706T150000
-DTEND;TZID=America/New_York:20250706T170000
+DTSTART;TZID=America/New_York:20250706T160000
+DTEND;TZID=America/New_York:20250706T180000
 RRULE:FREQ=MONTHLY;BYDAY=1SU
-LOCATION:4615 Lawrenceville Rd Loganville, GA 30052
+LOCATION:138 Park Avenue #305B, Winder, GA 30680
 DESCRIPTION:You are here for a reason! God did not create you to merely sit at home, binge-watch Netflix, go to work, and return home. You have a God-given destiny that is crucial in this time and age. This is your confirmation: you are called to lead the lost to Christ.\\n\\nhttps://youtu.be/N1GJKs7Ur8E?si=sLLdUKPyNNHD6svb
 BEGIN:VALARM
 TRIGGER:-P1D
@@ -46,10 +46,10 @@ END:VEVENT
 BEGIN:VEVENT
 UID:surrendered-hearts-3rd@rawministry.com
 SUMMARY:Surrendered Hearts
-DTSTART;TZID=America/New_York:20250720T150000
-DTEND;TZID=America/New_York:20250720T170000
+DTSTART;TZID=America/New_York:20250706T160000
+DTEND;TZID=America/New_York:20250706T180000
 RRULE:FREQ=MONTHLY;BYDAY=3SU
-LOCATION:4615 Lawrenceville Rd Loganville, GA 30052
+LOCATION:138 Park Avenue #305B, Winder, GA 30680
 DESCRIPTION:You are here for a reason! God did not create you to merely sit at home, binge-watch Netflix, go to work, and return home. You have a God-given destiny that is crucial in this time and age. This is your confirmation: you are called to lead the lost to Christ.\\n\\nhttps://youtu.be/N1GJKs7Ur8E?si=sLLdUKPyNNHD6svb
 BEGIN:VALARM
 TRIGGER:-P1D
