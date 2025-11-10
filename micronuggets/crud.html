@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Manage Courses | E-Learn Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+
+  <!-- Bootstrap (only for utilities & modal) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <style>
+    :root{
+      --ink:#131521;
+      --muted:#49506a;
+      --bg:#f6f7ff;
+      --card:#ffffff;
+      --border:#e7e9f3;
+      --brand:#6f5ef7;
+      --brand-2:#00bfa6;
+      --accent:#ff8a5b;
+      --good:#1bbf72;
+      --danger:#ec4a58;
+      --shadow:0 12px 28px rgba(18,22,53,.12);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      color:#fff;
+      background:
+        radial-gradient(900px 600px at -10% -10%, #2a255e 0, rgba(42,37,94,0) 60%),
+        radial-gradient(900px 600px at 110% 10%, #0f3c3a 0, rgba(15,60,58,0) 55%),
+        linear-gradient(180deg, #0c0f18, #0e1220 40%, #0c0f18);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+    }
+
+    /* Header / Banner */
+    .banner{
+      position:sticky; top:0; z-index:20;
+      background: linear-gradient(90deg, rgba(18,22,53,.75), rgba(0,191,166,.25));
+      backdrop-filter: blur(6px);
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .wrap{max-width:1100px; margin:0 auto; padding:16px}
+    .badge-brand{
+      display:inline-flex; gap:10px; align-items:center;
+      padding:8px 12px; border-radius:999px; font-weight:700; font-size:12px;
+      color:#fff; background: linear-gradient(90deg, var(--brand), var(--brand-2));
+      box-shadow: 0 8px 22px rgba(111,94,247,.25);
+    }
+    .title{font-weight:900; letter-spacing:.3px; margin:10px 0 2px}
+    .subtitle{color:#b5bedf; margin:0}
+
+    /* Shell cards */
+    .sheet{
+      background: #101427;
+      border:1px solid rgba(231,233,243,.08);
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      padding:16px;
+      margin:14px auto;
+      max-width:1100px;
+    }
+
+    /* Form Grid */
+    .form-grid{
+      display:grid; gap:10px;
+      grid-template-columns: repeat(12, 1fr);
+    }
+    .col-12{grid-column: span 12}
+    @media (min-width: 768px){
+      .md-3{grid-column: span 3}
+      .md-4{grid-column: span 4}
+      .md-6{grid-column: span 6}
+      .md-12{grid-column: span 12}
+    }
+    .control{
+      width:100%; padding:12px 12px; background:#0c0f1c; color:#e6ebff;
+      border:1px solid rgba(231,233,243,.12); border-radius:12px;
+      outline:none; transition:border-color .15s ease, box-shadow .15s ease;
+    }
+    .control:focus{ border-color:#5e7aff; box-shadow: 0 0 0 3px rgba(94,122,255,.2); }
+
+    .btn-fill{
+      background: linear-gradient(90deg, var(--brand), var(--brand-2));
+      color:#fff; border:none; font-weight:800; letter-spacing:.3px;
+      padding:12px 18px; border-radius:12px;
+      box-shadow: 0 8px 22px rgba(0,191,166,.25);
+    }
+    .btn-ghost{
+      background: transparent; color:#e6ebff;
+      border:1px solid rgba(231,233,243,.12); padding:12px 18px; border-radius:12px; font-weight:700;
+    }
+    .btn-mini{ padding:6px 10px; border-radius:10px; font-size:12px; }
+
+    /* Cards list */
+    .cards-grid{
+      display:grid; gap:12px;
+      grid-template-columns: repeat(12, 1fr);
+    }
+    .course-card{grid-column: span 12}
+    @media (min-width: 768px){ .course-card{grid-column: span 6} }
+    @media (min-width: 1100px){ .course-card{grid-column: span 4} }
+
+    .card-surface{
+      background:#0f1326; color:#e6ebff;
+      border:1px solid rgba(231,233,243,.08);
+      border-radius:16px; overflow:hidden;
+    }
+    .card-head{
+      padding:12px 14px; display:flex; align-items:center; justify-content:space-between;
+      border-bottom:1px dashed rgba(231,233,243,.08);
+    }
+    .card-head strong{font-size:14px}
+    .card-body{padding:12px 14px}
+    .row-sep{border-top:1px dashed rgba(231,233,243,.08); margin:10px 0; padding-top:10px}
+    .label{font-size:12px; color:#9fb1ff; margin:6px 0 6px}
+    textarea.card-text{
+      width:100%; min-height:96px; resize:vertical;
+      background:#0b0e1c; color:#e6ebff; border:1px solid rgba(231,233,243,.12); border-radius:12px; padding:10px;
+    }
+    .meta{font-size:12px; color:#97a2c9}
+
+    /* Top toolbar */
+    .toolbar{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+    }
+    .toolbar .left, .toolbar .right{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+
+    /* Toast */
+    #toast{
+      position:fixed; bottom:18px; right:18px; z-index:9999;
+      display:none; background:#17203b; color:#dffbe7; border:1px solid rgba(27,191,114,.35);
+      padding:10px 14px; border-radius:10px; box-shadow: 0 8px 22px rgba(0,0,0,.3);
+      font-size: 14px;
+    }
+
+    /* Auth overlay */
+    .auth-overlay{
+      position:fixed; inset:0; display:grid; place-items:center; z-index:9998;
+      background: radial-gradient(600px 400px at 50% 20%, rgba(111,94,247,.2), transparent 60%),
+                  rgba(6,8,14,.92);
+      backdrop-filter: blur(4px);
+    }
+    .auth-card{
+      background:#0f1326; color:#e6ebff; border:1px solid rgba(231,233,243,.08);
+      border-radius:16px; padding:20px; width:min(420px, 92vw);
+      box-shadow: var(--shadow);
+    }
+    /* Compose card row */
+.compose-row{display:flex; gap:10px; align-items:flex-start; margin-bottom:10px}
+.compose-row.dragging{opacity:.6; outline:1px dashed rgba(231,233,243,.25)}
+.drag-handle{
+  cursor:grab; user-select:none;
+  background:#0b0e1c; border:1px solid rgba(231,233,243,.12);
+  border-radius:10px; padding:8px 10px; line-height:1;
+}
+.drag-handle:active{cursor:grabbing}
+.compose-actions{display:flex; gap:6px; flex-wrap:wrap; margin-top:6px}
+.drag-handle{ padding:10px 12px; border-radius:12px; }
+@media (max-width:480px){
+  .compose-actions .btn-mini{ padding:8px 10px; font-size:13px; }
+}
+  </style>
+</head>
+<body>
+
+  <!-- Sticky banner -->
+  <div class="banner">
+    <div class="wrap">
+      <span class="badge-brand">Tech & Faith • Admin</span>
+      <h2 class="title">📖 Course Manager</h2>
+      <p class="subtitle">Create, update, reorder, and publish micro-lessons.</p>
+    </div>
+  </div>
+
+  <!-- Auth overlay (replaces prompt) -->
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-card">
+      <h4 class="mb-2">Admin Access</h4>
+      <p class="meta mb-3">Enter your username to manage courses.</p>
+      <input id="auth-user" class="control mb-2" placeholder="Username" autofocus />
+      <div class="d-flex gap-2">
+        <button class="btn-fill" id="auth-enter">Enter</button>
+        <button class="btn-ghost" id="auth-cancel">Cancel</button>
+      </div>
+      <div id="auth-msg" class="meta mt-2" style="color:#ffb3b3; display:none;">Invalid username.</div>
+    </div>
+  </div>
+
+  <!-- Compose / Filters -->
+  <div class="sheet" id="compose" style="display:none;">
+    <div class="toolbar mb-3">
+      <div class="left">
+        <input id="searchInput" class="control" placeholder="Search by identifier or description…" style="min-width:240px">
+        <select id="filterProfile" class="control" style="min-width:180px">
+          <option value="">All Profiles</option>
+          <option>Prophetic</option><option>Default</option><option>Partner</option>
+          <option>Dev</option><option>Evangelism</option><option>NewBorn</option>
+          <option>Ministers</option><option>Life</option>
+        </select>
+        <select id="sortBy" class="control" style="min-width:160px">
+          <option value="createdAt.desc">Newest First</option>
+          <option value="createdAt.asc">Oldest First</option>
+          <option value="title.asc">Title A→Z</option>
+          <option value="title.desc">Title Z→A</option>
+        </select>
+      </div>
+      <div class="right">
+        <button class="btn-ghost" id="btn-refresh">↻ Refresh</button>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <input id="title" class="control col-12 md-4" placeholder="Course Title">
+      <input id="recipient" class="control col-12 md-3" placeholder="Recipient (Required)">
+      <input id="sent_date" class="control col-12 md-3" placeholder="Sent Date (MM/DD/YYYY HH:MM AM/PM)">
+      <input id="description" class="control col-12 md-6" placeholder="Description">
+      <input id="name_identifier" class="control col-12 md-3" placeholder="Course Identifier">
+      <select id="profile_type" class="control col-12 md-3">
+        <option value="">Select Profile Type</option>
+        <option>Prophetic</option><option>Default</option><option>Partner</option>
+        <option>Dev</option><option>Evangelism</option><option>NewBorn</option>
+        <option>Ministers</option><option>Life</option>
+      </select>
+      <div class="col-12 md-12">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="m-0">✍️ Teaching Cards</h5>
+        </div>
+        <div id="array-fields"></div>
+        <div class="mt-2">
+          <button class="btn-ghost btn-mini" id="btn-add-at-end">➕ Add New Card (End)</button>
+          <button class="btn-ghost btn-mini" id="btn-clear-lines">🧹 Clear</button>
+        </div>
+      </div>
+
+      <div class="col-12 d-flex gap-2 mt-1">
+        <button class="btn-fill" id="btn-submit">✅ Create Course</button>
+        <button class="btn-ghost" id="btn-save-draft">💾 Save Draft (Local)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Courses list -->
+  <div class="sheet" id="list-sheet" style="display:none;">
+    <div id="course-card-container" class="cards-grid"></div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast">💾 Saved</div>
+
+  <!-- Full Card Modal -->
+  <div class="modal fade" id="fullCardModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content" style="background:#0f1326; color:#e6ebff">
+        <div class="modal-header">
+          <h5 class="modal-title">Full Card</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="fullCardText" style="white-space: pre-wrap;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Config -->
+  <script src="./config.js"></script>
+
+  <script>
+  /* ========= Utilities ========= */
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+  const toast = (msg='💾 Saved', ms=1200) => {
+    const t = $('#toast'); t.textContent = msg; t.style.display='block';
+    setTimeout(()=> t.style.display='none', ms);
+  };
+  const debounce = (fn, ms=400) => {
+    let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
+  };
+  const byId = id => allCourses.find(c => c._id === id);
+
+  function addSafeDnDGuards(){
+  // Prevent the browser from navigating on drop
+  window.addEventListener('dragover', e => e.preventDefault());
+  window.addEventListener('drop', e => e.preventDefault());
+}
+
+  /* ========= Auth ========= */
+  const overlay = $('#auth-overlay');
+  const authEnter = $('#auth-enter');
+  const authCancel = $('#auth-cancel');
+  authEnter.addEventListener('click', () => {
+    const u = $('#auth-user').value.trim();
+    if (u && typeof CONFIG !== 'undefined' && u === CONFIG.USERNAME){
+      overlay.style.display='none';
+      initUI();
+    } else {
+      $('#auth-msg').style.display='block';
+    }
+  });
+  authCancel.addEventListener('click', ()=> history.back());
+
+  /* ========= State ========= */
+  let allCourses = [];
+  let activeInsertCard = null;
+
+  /* ========= Load & Render ========= */
+  function initUI(){
+    $('#compose').style.display='block';
+    $('#list-sheet').style.display='block';
+
+    // Wiring
+    $('#btn-refresh').addEventListener('click', loadCourses);
+    $('#btn-save-draft').addEventListener('click', saveFormToLocalStorage);
+    $('#btn-submit').addEventListener('click', submitCourse);
+    $('#searchInput').addEventListener('input', filterAndRender);
+    $('#filterProfile').addEventListener('change', filterAndRender);
+    $('#sortBy').addEventListener('change', filterAndRender);
+    $('#btn-add-at-end').addEventListener('click', ()=> addArrayField());
+    $('#btn-clear-lines').addEventListener('click', ()=>{
+      $('#array-fields').innerHTML=''; addArrayField(); saveFormToLocalStorage();
+    });
+    // Autosave fields to local
+    ['title','description','name_identifier','profile_type','recipient','sent_date'].forEach(id=>{
+      $('#'+id).addEventListener('input', debounce(saveFormToLocalStorage, 300));
+    });
+    $('#array-fields').addEventListener('input', debounce(saveFormToLocalStorage, 300));
+    addSafeDnDGuards();
+    loadFormFromLocalStorage();
+    if (!$('#array-fields').children.length) addArrayField();
+
+    loadCourses();
+  }
+
+  async function loadCourses(){
+    try{
+      const res = await fetch(`${CONFIG.API_BASE}/elearn/list`);
+      const data = await res.json();
+      allCourses = Array.isArray(data) ? data : (data?.data || data?.results || []);
+      filterAndRender();
+    }catch(e){
+      console.error(e);
+    }
+  }
+
+  function filterAndRender(){
+    const q = ($('#searchInput').value||'').toLowerCase();
+    const pf = $('#filterProfile').value;
+    const sort = $('#sortBy').value;
+
+    let items = [...allCourses];
+    if (q){
+      items = items.filter(c =>
+        (c.name_identifier||'').toLowerCase().includes(q) ||
+        (c.description||'').toLowerCase().includes(q) ||
+        (c.title||'').toLowerCase().includes(q)
+      );
+    }
+    if (pf){ items = items.filter(c => (c.profile_type||'') === pf); }
+
+    const cmp = {
+      'createdAt.desc': (a,b)=> new Date(b.createdAt||0) - new Date(a.createdAt||0),
+      'createdAt.asc':  (a,b)=> new Date(a.createdAt||0) - new Date(b.createdAt||0),
+      'title.asc':      (a,b)=> (a.title||'').localeCompare(b.title||''),
+      'title.desc':     (a,b)=> (b.title||'').localeCompare(a.title||''),
+    }[sort] || ((a,b)=>0);
+    items.sort(cmp);
+
+    renderCourses(items);
+  }
+
+  function renderCourses(list){
+    const container = $('#course-card-container');
+    container.innerHTML = '';
+    list.forEach((course, i) => container.appendChild(makeCourseCard(course, i)));
+  }
+
+  function makeCourseCard(course, idx){
+    const card = document.createElement('div');
+    card.className = 'course-card';
+
+    const cid = `c-${course._id||idx}`;
+    const headerTitle = course.name_identifier || 'No Identifier';
+
+    card.innerHTML = `
+      <div class="card-surface">
+        <div class="card-head">
+          <div>
+            <strong>📘 ${escapeHtml(headerTitle)}</strong>
+            <div class="meta">Profile: ${escapeHtml(course.profile_type||'—')} • Created: ${fmt(course.createdAt)}</div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn-ghost btn-mini" data-action="toggle" data-target="${cid}">➕</button>
+            <button class="btn-ghost btn-mini text-danger" data-action="delete" data-id="${course._id}">❌</button>
+          </div>
+        </div>
+        <div class="card-body collapse" id="${cid}">
+          <div class="label">📝 Title</div>
+          <input class="control mb-2" data-field="title" value="${escapeAttr(course.title||'')}" data-id="${course._id}">
+          <div class="label">📅 Sent Date</div>
+          <input class="control mb-2" data-field="sent_date" value="${escapeAttr(course.sent_date||'')}" data-id="${course._id}">
+          <div class="label">🔗 Course Identifier</div>
+          <input class="control mb-2" data-field="name_identifier" value="${escapeAttr(course.name_identifier||'')}" data-id="${course._id}">
+          <div class="label">👤 Profile Type</div>
+          <select class="control mb-2" data-field="profile_type" data-id="${course._id}">
+            ${['Prophetic','Default','Partner','Dev','Evangelism','NewBorn','Ministers','Life']
+              .map(p => `<option ${course.profile_type===p?'selected':''}>${p}</option>`).join('')}
+          </select>
+          <div class="label">🎯 Recipient</div>
+          <input class="control mb-2" data-field="recipient" value="${escapeAttr(course.recipient||'')}" data-id="${course._id}">
+
+          <div class="row-sep"></div>
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="label m-0">📜 Cards</div>
+            <button class="btn-ghost btn-mini" data-action="append-card" data-id="${course._id}">➕ Add Card</button>
+          </div>
+
+          <div id="points-${course._id}">
+            ${(course.cards||[]).map((t,i)=> cardRow(course._id, i, t)).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Event delegation for this card
+    card.addEventListener('click', (ev)=>{
+      const btn = ev.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+
+      if (action === 'toggle'){
+        const el = $('#'+btn.dataset.target);
+        const isShown = el.classList.contains('show');
+        el.classList.toggle('show', !isShown);
+        btn.textContent = isShown ? '➕' : '➖';
+      }
+
+      if (action === 'delete'){
+        const id = btn.dataset.id;
+        if (confirm('Delete this course?')){
+          fetch(`${CONFIG.API_BASE}/elearn/list/${id}`, {method:'DELETE'})
+            .then(()=>{ toast('🗑️ Deleted'); loadCourses(); });
+        }
+      }
+
+      if (action === 'append-card'){
+        const id = btn.dataset.id;
+        appendPoint(id);
+      }
+
+      if (action === 'move-up' || action === 'move-down'){
+        const id = btn.dataset.id; const idx = parseInt(btn.dataset.index,10);
+        movePoint(id, idx, action==='move-up' ? -1 : 1);
+      }
+
+      if (action === 'remove-card'){
+        const id = btn.dataset.id; const idx = parseInt(btn.dataset.index,10);
+        removePoint(id, idx);
+      }
+
+      if (action === 'insert-below'){
+        const id = btn.dataset.id; const idx = parseInt(btn.dataset.index,10);
+        insertPoint(id, idx);
+      }
+
+      if (action === 'view-full'){
+        const txt = btn.dataset.text || '';
+        const modal = new bootstrap.Modal($('#fullCardModal'));
+        $('#fullCardText').textContent = txt;
+        modal.show();
+      }
+
+      if (action === 'save-card'){
+        const id = btn.dataset.id; const idx = parseInt(btn.dataset.index,10);
+        saveSingleCard(id, idx);
+      }
+    });
+
+    // Debounced inline field saving
+    card.addEventListener('input', debounce((ev)=>{
+      const el = ev.target;
+      const field = el.dataset.field; if (!field) return;
+      const id = el.dataset.id; if (!id) return;
+      const course = byId(id); if (!course) return;
+      const updated = {...course, [field]: el.value};
+      saveCourseUpdate(id, updated, false);
+    }, 400));
+
+    return card;
+  }
+
+function enableDragForCompose(){
+  const container = document.querySelector('#array-fields');
+  let draggingRow = null;
+
+  document.querySelectorAll('#array-fields .compose-row').forEach(row => {
+    const handle = row.querySelector('.drag-handle');
+    if (!handle) return;
+
+    // Only the handle is draggable
+    handle.setAttribute('draggable', 'true');
+
+    handle.addEventListener('dragstart', (e) => {
+      draggingRow = row;
+      row.classList.add('dragging');
+      // Required for FF + prevents the browser from treating it like a URL
+      if (e.dataTransfer){
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', ''); // put empty data
+      }
+      e.stopPropagation(); // don't let anything else think it's being dragged
+    });
+
+    handle.addEventListener('dragend', (e) => {
+      if (draggingRow) draggingRow.classList.remove('dragging');
+      draggingRow = null;
+      saveFormToLocalStorage();
+      e.stopPropagation();
+    });
+  });
+
+  // Reorder while hovering the container
+  container.addEventListener('dragover', (e) => {
+    e.preventDefault(); // ← critical: allows drop & blocks navigation
+    if (!draggingRow) return;
+    const afterEl = getDragAfterElement(container, e.clientY);
+    if (afterEl == null) {
+      container.appendChild(draggingRow);
+    } else {
+      container.insertBefore(draggingRow, afterEl);
+    }
+  });
+
+  // Extra safety: neutralize default drop on the container itself
+  container.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+
+  function getDragAfterElement(container, y){
+    const els = [...container.querySelectorAll('.compose-row:not(.dragging)')];
+    let closest = { offset: Number.NEGATIVE_INFINITY, element: null };
+    els.forEach(child => {
+      const box = child.getBoundingClientRect();
+      const offset = y - (box.top + box.height / 2);
+      if (offset < 0 && offset > closest.offset){
+        closest = { offset, element: child };
+      }
+    });
+    return closest.element;
+  }
+}
+
+  function cardRow(courseId, idx, txt){
+    const safe = escapeHtml(txt||'');
+    return `
+      <div class="mt-2">
+        <textarea class="card-text" id="card-${courseId}-${idx}" rows="4">${safe}</textarea>
+        <div class="d-flex flex-wrap gap-1 mt-2">
+          <button class="btn-ghost btn-mini" data-action="view-full" data-text="${escapeAttr(txt||'')}">👁️ View</button>
+          <button class="btn-ghost btn-mini" data-action="move-up" data-id="${courseId}" data-index="${idx}">⬆️</button>
+          <button class="btn-ghost btn-mini" data-action="move-down" data-id="${courseId}" data-index="${idx}">⬇️</button>
+          <button class="btn-ghost btn-mini" data-action="insert-below" data-id="${courseId}" data-index="${idx}">➕ Below</button>
+          <button class="btn-ghost btn-mini" data-action="save-card" data-id="${courseId}" data-index="${idx}">💾 Save</button>
+          <button class="btn-ghost btn-mini text-danger" data-action="remove-card" data-id="${courseId}" data-index="${idx}">❌ Remove</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderSingleCourse(course){
+    // Replace only that card
+    const container = $('#course-card-container');
+    const cards = $$('.course-card', container);
+    const idx = allCourses.findIndex(c => c._id === course._id);
+    if (idx === -1) return loadCourses();
+    const newCard = makeCourseCard(course, idx);
+    container.replaceChild(newCard, cards[idx]);
+  }
+
+  /* ========= Compose helpers ========= */
+function addArrayField(beforeEl=null, initialText=''){
+  const container = $('#array-fields');
+  const row = document.createElement('div');
+  row.className = 'compose-row';
+  row.innerHTML = `
+    <button class="drag-handle" title="Drag to reorder">≡</button>
+    <div class="flex-grow-1">
+      <textarea class="card-text" placeholder="Enter card text…" rows="3">${initialText}</textarea>
+      <div class="compose-actions">
+        <button class="btn-ghost btn-mini" data-act="add-below">➕ Add Below</button>
+        <button class="btn-ghost btn-mini" data-act="view">👁️ View</button>
+        <button class="btn-ghost btn-mini" data-act="save-local">💾 Save Draft</button>
+        <button class="btn-ghost btn-mini text-danger" data-act="remove">❌ Remove</button>
+      </div>
+    </div>
+  `;
+
+  // Row-level actions
+  row.addEventListener('click', (ev)=>{
+    const btn = ev.target.closest('[data-act]'); if(!btn) return;
+    const act = btn.dataset.act;
+    if (act === 'add-below'){
+      addArrayField(row.nextElementSibling, '');
+      saveFormToLocalStorage();
+    }
+    if (act === 'remove'){
+      row.remove();
+      saveFormToLocalStorage();
+    }
+    if (act === 'view'){
+      const txt = row.querySelector('textarea').value;
+      const modal = new bootstrap.Modal($('#fullCardModal'));
+      $('#fullCardText').textContent = txt;
+      modal.show();
+    }
+    if (act === 'save-local'){
+      saveFormToLocalStorage();
+    }
+  });
+
+  if (beforeEl) container.insertBefore(row, beforeEl);
+  else container.appendChild(row);
+
+  enableDragForCompose();  // (re)wire DnD on new rows
+}
+
+function removeArrayField(btn){
+  const row = btn.closest('.array-row');
+  if (row) {
+    row.remove();
+    // keep local draft in sync; this also cleans up empty textareas
+    saveFormToLocalStorage();
+  }
+}
+
+  function saveFormToLocalStorage(){
+    const data = {
+      title: $('#title').value.trim(),
+      sent_date: $('#sent_date').value.trim(),
+      description: $('#description').value.trim(),
+      name_identifier: $('#name_identifier').value.trim(),
+      profile_type: $('#profile_type').value,
+      recipient: $('#recipient').value.trim(),
+      points: $$('#array-fields textarea').map(t=> t.value.trim())
+    };
+    localStorage.setItem('courseFormData', JSON.stringify(data));
+    toast('💾 Draft saved (local)');
+  }
+
+  function loadFormFromLocalStorage(){
+    const saved = localStorage.getItem('courseFormData'); if (!saved) return;
+    const d = JSON.parse(saved);
+    $('#title').value = d.title || '';
+    $('#description').value = d.description || '';
+    $('#name_identifier').value = d.name_identifier || '';
+    $('#profile_type').value = d.profile_type || '';
+    $('#recipient').value = d.recipient || '';
+    $('#sent_date').value = d.sent_date || '';
+    const container = $('#array-fields'); container.innerHTML = '';
+    if (d.points && d.points.length){
+      d.points.forEach(p=>{
+        addArrayField(); $$('#array-fields textarea').at(-1).value = p;
+      });
+    }
+  }
+
+  async function submitCourse(){
+    const title = $('#title').value.trim();
+    const description = $('#description').value.trim();
+    const profile_type = $('#profile_type').value;
+    const name_identifier = $('#name_identifier').value.trim();
+    const createdAt = new Date().toISOString();
+    const recipient = $('#recipient').value.trim();
+    const sent_date = $('#sent_date').value.trim();
+    const points = $$('#array-fields textarea').map(t=> t.value.trim()).filter(Boolean);
+
+    if (!title || !description || !profile_type || points.length===0){
+      alert('🚨 Please fill all fields and add at least one teaching card.');
+      return;
+    }
+
+    const payload = { title, description, profile_type, createdAt, points, name_identifier, recipient, sent_date };
+
+    try{
+      const res = await fetch(`${CONFIG.API_BASE}/elearn/new_course`, {
+        method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+      });
+      if (res.status === 201){
+        toast('✅ Course created');
+        localStorage.removeItem('courseFormData');
+        ['title','description','name_identifier','recipient','sent_date'].forEach(id=> $('#'+id).value='');
+        $('#profile_type').value='';
+        $('#array-fields').innerHTML=''; addArrayField();
+        loadCourses();
+      } else {
+        alert('❌ Course not submitted successfully. Please verify your inputs.');
+      }
+    }catch(e){
+      console.error(e); alert('❌ An error occurred. Try again later.');
+    }
+  }
+
+  /* ========= Inline CRUD (list) ========= */
+  const saveInline = debounce(async (id, updated, notify=true)=>{
+    await fetch(`${CONFIG.API_BASE}/elearn/list/${id}`, {
+      method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(updated)
+    });
+    if (notify) toast('💾 Saved');
+  }, 250);
+
+  function saveCourseUpdate(id, updated, notify=true){
+    // optimistic local update
+    const idx = allCourses.findIndex(c=> c._id===id);
+    if (idx !== -1) allCourses[idx] = updated;
+    saveInline(id, updated, notify);
+  }
+
+  async function saveSingleCard(courseId, index){
+    const c = byId(courseId); if (!c) return;
+    const ta = $(`#card-${courseId}-${index}`); if (!ta) return;
+    const txt = ta.value.trim();
+    c.cards[index] = txt;
+    await fetch(`${CONFIG.API_BASE}/elearn/list/${courseId}`, {
+      method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(c)
+    });
+    toast('💾 Card saved');
+  }
+
+  async function appendPoint(courseId){
+    const c = byId(courseId); if (!c) return;
+    if (!Array.isArray(c.cards)) c.cards = [];
+    c.cards.push('');
+    await fetch(`${CONFIG.API_BASE}/elearn/list/${courseId}`, {
+      method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(c)
+    });
+    renderSingleCourse(c);
+  }
+
+  async function insertPoint(courseId, index){
+    if (activeInsertCard) activeInsertCard.remove();
+    const container = $(`#points-${courseId}`);
+    const holder = document.createElement('div');
+    holder.className = 'mt-2';
+    holder.innerHTML = `
+      <textarea class="card-text" rows="3" placeholder="New card text…"></textarea>
+      <div class="d-flex gap-1 mt-2">
+        <button class="btn-ghost btn-mini" data-do="save">💾 Save</button>
+        <button class="btn-ghost btn-mini text-danger" data-do="cancel">❌ Cancel</button>
+      </div>
+    `;
+    const ref = $(`#card-${courseId}-${index}`).closest('.mt-2');
+    ref.insertAdjacentElement('afterend', holder);
+    activeInsertCard = holder;
+
+    holder.addEventListener('click', async (ev)=>{
+      const a = ev.target.dataset.do;
+      if (a==='cancel'){ holder.remove(); activeInsertCard=null; return; }
+      if (a==='save'){
+        const txt = holder.querySelector('textarea').value.trim(); if (!txt) return;
+        const c = byId(courseId); if (!c) return;
+        c.cards.splice(index+1, 0, txt);
+        await fetch(`${CONFIG.API_BASE}/elearn/list/${courseId}`, {
+          method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(c)
+        });
+        activeInsertCard=null; loadCourses(); toast('➕ Card added');
+      }
+    });
+  }
+
+  async function removePoint(courseId, index){
+    const c = byId(courseId); if (!c) return;
+    c.cards.splice(index, 1);
+    await fetch(`${CONFIG.API_BASE}/elearn/list/${courseId}`, {
+      method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(c)
+    });
+    toast('🗑️ Card removed');
+    renderSingleCourse(c);
+  }
+
+  async function movePoint(courseId, index, dir){
+    const c = byId(courseId); if (!c) return;
+    const ni = index + dir; if (ni<0 || ni>=c.cards.length) return;
+    [c.cards[index], c.cards[ni]] = [c.cards[ni], c.cards[index]];
+    await fetch(`${CONFIG.API_BASE}/elearn/list/${courseId}`, {
+      method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(c)
+    });
+    renderSingleCourse(c);
+  }
+
+  /* ========= Helpers ========= */
+  function fmt(iso){
+    if (!iso) return '—';
+    const d = new Date(iso); if (isNaN(d)) return iso;
+    return d.toLocaleString('en-US', {month:'2-digit', day:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:true});
+  }
+  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+  function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
+  </script>
+</body>
+</html>

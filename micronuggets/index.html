@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+
+  <meta name="title" content="Micro | E-Learning by Stevenson Gerard" />
+  <meta name="description" content="Exploring Jesus in Today. Join us in discovering Kingdom truths through guided flashcards." />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="E-learn by Stevenson Gerard" />
+  <meta property="og:description" content="Exploring Jesus in Today. Tap into Kingdom Tech flashcards." />
+  <meta property="og:image" content="https://e-learn.stevensongerard.tech/coverimage/meta.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="E-learn by Stevenson Gerard" />
+  <meta name="twitter:description" content="Exploring Jesus in Today. Tap into Kingdom Tech flashcards." />
+  <meta name="twitter:image" content="https://e-learn.stevensongerard.tech/coverimage/meta.png" />
+
+  <title>Micro | E-Learning by Stevenson Gerard</title>
+
+  <!-- Optional Bootstrap reset (you had it before) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <style>
+    :root{
+      --ink:#131521;
+      --muted:#49506a;
+      --bg:#f6f7ff;
+      --card:#ffffff;
+      --border:#e7e9f3;
+      --brand:#6f5ef7;
+      --brand-2:#00bfa6;
+      --accent:#ff8a5b;
+      --good:#1bbf72;
+      --danger:#ec4a58;
+      --shadow:0 12px 28px rgba(18,22,53,.12);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+
+    body{
+      margin:0;
+      color:var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background:
+        radial-gradient(900px 600px at -10% -10%, #e8e4ff 0, rgba(232,228,255,0) 60%),
+        radial-gradient(900px 600px at 110% 10%, #dbfff7 0, rgba(219,255,247,0) 55%),
+        linear-gradient(180deg, #fdfdff, var(--bg));
+      padding:28px 16px 48px;
+    }
+
+    .wrap{max-width:1020px; margin:0 auto}
+
+    /* Header */
+    .badge-brand{
+      display:inline-flex; gap:10px; align-items:center;
+      padding:8px 12px; border-radius:999px; font-weight:700; font-size:12px;
+      color:#fff; background:
+      linear-gradient(90deg, var(--brand), var(--brand-2));
+      box-shadow: 0 8px 22px rgba(111,94,247,.25);
+    }
+
+    h1.title{
+      margin:12px 0 6px;
+      font-size: clamp(30px, 5.4vw, 54px);
+      line-height:1.07; letter-spacing:.2px; font-weight:900;
+    }
+    .subtitle{ color:var(--muted); font-size:clamp(14px,2.2vw,18px); margin:0 0 10px; }
+
+    /* Card shells */
+    .sheet{
+      background: var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      padding:18px;
+    }
+
+    /* Course grid */
+    .courses{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap:16px;
+      margin:14px 0 8px;
+    }
+
+    .course{
+      background: #fff;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:16px 16px 14px;
+      box-shadow: 0 6px 18px rgba(19,21,33,.06);
+      cursor:pointer;
+      transition: transform .1s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+    .course:hover{
+      transform: translateY(-3px);
+      border-color:#dfe2f2;
+      box-shadow: 0 10px 26px rgba(19,21,33,.10);
+    }
+    .course strong{font-size:18px; display:block; margin-bottom:6px}
+    .meta{color:#687199; font-size:13px}
+
+    /* Buttons */
+    .btn-stack{
+      display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin:18px 0 4px;
+    }
+    .btn-fill{
+      background: linear-gradient(90deg, var(--brand), var(--brand-2));
+      color:#fff; border:none; font-weight:800; letter-spacing:.3px;
+      padding:12px 18px; border-radius:12px; box-shadow: 0 8px 22px rgba(0,191,166,.25);
+      transition: transform .08s ease;
+    }
+    .btn-fill:hover{ transform: translateY(-1px); }
+    .btn-outline{
+      background:#fff; color:var(--ink); border:1px solid var(--border);
+      padding:12px 18px; border-radius:12px; font-weight:700;
+      transition: border-color .15s ease, transform .08s ease;
+    }
+    .btn-outline:hover{ border-color:#cfd6ef; transform: translateY(-1px); }
+
+    /* Popups */
+    .popup{
+      display:none; position:fixed; inset:0; z-index:1000;
+      background: rgba(19,21,33,.55);
+      backdrop-filter: blur(2px);
+      place-items:center; padding:16px;
+    }
+    .form-box{
+      background:#fff; color:var(--ink);
+      border:1px solid var(--border);
+      border-radius:14px; width:min(420px, 90vw);
+      padding:22px 18px;
+      box-shadow: var(--shadow);
+      animation: pop .18s ease;
+    }
+    @keyframes pop{from{transform:scale(.98); opacity:.7}to{transform:scale(1); opacity:1}}
+
+    .form-title{margin:0 0 6px; font-weight:900}
+    .form-caption{margin:0 0 12px; color:#5b6486}
+    .control{
+      width:100%; padding:12px 12px; margin:10px 0;
+      background:#fff; color:var(--ink);
+      border:1px solid var(--border); border-radius:10px;
+      outline:none; transition:border-color .15s ease, box-shadow .15s ease;
+    }
+    .control:focus{ border-color:#cfd6ef; box-shadow: 0 0 0 3px #e9ecfb; }
+    .form-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
+    .radio-line{ display:block; margin:6px 0; color:#3f4661 }
+
+    /* Shake on validation */
+    @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+    .shake{ animation:shake .5s }
+
+    /* Footer hint */
+    .hint{ color:#7a80a3; text-align:center; font-size:13px; margin-top:14px }
+    /* === List view overrides === */
+.courses{
+  display:block;                 /* single column */
+  margin: 6px 0 8px;
+}
+.course{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:14px 12px;
+  border:0;                      /* remove card border */
+  border-bottom:1px solid var(--border);
+  border-radius:0;               /* row, not card */
+  background:transparent;
+  box-shadow:none;               /* no card shadow */
+  cursor:pointer;
+  transition: background .12s ease, transform .06s ease;
+}
+.course:hover{
+  background: #f7f8ff;          /* subtle row hover */
+  transform: translateY(0);      /* no lift */
+  border-color: var(--border);
+  box-shadow:none;
+}
+/* left icon dot */
+.course::before{
+  content:"";
+  flex:0 0 10px;
+  height:10px;
+  border-radius:50%;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  box-shadow: 0 0 0 4px #eef2ff;
+}
+/* right chevron */
+.course::after{
+  content:"›";
+  margin-left:auto;
+  font-weight:800;
+  color:#9aa2c7;
+}
+
+/* text */
+.course strong{font-size:16px; margin:0; line-height:1.2}
+.course .meta{font-size:12px; color:#737ba0; margin:2px 0 0}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- Header -->
+    <div style="text-align:center">
+      <span class="badge-brand">Tech & Faith • Micro</span>
+      <h1 class="title">Explore All E-Courses</h1>
+      <p class="subtitle">Short, powerful lessons for active disciples and kingdom builders.</p>
+    </div>
+
+    <!-- Course List (unchanged IDs) -->
+    <div class="d-flex justify-content-end align-items-center mb-2" style="gap:10px">
+  <label class="meta m-0">Sort:</label>
+  <select id="sort-order" class="control" style="max-width:240px">
+    <option value="desc">Last → First (Newest)</option>
+    <option value="asc">First → Last (Oldest)</option>
+  </select>
+</div>
+    <div class="sheet">
+      <div id="course-list" class="courses">
+        <!-- JS will inject cards here -->
+      </div>
+      <p id="course-recipient" class="hint"></p>
+    </div>
+
+    <!-- Buttons -->
+    <div class="btn-stack pb-5 pt-5">
+      <button class="btn-fill" onclick="showSubscribe()">✨ Subscribe</button>
+      <button class="btn-outline" onclick="showUnsubscribe()">Unsubscribe</button>
+    </div>
+  </div>
+
+  <!-- Subscribe Modal (unchanged IDs) -->
+  <div class="popup" id="subscribe-popup">
+    <div class="form-box" id="subscribe-form">
+      <h2 class="form-title">Kingdom Tech Expansion 🚀</h2>
+      <p class="form-caption">Let’s get you plugged into the Kingdom Tech Space 🔥</p>
+      <input class="control" type="text" id="sub-fn" placeholder="First Name" />
+      <input class="control" type="text" id="sub-ln" placeholder="Last Name" />
+      <input class="control" type="email" id="sub-email" placeholder="Email" />
+      <input class="control" type="tel" id="sub-phone" placeholder="Phone Number" />
+      <select class="control" id="sub-ref">
+        <option value="">How did you hear about us?</option>
+        <option value="Friend">Friend</option>
+        <option value="Church">Event</option>
+        <option value="Instagram">Social Media</option>
+        <option value="Text">Text</option>
+        <option value="Other">Other</option>
+      </select>
+      <div class="form-actions">
+        <button class="btn-fill" onclick="submitSubscribe()">✅ Join</button>
+        <button class="btn-outline" onclick="hidePopup('subscribe-popup')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Unsubscribe Modal (unchanged IDs) -->
+  <div class="popup" id="unsubscribe-popup">
+    <div class="form-box" id="unsubscribe-form">
+      <h2 class="form-title">Unsubscribe 🥺</h2>
+      <p class="form-caption">Sorry to see you go! Can we know why?</p>
+      <input class="control" type="email" id="unsub-email" placeholder="Your Email" />
+      <label class="radio-line"><input type="radio" name="reason" value="Too many emails" /> Too many emails</label>
+      <label class="radio-line"><input type="radio" name="reason" value="Not helpful" /> Not helpful</label>
+      <label class="radio-line"><input type="radio" name="reason" value="Not enough time" /> Not enough time</label>
+      <label class="radio-line"><input type="radio" name="reason" value="Other" /> Other</label>
+      <div class="form-actions">
+        <button class="btn-outline" onclick="hidePopup('unsubscribe-popup')">Cancel</button>
+        <button class="btn-fill" onclick="confirmUnsubscribe()">Unsubscribe</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Your config -->
+<script src="./config.js"></script>
+<script>
+  // ---------- State ----------
+  let LAST_LIST = [];
+
+  // ---------- Elements ----------
+  const courseListEl = document.getElementById('course-list');
+  const sortEl = document.getElementById('sort-order'); // <-- define this
+
+  // ---------- Helpers ----------
+  const setLoading = () => { if (courseListEl) courseListEl.innerHTML = '<div class="meta">Loading courses…</div>'; };
+  const setError   = (msg) => { if (courseListEl) courseListEl.innerHTML = `<div class="meta">Could not load courses: ${msg}</div>`; };
+  const setEmpty   = () => { if (courseListEl) courseListEl.innerHTML = '<div class="meta">No courses found.</div>'; };
+
+  const formatDateTime = (isoString) => {
+    if (!isoString) return "—";
+    const d = new Date(isoString);
+    return isNaN(d.getTime()) ? isoString : d.toLocaleString('en-US', {
+      month:'2-digit', day:'2-digit', year:'numeric',
+      hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true
+    });
+  };
+
+  // Prefer createdAt; fallback to Mongo ObjectId time; fallback to numeric id
+  function tsFromCourse(c){
+    if (c?.createdAt) {
+      const t = Date.parse(c.createdAt);
+      if (!Number.isNaN(t)) return t;
+    }
+    if (typeof c?._id === 'string' && /^[a-f0-9]{24}$/i.test(c._id)) {
+      try { return parseInt(c._id.slice(0, 8), 16) * 1000; } catch {}
+    }
+    if (!Number.isNaN(Number(c?._id))) return Number(c._id);
+    return 0;
+  }
+
+  function renderCourses(list){
+    const order = (sortEl?.value || 'desc').toLowerCase();
+    const sorted = [...list].sort((a,b)=>{
+      const ta = tsFromCourse(a), tb = tsFromCourse(b);
+      return order === 'asc' ? ta - tb : tb - ta;
+    });
+
+    courseListEl.innerHTML = '';
+    sorted.forEach(course => {
+      const div = document.createElement('div');
+      div.className = 'course';
+      div.innerHTML = `
+        <div style="display:flex; flex-direction:column;">
+          <strong>${course.title ?? 'Untitled Course'}</strong>
+          <div class="meta">
+            Created: ${formatDateTime(course.createdAt)} •
+            Published: ${course.sent_date ? formatDateTime(course.sent_date) : 'Not Published Yet'}
+          </div>
+        </div>
+      `;
+      div.onclick = () => {
+        const id = course.name_identifier || course._id;
+        if (!id) return;
+        window.location.href = `./flashcards.html?courseId=${id}&database_id=${course._id ?? ''}`;
+      };
+      courseListEl.appendChild(div);
+    });
+  }
+
+  // ---------- Fetch & render ----------
+  (async function loadCourses() {
+    try {
+      // CONFIG guard
+      if (typeof CONFIG === 'undefined') {
+        setError('config.js not loaded or CONFIG is undefined.');
+        return;
+      }
+
+      setLoading();
+
+      // Mixed-content guard
+      if (location.protocol === 'https:' && CONFIG.API_BASE.startsWith('http://')) {
+        throw new Error('Blocked mixed content: page is https but API is http. Use https API or serve page over http for local dev.');
+      }
+
+      const url = `${CONFIG.API_BASE}/elearn/list`;
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status} ${res.statusText} ${text ? '— ' + text.slice(0,120) : ''}`);
+      }
+
+      const data = await res.json();
+      const list = Array.isArray(data) ? data
+                 : Array.isArray(data?.results) ? data.results
+                 : Array.isArray(data?.data) ? data.data
+                 : [];
+
+      // Optional: hide Dev
+      const APPLY_DEV_FILTER = true;
+      LAST_LIST = APPLY_DEV_FILTER ? list.filter(c => c.profile_type !== 'Dev') : list;
+
+      if (!LAST_LIST.length) { setEmpty(); return; }
+      renderCourses(LAST_LIST);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Unknown error');
+    }
+  })();
+
+  // ---------- Sort change (single listener) ----------
+  sortEl?.addEventListener('change', () => {
+    if (!LAST_LIST.length) return;
+    renderCourses(LAST_LIST);
+  });
+
+  // ---------- Popups ----------
+  function showSubscribe(){ document.getElementById('subscribe-popup').style.display = 'grid'; }
+  function showUnsubscribe(){ document.getElementById('unsubscribe-popup').style.display = 'grid'; }
+  function hidePopup(id){ document.getElementById(id).style.display = 'none'; }
+
+  function submitSubscribe() {
+    const form = document.getElementById('subscribe-form');
+    const data = {
+      first_name: document.getElementById('sub-fn').value.trim(),
+      last_name: document.getElementById('sub-ln').value.trim(),
+      email: document.getElementById('sub-email').value.trim(),
+      phone: document.getElementById('sub-phone').value.trim(),
+      referral: document.getElementById('sub-ref').value
+    };
+    if (!data.first_name || !data.last_name || !data.email || !data.phone || !data.referral) {
+      form.classList.add('shake'); setTimeout(() => form.classList.remove('shake'), 500);
+      alert("😅 Oops! All fields must be filled out."); return;
+    }
+    fetch(`${CONFIG.API_BASE}/elearn/subscribe`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+    }).then(() => { window.location.href = CONFIG.REDIRECT_AFTER_SUBSCRIBE; });
+  }
+
+  function confirmUnsubscribe() {
+    const form = document.getElementById('unsubscribe-form');
+    const reason = document.querySelector('input[name="reason"]:checked');
+    const email = document.getElementById('unsub-email').value.trim();
+    if (!reason || !email) {
+      form.classList.add('shake'); setTimeout(() => form.classList.remove('shake'), 500);
+      alert("Please complete the form 😬"); return;
+    }
+    if (confirm("Would you like to stay and give it a try? You can leave feedback instead ✨")) return;
+    fetch(`${CONFIG.API_BASE}/unsubscribe`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, reason: reason.value })
+    }).then(() => { alert("You've been unsubscribed 😢"); hidePopup('unsubscribe-popup'); });
+  }
+
+  // expose for inline handlers
+  window.showSubscribe = showSubscribe;
+  window.showUnsubscribe = showUnsubscribe;
+  window.hidePopup = hidePopup;
+  window.submitSubscribe = submitSubscribe;
+  window.confirmUnsubscribe = confirmUnsubscribe;
+</script>
+</body>
+</html>
