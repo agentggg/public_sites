@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>Tech and Faith</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300..800&family=Figtree:wght@400..900&display=swap" rel="stylesheet">
@@ -11,19 +11,24 @@
       --bg1:#0f1020; --bg2:#151a4a; --bg3:#1f1147;
       --fg:#ffffff; --muted:#cbd5e1; --brand:#8b5cf6; --brand2:#22d3ee; --card:#10142f; --border:#273055;
       --ok:#10b981; --err:#ef4444;
+      --wrap:max(92%, min(1200px, 92%));
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0; color:var(--fg); font-family:"Manrope",system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      background: radial-gradient(1200px 600px at 10% -10%, #2a1b7c66 0, transparent 60%),
-                  radial-gradient(1200px 800px at 110% 10%, #0ea5e966 0, transparent 55%),
-                  linear-gradient(120deg, var(--bg1), var(--bg2) 60%, var(--bg3));
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #2a1b7c66 0, transparent 60%),
+        radial-gradient(1200px 800px at 110% 10%, #0ea5e966 0, transparent 55%),
+        linear-gradient(120deg, var(--bg1), var(--bg2) 60%, var(--bg3));
       overflow-x:hidden;
+      -webkit-tap-highlight-color: transparent;
     }
     .grid{
       display:grid; grid-template-columns: repeat(12, 1fr); gap:clamp(12px,2vw,24px);
-      width:min(1200px,92%); margin:0 auto; padding:clamp(16px,3vw,32px) 0 80px;
+      width:var(--wrap); margin:0 auto; padding:clamp(16px,3vw,32px) 0 80px;
+      padding-left:calc(env(safe-area-inset-left) + 0px);
+      padding-right:calc(env(safe-area-inset-right) + 0px);
     }
     header{ grid-column:1/-1; padding:48px 0 8px; }
     .badge{
@@ -34,28 +39,33 @@
     }
     .title{
       margin:10px 0 6px; font-family:"Figtree",system-ui; font-weight:900; letter-spacing:0.5px;
-      font-size: clamp(36px, 5vw, 56px); line-height:1.05; text-shadow: 0 0 24px #8b5cf666;
+      font-size: clamp(32px, 6vw, 56px); line-height:1.05; text-shadow: 0 0 24px #8b5cf666;
     }
-    .subtitle{ color:var(--muted); margin-top:8px; font-size:clamp(14px,2.3vw,18px); }
+    .subtitle{ color:var(--muted); margin-top:8px; font-size:clamp(14px,2.8vw,18px); }
     .col-span-7{ grid-column: span 7; }
     .col-span-5{ grid-column: span 5; }
+
     .hero{
-      grid-column:1/-1; display:grid; gap:20px; align-items:stretch; grid-template-columns: repeat(12, 1fr); margin-top:24px;
+      grid-column:1/-1; display:grid; gap:20px; align-items:stretch;
+      grid-template-columns: repeat(12, 1fr); margin-top:24px;
     }
+
     .panel{
       background:linear-gradient(180deg, #0c1030cc, #0b0f2bcc);
       border:1px solid var(--border); border-radius:20px; padding:22px; position:relative;
       box-shadow: 0 10px 30px #0007, inset 0 0 0 1px #ffffff08;
     }
+
     h2,h3{margin:0 0 10px}
-    .content{ font-size:clamp(16px,2.2vw,18px); line-height:1.55 }
+    .content{ font-size:clamp(15px, 2.6vw, 18px); line-height:1.6 }
     .row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:12px }
-    .pill{ padding:6px 10px; border-radius:999px; background:#10153a; border:1px solid #26305a; color:#a3b5ff; font-size:12px }
+    .pill{ padding:8px 12px; border-radius:999px; background:#10153a; border:1px solid #26305a; color:#a3b5ff; font-size:12px }
     .cta{
-      display:inline-flex; align-items:center; gap:10px; border-radius:14px; padding:12px 18px;
+      display:inline-flex; align-items:center; gap:10px; border-radius:14px; padding:14px 18px;
       background:linear-gradient(90deg, #8b5cf6, #22d3ee); color:#0a0b1a; font-weight:800; letter-spacing:.02em;
       border:none; cursor:pointer; transition: transform .08s ease-in-out, box-shadow .2s;
       box-shadow: 0 10px 30px #22d3ee55, 0 6px 16px #8b5cf633;
+      min-height:44px; /* comfy tap target */
     }
     .cta:hover{ transform: translateY(-1px); }
     .card{ border-radius:16px; border:1px solid var(--border); background:var(--card); padding:18px; min-height:160px; }
@@ -66,10 +76,10 @@
     .imgcard img{ width:100%; height:100%; object-fit:cover; filter:saturate(1.15) contrast(1.06) }
     .list{ display:grid; gap:12px; margin-top:8px }
     .linkrow{
-      display:flex; justify-content:space-between; gap:8px; align-items:center; padding:12px 14px;
+      display:flex; justify-content:space-between; gap:8px; align-items:center; padding:14px 16px;
       background:#0e1334; border:1px solid #28305c; border-radius:12px;
     }
-    .linkrow a{ color:#c7d2fe; text-decoration:none; font-weight:700 }
+    .linkrow a{ color:#c7d2fe; text-decoration:none; font-weight:700; word-break:break-word }
     .linkrow a:hover{text-decoration:underline}
     .loader{
       width:16px;height:16px;border-radius:50%;
@@ -79,69 +89,80 @@
     }
     @keyframes pulse{0%{transform:scale(.8);opacity:.8}50%{transform:scale(1);opacity:1}100%{transform:scale(.8);opacity:.8}}
     footer{ grid-column:1/-1; margin-top:36px; padding:20px; color:#8ea6ff99; border-top:1px solid #25305a66; font-size:13px; text-align:center; }
-    a.btn-slim{font-size:12px; padding:4px 8px; border-radius:8px; background:#16205a; border:1px solid #2b3a7a;}
+    a.btn-slim{font-size:12px; padding:6px 10px; border-radius:10px; background:#16205a; border:1px solid #2b3a7a;}
     .explore-grid{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
-  gap:18px;
-  margin-top:6px;
-}
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+      gap:18px;
+      margin-top:6px;
+    }
+    .explore-card{
+      background: radial-gradient(circle at 20% 0%, #1a2053, #0f133a);
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:16px;
+      padding:18px 20px;
+      display:flex; flex-direction:column;
+      color:#fff; text-decoration:none; position:relative;
+      box-shadow:0 8px 22px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.05);
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+      min-height:120px;
+    }
+    .explore-card:hover{
+      border-color:#22d3ee;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 26px rgba(0,0,0,0.55), 0 0 15px #22d3ee60;
+    }
+    .explore-card .icon{ font-size:26px; margin-bottom:8px; }
+    .explore-card .title{ font-size:17px; font-weight:700; margin-bottom:4px; }
+    .explore-card .desc{ font-size:14px; color:#b9c4ff; line-height:1.35; }
 
-.explore-card{
-  background: radial-gradient(circle at 20% 0%, #1a2053, #0f133a);
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:16px;
-  padding:18px 20px;
-  display:flex;
-  flex-direction:column;
-  color:#fff;
-  text-decoration:none;
-  position:relative;
-  box-shadow:0 8px 22px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.05);
-  transition: all .18s ease;
-}
+    /* ---------- Responsive tweaks ---------- */
+    @media (max-width: 1024px){
+      .grid{ gap:18px; }
+      .content{ font-size:clamp(15px,2.4vw,17px); }
+    }
 
-.explore-card:hover{
-  border-color:#22d3ee;
-  transform: translateY(-3px);
-  box-shadow: 0 8px 26px rgba(0,0,0,0.55), 0 0 15px #22d3ee60;
-}
+    @media (max-width: 860px){
+      .hero{ grid-template-columns: 1fr; }
+      .col-span-7, .col-span-5{ grid-column: 1 / -1 !important; }
+      .row{ gap:10px; }
+    }
 
-.explore-card .icon{
-  font-size:26px;
-  margin-bottom:8px;
-}
+    @media (max-width: 640px){
+      header{ padding:32px 0 4px; }
+      .subtitle{ font-size:15px; }
+      .panel{ padding:16px; border-radius:16px; }
+      .card{ padding:16px; }
+      .row{ flex-direction:column; align-items:stretch; }
+      .cta{ width:100%; justify-content:center; }
+      .pill{ width:100%; text-align:center; padding:10px 12px; }
+      .linkrow{ padding:12px; }
+      .explore-card{ padding:16px; }
+    }
 
-.explore-card .title{
-  font-size:17px;
-  font-weight:700;
-  margin-bottom:4px;
-}
-
-.explore-card .desc{
-  font-size:14px;
-  color:#b9c4ff;
-  line-height:1.35;
-}
+    /* Respect reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition:none !important; scroll-behavior:auto !important; }
+    }
   </style>
 </head>
 <body>
   <main class="grid">
     <header>
-      <div class="badge">✨ Tech + Faith • Joyfully Techy</div>
+      <div class="badge" aria-label="Tech and Faith badge">✨ Tech + Faith • Joyfully Techy</div>
       <h1 class="title">Tech and Faith</h1>
       <p class="subtitle">A page for my repo—where neon circuits meet timeless truth.</p>
     </header>
 
     <section class="hero">
       <!-- Left: welcome -->
-      <article class="panel col-span-7" style="background: linear-gradient(180deg, #0f122eaa, #0b0f2bdd), url('https://source.unsplash.com/1600x900/?technology,neon') center/cover no-repeat;">
+      <article class="panel col-span-7" style="background: linear-gradient(180deg, #0f122eaa, #0b0f2bdd), url('https://source.unsplash.com/1200x800/?technology,neon') center/cover no-repeat;">
         <h2>Welcome, Builder 🙌</h2>
         <p class="content">
           Grab a dad joke and today’s Bible verse. Browse the public repo folders below. May your commits be clean and your tests pass on the first run.
         </p>
         <div class="row">
-          <button class="cta" id="refreshBtn">🔄 Refresh</button>
+          <button class="cta" id="refreshBtn" aria-label="Refresh joke and verse">🔄 Refresh</button>
           <span class="pill">Tech in the hands of the Righteous</span>
           <span class="pill">No keys</span>
         </div>
@@ -151,73 +172,72 @@
       <aside class="col-span-5" style="display:grid; gap:20px;">
         <div class="card" id="jokeCard">
           <h3>Joke of the Day 😂</h3>
-          <div id="joke" class="content"><span class="loader"></span> Loading…</div>
+          <div id="joke" class="content"><span class="loader" aria-hidden="true"></span> Loading…</div>
           <div class="small" id="jokeSource"></div>
         </div>
 
         <div class="card" id="verseCard">
           <h3>Verse of the Day 📖</h3>
-          <div id="verse" class="content"><span class="loader"></span> Fetching…</div>
+          <div id="verse" class="content"><span class="loader" aria-hidden="true"></span> Fetching…</div>
           <div class="small" id="verseRef"></div>
         </div>
       </aside>
     </section>
 
     <!-- Repo folders -->
-<section class="panel" style="grid-column:1/-1; padding:28px;">
-  <h3 style="margin-bottom:10px; font-size:22px; font-weight:800;">Explore</h3>
-  <div class="small" style="margin-bottom:18px;">Quick links you might enjoy</div>
+    <section class="panel" style="grid-column:1/-1; padding:28px;">
+      <h3 style="margin-bottom:10px; font-size:22px; font-weight:800;">Explore</h3>
+      <div class="small" style="margin-bottom:18px;">Quick links you might enjoy</div>
 
-  <div class="explore-grid">
-    <a class="explore-card" href="/dev" target="_parent" rel="noopener">
-      <div class="icon">🚧</div>
-      <div class="title">See what I'm still Developing</div>
-      <div class="desc">Sneak peek at projects in progress</div>
-    </a>
+      <div class="explore-grid">
+        <a class="explore-card" href="/dev" target="_parent" rel="noopener">
+          <div class="icon" aria-hidden="true">🚧</div>
+          <div class="title">See what I'm still Developing</div>
+          <div class="desc">Sneak peek at projects in progress</div>
+        </a>
 
-    <a class="explore-card" href="/micronuggets/index.html" target="_parent" rel="noopener">
-      <div class="icon">📚</div>
-      <div class="title">Micro Nuggets</div>
-      <div class="desc">Short teachings, big revelation</div>
-    </a>
+        <a class="explore-card" href="/micronuggets/index.html" target="_parent" rel="noopener">
+          <div class="icon" aria-hidden="true">📚</div>
+          <div class="title">Micro Nuggets</div>
+          <div class="desc">Short teachings, big revelation</div>
+        </a>
 
-    <a class="explore-card" href="/prayer_request/prayer_request.html" target="_parent" rel="noopener">
-      <div class="icon">🙏</div>
-      <div class="title">Do you have a prayer request?</div>
-      <div class="desc">Submit confidential prayer needs</div>
-    </a>
+        <a class="explore-card" href="/prayer_request/prayer_request.html" target="_parent" rel="noopener">
+          <div class="icon" aria-hidden="true">🙏</div>
+          <div class="title">Do you have a prayer request?</div>
+          <div class="desc">Submit confidential prayer needs</div>
+        </a>
 
-    <a class="explore-card" href="surrender_hearts.html" target="_parent" rel="noopener">
-      <div class="icon">📅</div>
-      <div class="title">Ever heard of Surrender Hearts?</div>
-      <div class="desc">Click to see what it's all about</div>
-    </a>
-  </div>
-</section>
-
-    <section class="gallery" aria-label="Gallery">
-      <figure class="imgcard"><img alt="Abstract neon tech" src="https://free-images.com/md/59f0/camera_technology_display_items.jpg"/></figure>
-      <figure class="imgcard"><img alt="Peaceful chapel interior" src="https://free-images.com/md/9310/prayer_bible_pray_hands_1.jpg"/></figure>
-      <figure class="imgcard"><img alt="Code on screen aesthetic" src="https://free-images.com/md/ba63/source_code_code_programming.jpg"/></figure>
-      <figure class="imgcard"><img alt="Sunrise representing hope" src="https://free-images.com/md/917b/paper_calendar_planner_pen.jpg"/></figure>
+        <a class="explore-card" href="surrender_hearts.html" target="_parent" rel="noopener">
+          <div class="icon" aria-hidden="true">📅</div>
+          <div class="title">Ever heard of Surrender Hearts?</div>
+          <div class="desc">Click to see what it's all about</div>
+        </a>
+      </div>
     </section>
 
     <footer>
-      Built by Stevesnon Gerard with ❤️ • Images via Unsplash • Public APIs for jokes & verse
+      Built by Stevenson Gerard with ❤️ • Images via Unsplash • Public APIs for jokes & verse
     </footer>
   </main>
 
   <script>
-    // ---- CONFIG ----
+    // Accessibility/UX: abort long fetches on slow networks
+    function withTimeout(ms, signal){
+      const ctrl = new AbortController();
+      const id = setTimeout(()=>ctrl.abort(), ms);
+      if(signal){ signal.addEventListener('abort', ()=>clearTimeout(id)); }
+      return ctrl;
+    }
 
-
-    // Dad joke API (free): https://icanhazdadjoke.com/ (CORS OK)
     async function fetchJoke(){
       const el = document.getElementById('joke');
       const src = document.getElementById('jokeSource');
       try{
+        const ctrl = withTimeout(8000);
         const res = await fetch('https://icanhazdadjoke.com/', {
-          headers: { 'Accept': 'application/json' }
+          headers: { 'Accept': 'application/json' },
+          signal: ctrl.signal
         });
         if(!res.ok) throw new Error('Network ' + res.status);
         const data = await res.json();
@@ -229,13 +249,12 @@
       }
     }
 
-    // Bible Verse of the Day (free): OurManna API (CORS OK)
-    // JSON shape: { verse: { details: { text, reference, version }, notice: ... } }  (beta endpoint)
     async function fetchVerse(){
       const verseEl = document.getElementById('verse');
       const refEl = document.getElementById('verseRef');
       try{
-        const res = await fetch('https://beta.ourmanna.com/api/v1/get/?format=json&order=daily');
+        const ctrl = withTimeout(8000);
+        const res = await fetch('https://beta.ourmanna.com/api/v1/get/?format=json&order=daily', { signal: ctrl.signal });
         if(!res.ok) throw new Error('Network ' + res.status);
         const data = await res.json();
         const text = data?.verse?.details?.text?.trim();
@@ -254,10 +273,15 @@
       }
     }
 
-    function escapeHtml(str){ return (str||'').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
+    function escapeHtml(str){
+      return (str||'').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+    }
 
     // Wire up
     document.getElementById('refreshBtn').addEventListener('click', () => { fetchJoke(); fetchVerse(); });
+
+    // Prevent console error from undefined function in original
+    function loadRepoFolders(){ /* intentionally empty; hook for future */ }
 
     // Initial load
     fetchJoke();
