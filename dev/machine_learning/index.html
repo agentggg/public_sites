@@ -1,0 +1,878 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+
+  <!-- Page metadata -->
+  <title>Tech & Faith — Tech Trace</title>
+  <meta name="application-name" content="Tech & Faith" />
+  <meta name="apple-mobile-web-app-title" content="Tech & Faith" />
+  <meta name="theme-color" content="#0b0f14" />
+  <meta name="description" content="Tech Trace by Tech & Faith: live camera detection overlay using a Django /predict endpoint." />
+
+  <style>
+    :root {
+      /* Core backgrounds */
+      --bg0: #050608;
+      --bg1: #0b0f14;
+      --bg2: #11161c;
+
+      /* Panels */
+      --panel: rgba(18,22,28,0.92);
+      --panel-border: rgba(0,229,255,0.18);
+
+      /* Text */
+      --txt: #e6f1ff;
+      --muted: #9fb0c2;
+
+      /* Accents */
+      --cyan:  #00e5ff;
+      --green: #7cff00;
+      --amber: #ffb300;
+      --red:   #ff3355;
+      --magenta: #ff2bd6; /* accent only */
+
+      --glow-cyan:  0 0 8px rgba(0,229,255,0.28);
+      --glow-green: 0 0 8px rgba(124,255,0,0.22);
+
+      --radius: 12px;
+      --shadow: 0 22px 60px rgba(0,0,0,0.75);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--txt);
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(0,229,255,0.10), transparent 60%),
+        radial-gradient(1000px 500px at 100% 0%, rgba(124,255,0,0.06), transparent 62%),
+        linear-gradient(180deg, var(--bg0), var(--bg1) 42%, var(--bg2));
+      overflow-x:hidden;
+    }
+
+    /* scanlines + subtle grid */
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.045), rgba(255,255,255,.045) 1px, transparent 1px, transparent 6px);
+      background-size: 64px 64px, 64px 64px, auto;
+      opacity:.10;
+      mask-image: radial-gradient(circle at 50% 10%, rgba(0,0,0,.95), transparent 75%);
+    }
+
+    .app{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 16px;
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-width: 280px;
+    }
+
+    .titleRow{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .title{
+      font-weight: 950;
+      letter-spacing: .8px;
+      font-size: 18px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      text-transform: uppercase;
+    }
+
+    .badge{
+      font-size: 11px;
+      letter-spacing: .55px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.75);
+    }
+
+    .logoMark{
+      width: 16px; height: 16px; border-radius: 5px;
+      background: conic-gradient(from 220deg, var(--cyan), var(--green), var(--magenta), var(--cyan));
+      box-shadow: var(--glow-cyan);
+      border: 1px solid rgba(255,255,255,.18);
+      position: relative;
+      overflow:hidden;
+    }
+    .logoMark::after{
+      content:"";
+      position:absolute; inset:-40%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.40), transparent);
+      transform: rotate(18deg) translateX(-40%);
+      animation: sheen 3.2s linear infinite;
+      opacity:.28;
+    }
+    @keyframes sheen{
+      0%{ transform: rotate(18deg) translateX(-55%); }
+      100%{ transform: rotate(18deg) translateX(55%); }
+    }
+
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--muted);
+      backdrop-filter: blur(10px);
+    }
+
+    .dot{
+      width: 8px; height: 8px; border-radius: 999px;
+      background: var(--amber);
+      box-shadow: 0 0 0 6px rgba(255,179,0,.10);
+    }
+    .dot.ok{ background: var(--green); box-shadow: 0 0 0 6px rgba(124,255,0,.10); }
+    .dot.bad{ background: var(--red); box-shadow: 0 0 0 6px rgba(255,51,85,.10); }
+
+    .subcopy{
+      font-size: 12px;
+      color: rgba(255,255,255,.70);
+      line-height: 1.5;
+      max-width: 920px;
+    }
+    .subcopy b{ color: rgba(255,255,255,.92); }
+    .subcopy code{
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      padding: 2px 6px;
+      border-radius: 8px;
+      color: rgba(255,255,255,.90);
+    }
+
+    .btns{ display:flex; gap:10px; }
+
+    button{
+      border: 1px solid rgba(0,229,255,0.45);
+      background: rgba(0,229,255,0.08);
+      color: var(--txt);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 800;
+      letter-spacing: 0.45px;
+      cursor: pointer;
+      transition: transform .08s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    button:active{ transform: scale(.985); }
+    button:disabled{ opacity:.45; cursor:not-allowed; }
+
+    button.primary{
+      border-color: rgba(124,255,0,0.60);
+      box-shadow: var(--glow-green);
+      background: rgba(124,255,0,0.08);
+    }
+    button.danger{
+      border-color: rgba(255,51,85,0.65);
+      background: rgba(255,51,85,0.10);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.35fr .65fr;
+      gap:14px;
+    }
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow:hidden;
+    }
+
+    /* terminal sweep */
+    .card::before{
+      content:"";
+      position:absolute; inset:0;
+      pointer-events:none;
+      background: linear-gradient(90deg, transparent 0%, rgba(0,229,255,0.10) 50%, transparent 100%);
+      opacity: 0.30;
+    }
+
+    .card-h{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:12px 12px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.20);
+      position:relative;
+      z-index:2;
+    }
+    .card-h .left{
+      display:flex; flex-direction:column; gap:4px;
+    }
+    .card-h .left b{
+      font-size: 12px;
+      letter-spacing:.55px;
+      text-transform: uppercase;
+    }
+    .card-h .left span{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .stage{
+      position:relative;
+      width:100%;
+      aspect-ratio: 16 / 10;
+      background: rgba(0,0,0,.22);
+      z-index:1;
+    }
+    @media (max-width: 900px){
+      .stage{ aspect-ratio: 3 / 4; }
+    }
+
+    video, canvas{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      display:block;
+    }
+    canvas{ pointer-events:none; }
+
+    .hud{
+      position:absolute;
+      left:10px; top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      z-index:5;
+    }
+
+    .pill{
+      position: relative;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(0,229,255,0.35);
+      background: rgba(8,12,16,0.86);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      box-shadow: var(--glow-cyan);
+      overflow:hidden;
+    }
+    .pill::after{
+      content:"";
+      position:absolute; inset:-2px;
+      background: linear-gradient(90deg, transparent, rgba(0,229,255,.18), transparent);
+      transform: translateX(-60%);
+      animation: scan 2.6s linear infinite;
+      opacity:.45;
+    }
+    @keyframes scan{
+      0%{ transform: translateX(-60%); }
+      100%{ transform: translateX(60%); }
+    }
+
+    .kv{ color: rgba(255,255,255,.62); }
+    .val{ color: rgba(255,255,255,.95); font-weight: 900; }
+
+    .panel{
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      position:relative;
+      z-index:2;
+    }
+
+    .section{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+      border-radius: 12px;
+      padding: 10px;
+    }
+    .section h3{
+      margin: 0 0 6px 0;
+      font-size: 12px;
+      letter-spacing: .55px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.88);
+    }
+    .section p{
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.5;
+      color: rgba(255,255,255,.68);
+    }
+    .section code{
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      padding: 2px 6px;
+      border-radius: 8px;
+      color: rgba(255,255,255,.90);
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 900px){
+      .row{ grid-template-columns:1fr; }
+    }
+
+    label{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      font-size:12px;
+      color: var(--muted);
+    }
+
+    input, select{
+      width:100%;
+      padding:10px 10px;
+      border-radius: 10px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.30);
+      color: var(--txt);
+      outline:none;
+    }
+    input:focus, select:focus{
+      border-color: rgba(0,229,255,.55);
+      box-shadow: 0 0 0 6px rgba(0,229,255,.10);
+    }
+
+    .status{
+      font-size:12px;
+      color: rgba(255,255,255,.76);
+      line-height:1.5;
+      padding:10px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+    }
+    .status b{ color: rgba(255,255,255,.92); }
+    .status .hintline{
+      margin-top:6px;
+      color: rgba(255,255,255,.62);
+    }
+
+    .console{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.32);
+      color: rgba(255,255,255,.80);
+      max-height: 240px;
+      overflow:auto;
+    }
+    .console .ok{ color: rgba(124,255,0,.95); }
+    .console .bad{ color: rgba(255,51,85,.95); }
+    .console .warn{ color: rgba(255,179,0,.95); }
+    .console .muted{ color: rgba(255,255,255,.55); }
+
+    .divider{
+      height:1px;
+      background: rgba(255,255,255,.10);
+      margin: 4px 0;
+    }
+
+    .fineprint{
+      font-size: 11px;
+      color: rgba(255,255,255,.58);
+      line-height: 1.45;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="top">
+      <div class="brand">
+        <div class="titleRow">
+          <div class="title">
+            <span class="logoMark"></span>
+            Tech Trace
+            <span class="badge">Tech & Faith</span>
+          </div>
+
+          <span class="chip">
+            <span id="dot" class="dot"></span>
+            <span id="connText">Idle</span>
+          </span>
+
+          <span class="chip" id="miniStats">Detections: 0</span>
+        </div>
+
+        <div class="subcopy">
+          <b>What this does:</b> Tech Trace captures your camera feed, sends frames to your <code>/predict/</code> endpoint, then overlays detections in real-time.
+          <br/>
+          <b>iPhone note:</b> If this page is opened via <code>https://</code>, your API must also be <code>https://</code> (iOS blocks mixed content). The console below will show the exact failure.
+        </div>
+      </div>
+
+      <div class="btns">
+        <button id="start" class="primary">Start Scan</button>
+        <button id="stop" class="danger" disabled>Stop</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-h">
+          <div class="left">
+            <b>Live Feed</b>
+            <span>Detection overlay drawn on top of your camera view</span>
+          </div>
+          <span class="chip"><span class="muted">Tip:</span>&nbsp;Rear camera is best</span>
+        </div>
+
+        <div class="stage">
+          <video id="video" playsinline autoplay muted></video>
+          <canvas id="overlay"></canvas>
+
+          <div class="hud">
+            <div class="pill"><span class="kv">FPS</span> <span class="val" id="fpsLive">0</span></div>
+            <div class="pill"><span class="kv">Confidence</span> <span class="val" id="confLive">0.25</span></div>
+            <div class="pill"><span class="kv">Camera</span> <span class="val" id="camLive">rear</span></div>
+            <div class="pill"><span class="kv">API Host</span> <span class="val" id="hostLive">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <div class="left">
+            <b>Controls & Notes</b>
+            <span>Configure your API, tune performance, and troubleshoot</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="section">
+            <h3>How to use</h3>
+            <p>
+              1) Set <code>Django Predict URL</code> to your backend endpoint (example: <code>https://your-domain.com/predict/</code>).<br/>
+              2) Tap <b>Start Scan</b> and allow camera access.<br/>
+              3) Watch detections on the video and logs in the console.
+            </p>
+          </div>
+
+          <label>
+            Django Predict URL
+            <input id="apiUrl" placeholder="https://ict-daytrade-backend.onrender.com/predict/" />
+          </label>
+
+          <div class="row">
+            <label>
+              Target FPS (requests/sec)
+              <input id="fps" type="number" min="1" max="30" value="5" />
+            </label>
+
+            <label>
+              Confidence Threshold
+              <input id="conf" type="number" min="0" max="1" step="0.05" value="0.25" />
+            </label>
+          </div>
+
+          <div class="row">
+            <label>
+              Camera
+              <select id="cameraMode">
+                <option value="environment" selected>Rear (environment)</option>
+                <option value="user">Front (user)</option>
+              </select>
+            </label>
+
+            <label>
+              JPEG Quality (0.3–0.95)
+              <input id="jpegQ" type="number" min="0.3" max="0.95" step="0.05" value="0.7" />
+            </label>
+          </div>
+
+          <div class="status" id="status">
+            <b>Status:</b> Ready. Configure your Predict URL and press <b>Start Scan</b>.
+            <div class="hintline">
+              If you see <b>ERR_CERT_AUTHORITY_INVALID</b>, your backend certificate is not trusted by the device/browser.
+              Use a real HTTPS domain (recommended) or a trusted tunnel.
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="fineprint">
+            <b>Pro tip:</b> For the cleanest iPhone experience, host the backend on a public HTTPS domain (Render/Fly/Cloud Run).
+            Then paste that <code>https://...</code> Predict URL here.
+          </div>
+
+          <div class="console" id="console"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ----------------------------
+    // Tech Trace — Mobile-friendly debug console
+    // ----------------------------
+    const $ = (id) => document.getElementById(id);
+    const cEl = $("console");
+
+    function logLine(msg, cls="muted"){
+      const t = new Date().toLocaleTimeString();
+      const div = document.createElement("div");
+      div.className = cls;
+      div.textContent = `[${t}] ${msg}`;
+      cEl.appendChild(div);
+      cEl.scrollTop = cEl.scrollHeight;
+      console.log(`[Tech Trace] ${msg}`);
+    }
+
+    window.addEventListener("error", (e) => logLine(`window.error: ${e.message}`, "bad"));
+    window.addEventListener("unhandledrejection", (e) => logLine(`unhandledrejection: ${String(e.reason)}`, "bad"));
+
+    // Elements
+    const video = $("video");
+    const canvas = $("overlay");
+    const ctx = canvas.getContext("2d");
+
+    const startBtn = $("start");
+    const stopBtn = $("stop");
+
+    const apiUrlInput = $("apiUrl");
+    const fpsInput = $("fps");
+    const confInput = $("conf");
+    const camModeSelect = $("cameraMode");
+    const jpegQInput = $("jpegQ");
+
+    const statusEl = $("status");
+    const miniStatsEl = $("miniStats");
+    const fpsLiveEl = $("fpsLive");
+    const confLiveEl = $("confLive");
+    const camLiveEl = $("camLive");
+    const hostLiveEl = $("hostLive");
+
+    const dot = $("dot");
+    const connText = $("connText");
+
+    // State
+    let stream = null;
+    let running = false;
+    let busy = false;
+
+    let lastSendTs = 0;
+    let lastFpsTs = performance.now();
+    let framesSent = 0;
+
+    function setConn(state, text){
+      dot.className = "dot " + (state || "");
+      connText.textContent = text || "Idle";
+    }
+
+    function setStatus(msg, type){
+      statusEl.innerHTML = `<b>Status:</b> ${msg}`;
+      if (type === "ok") setConn("ok", "Connected");
+      else if (type === "bad") setConn("bad", "Error");
+      else setConn("", "Running");
+    }
+
+    function parseApiHost(url){
+      try{
+        const u = new URL(url, location.href);
+        return `${u.protocol}//${u.host}`;
+      }catch{
+        return "—";
+      }
+    }
+
+    function resizeOverlayToVideo(){
+      const rect = video.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const w = Math.max(1, Math.floor(rect.width * dpr));
+      const h = Math.max(1, Math.floor(rect.height * dpr));
+      if (canvas.width !== w || canvas.height !== h){
+        canvas.width = w;
+        canvas.height = h;
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function drawBoxes(dets){
+      const rect = video.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      ctx.font = "14px system-ui";
+
+      const vw = video.videoWidth || 1;
+      const vh = video.videoHeight || 1;
+      const sx = rect.width / vw;
+      const sy = rect.height / vh;
+
+      for (const d of dets){
+        const [x1,y1,x2,y2] = d.bbox_xyxy;
+        const label = `${d.class_name} ${Number(d.confidence).toFixed(2)}`;
+
+        const x = x1 * sx;
+        const y = y1 * sy;
+        const w = (x2 - x1) * sx;
+        const h = (y2 - y1) * sy;
+
+        // HUD box
+        ctx.strokeStyle = "#00e5ff";
+        ctx.lineWidth = 2;
+        ctx.shadowColor = "rgba(0,229,255,0.40)";
+        ctx.shadowBlur = 6;
+        ctx.strokeRect(x, y, w, h);
+
+        // Corner ticks
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(255,43,214,.75)";
+        ctx.lineWidth = 3;
+        const t = 14;
+
+        ctx.beginPath(); ctx.moveTo(x, y+t); ctx.lineTo(x, y); ctx.lineTo(x+t, y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x+w-t, y); ctx.lineTo(x+w, y); ctx.lineTo(x+w, y+t); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, y+h-t); ctx.lineTo(x, y+h); ctx.lineTo(x+t, y+h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x+w-t, y+h); ctx.lineTo(x+w, y+h); ctx.lineTo(x+w, y+h-t); ctx.stroke();
+
+        // Label block
+        ctx.font = "13px system-ui";
+        const tw = ctx.measureText(label).width;
+        const boxH = 18;
+        const ly = Math.max(0, y - boxH - 3);
+
+        ctx.fillStyle = "#00e5ff";
+        ctx.fillRect(x, ly, tw + 10, boxH);
+
+        ctx.fillStyle = "#050608";
+        ctx.fillText(label, x + 5, ly + 13);
+      }
+    }
+
+    async function captureBlob(){
+      const off = document.createElement("canvas");
+      off.width = video.videoWidth;
+      off.height = video.videoHeight;
+      off.getContext("2d").drawImage(video, 0, 0);
+
+      const q = Math.max(0.3, Math.min(0.95, parseFloat(jpegQInput.value || "0.7")));
+      return await new Promise((res, rej) => {
+        off.toBlob((blob) => {
+          if (!blob) return rej(new Error("toBlob returned null (camera/memory constraint)"));
+          res(blob);
+        }, "image/jpeg", q);
+      });
+    }
+
+    async function sendFrame(){
+      if (!running || busy) return;
+      if (!video.videoWidth) return;
+
+      const fps = Math.max(1, Math.min(30, parseInt(fpsInput.value || "5", 10)));
+      const intervalMs = Math.floor(1000 / fps);
+
+      const now = performance.now();
+      if (now - lastSendTs < intervalMs) return;
+      lastSendTs = now;
+
+      busy = true;
+      try{
+        const API_URL = apiUrlInput.value.trim();
+        if (!API_URL){
+          setStatus("Missing Django Predict URL. Please enter it first.", "bad");
+          logLine("Missing API URL.", "bad");
+          running = false;
+          return;
+        }
+
+        const resolvedApi = new URL(API_URL, location.href);
+
+        // Mixed-content guard
+        const pageIsHttps = location.protocol === "https:";
+        const apiIsHttp = resolvedApi.protocol === "http:";
+        if (pageIsHttps && apiIsHttp){
+          setStatus("Blocked: HTTPS page cannot call HTTP API (mixed content). Use an https:// API URL.", "bad");
+          logLine("MIXED CONTENT: https page → http api (blocked).", "bad");
+          running = false;
+          return;
+        }
+
+        const blob = await captureBlob();
+        const conf = Math.max(0, Math.min(1, parseFloat(confInput.value || "0.25")));
+        confLiveEl.textContent = conf.toFixed(2);
+
+        const form = new FormData();
+        form.append("image", blob, "frame.jpg");
+        form.append("conf", String(conf));
+
+        logLine(`POST ${resolvedApi.href} (jpg=${Math.round(blob.size/1024)}KB, conf=${conf.toFixed(2)})`, "muted");
+
+        const r = await fetch(resolvedApi.href, { method:"POST", body: form });
+        if (!r.ok) throw new Error(`API error ${r.status}`);
+
+        const data = await r.json();
+        const dets = data.detections || [];
+
+        drawBoxes(dets);
+        miniStatsEl.textContent = `Detections: ${dets.length}`;
+
+        framesSent++;
+        const t = performance.now();
+        if (t - lastFpsTs >= 1000){
+          fpsLiveEl.textContent = String(framesSent);
+          framesSent = 0;
+          lastFpsTs = t;
+        }
+
+        setConn("ok", "Connected");
+      }catch(e){
+        setStatus(`Error: ${e.message}`, "bad");
+        logLine(`ERROR: ${e.message}`, "bad");
+      }finally{
+        busy = false;
+      }
+    }
+
+    function loop(){
+      if (!running) return;
+      resizeOverlayToVideo();
+      sendFrame();
+      requestAnimationFrame(loop);
+    }
+    async function start(){
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setStatus("Camera API not available in this browser/context. Open this page in Safari/Chrome over HTTPS (or localhost).", "bad");
+        logLine("navigator.mediaDevices is undefined. This usually means: not HTTPS, or an in-app browser/WebView.", "bad");
+        return;
+    }
+      try{
+        logLine(`UserAgent: ${navigator.userAgent}`, "muted");
+        logLine(`Page protocol: ${location.protocol}`, "muted");
+
+        const API_URL = apiUrlInput.value.trim();
+        hostLiveEl.textContent = parseApiHost(API_URL);
+
+        setConn("", "Starting...");
+        const mode = camModeSelect.value;
+        camLiveEl.textContent = (mode === "user") ? "front" : "rear";
+
+        logLine(`Requesting camera (facingMode=${mode})...`, "warn");
+
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: mode },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+
+        video.srcObject = stream;
+        await new Promise(res => { video.onloadedmetadata = () => res(); });
+        await video.play();
+
+        logLine(`Camera ready. video=${video.videoWidth}x${video.videoHeight}`, "ok");
+
+        running = true;
+        busy = false;
+        lastSendTs = 0;
+        framesSent = 0;
+        lastFpsTs = performance.now();
+
+        setStatus("Scanning… sending frames to /predict and rendering overlay.", "ok");
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+
+        requestAnimationFrame(loop);
+      }catch(e){
+        setStatus(`Camera start failed: ${e.message}`, "bad");
+        logLine(`Camera start failed: ${e.message}`, "bad");
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      }
+    }
+
+    function stop(){
+      running = false;
+      busy = false;
+
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      stream = null;
+
+      const rect = video.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      miniStatsEl.textContent = "Detections: 0";
+      fpsLiveEl.textContent = "0";
+
+      setConn("", "Idle");
+      $("status").innerHTML = "<b>Status:</b> Stopped.";
+      logLine("Stopped.", "warn");
+
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+    }
+
+    (function init(){
+        const hasCam = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+        logLine(`mediaDevices: ${hasCam ? "present" : "missing"}`, hasCam ? "ok" : "bad");
+        if (!hasCam) {
+        startBtn.disabled = true;
+        setStatus("Camera not available here. Open this page in Safari/Chrome over HTTPS (or localhost).", "bad");
+        }
+      // Default API (edit to your Render/Fly/etc URL)
+      logLine(`mediaDevices: ${navigator.mediaDevices ? "present" : "missing"}`, navigator.mediaDevices ? "ok" : "bad");
+      apiUrlInput.value = "https://ict-daytrade-backend.onrender.com/predict/";
+      hostLiveEl.textContent = parseApiHost(apiUrlInput.value);
+      confLiveEl.textContent = parseFloat(confInput.value || "0.25").toFixed(2);
+
+      logLine("Tech Trace initialized.", "muted");
+      logLine(`Default Predict URL: ${apiUrlInput.value}`, "muted");
+      setConn("", "Idle");
+    })();
+
+    startBtn.addEventListener("click", start);
+    stopBtn.addEventListener("click", stop);
+    window.addEventListener("resize", () => resizeOverlayToVideo());
+  </script>
+</body>
+</html>
