@@ -173,7 +173,7 @@
       color: rgba(255,255,255,.90);
     }
 
-    .btns{ display:flex; gap:10px; }
+    .btns{ display:flex; gap:10px; flex-wrap:wrap; }
 
     button{
       border: 1px solid rgba(0,229,255,0.45);
@@ -271,46 +271,6 @@
     }
     canvas{ pointer-events:none; }
 
-    .hud{
-      position:absolute;
-      left:10px; top:10px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      z-index:5;
-    }
-
-    .pill{
-      position: relative;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding: 6px 10px;
-      border-radius: 8px;
-      border: 1px solid rgba(0,229,255,0.35);
-      background: rgba(8,12,16,0.86);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      box-shadow: var(--glow-cyan);
-      overflow:hidden;
-    }
-    .pill::after{
-      content:"";
-      position:absolute; inset:-2px;
-      background: linear-gradient(90deg, transparent, rgba(0,229,255,.18), transparent);
-      transform: translateX(-60%);
-      animation: scan 2.6s linear infinite;
-      opacity:.45;
-    }
-    @keyframes scan{
-      0%{ transform: translateX(-60%); }
-      100%{ transform: translateX(60%); }
-    }
-
-    .kv{ color: rgba(255,255,255,.62); }
-    .val{ color: rgba(255,255,255,.95); font-weight: 900; }
-
     .panel{
       padding: 12px;
       display:flex;
@@ -388,10 +348,6 @@
       background: rgba(0,0,0,.22);
     }
     .status b{ color: rgba(255,255,255,.92); }
-    .status .hintline{
-      margin-top:6px;
-      color: rgba(255,255,255,.62);
-    }
 
     .console{
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -421,6 +377,56 @@
       color: rgba(255,255,255,.58);
       line-height: 1.45;
     }
+
+    /* ----------------------------
+       Debug mode (simple by default)
+       ---------------------------- */
+    .debugOnly{ display:none; }
+    body.debug-on .debugOnly{ display:block; }
+
+    /* Debug modal */
+    .modalBack{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.65);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:9999;
+    }
+    .modalBack.show{ display:flex; }
+
+    .modal{
+      width: min(420px, 100%);
+      background: rgba(18,22,28,0.96);
+      border: 1px solid rgba(0,229,255,0.22);
+      border-radius: 14px;
+      box-shadow: 0 22px 60px rgba(0,0,0,.75);
+      padding: 14px;
+    }
+    .modal h3{
+      margin: 0 0 8px 0;
+      font-size: 13px;
+      letter-spacing: .55px;
+      text-transform: uppercase;
+    }
+    .modal p{
+      margin: 0 0 10px 0;
+      font-size: 12px;
+      color: rgba(255,255,255,.70);
+      line-height: 1.5;
+    }
+    .modalActions{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      margin-top:10px;
+    }
+    #debugErr{
+      font-size:12px;
+      color: rgba(255,51,85,.95);
+      display:none;
+    }
   </style>
 </head>
 
@@ -446,17 +452,20 @@
         <div class="subcopy">
           <b>What this does:</b> Tech Trace captures your camera feed, sends frames to your <code>/predict/</code> endpoint, then overlays detections in real-time.
           <br/>
-          <b>iPhone note:</b> If this page is opened via <code>https://</code>, your API must also be <code>https://</code> (iOS blocks mixed content). The console below will show the exact failure.
+          <b>iPhone note:</b> If this page is opened via <code>https://</code>, your API must also be <code>https://</code> (iOS blocks mixed content). The debug console will show the exact failure.
         </div>
       </div>
 
       <div class="btns">
         <button id="start" class="primary">Start Scan</button>
         <button id="stop" class="danger" disabled>Stop</button>
+        <button id="debugBtn">Debug</button>
+        <button id="hideDebugBtn" style="display:none;">Hide Debug</button>
       </div>
     </div>
 
     <div class="grid">
+      <!-- Live feed (always visible) -->
       <div class="card">
         <div class="card-h">
           <div class="left">
@@ -469,12 +478,11 @@
         <div class="stage">
           <video id="video" playsinline autoplay muted></video>
           <canvas id="overlay"></canvas>
-
-
         </div>
       </div>
 
-      <div class="card">
+      <!-- Admin / debug panel (hidden unless debug-on) -->
+      <div class="card debugOnly">
         <div class="card-h">
           <div class="left">
             <b>Controls & Notes</b>
@@ -526,10 +534,6 @@
 
           <div class="status" id="status">
             <b>Status:</b> Ready. Configure your Predict URL and press <b>Start Scan</b>.
-            <div class="hintline">
-              If you see <b>ERR_CERT_AUTHORITY_INVALID</b>, your backend certificate is not trusted by the device/browser.
-              Use a real HTTPS domain (recommended) or a trusted tunnel.
-            </div>
           </div>
 
           <div class="divider"></div>
@@ -545,14 +549,32 @@
     </div>
   </div>
 
+  <!-- Debug password modal -->
+  <div id="debugModal" class="modalBack" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dbgTitle">
+      <h3 id="dbgTitle">Enter Debug Password</h3>
+      <p>Debug mode reveals API controls and logs. Password is required.</p>
+
+      <input id="debugPass" type="password" placeholder="Password" autocomplete="current-password" />
+      <div id="debugErr">Incorrect password.</div>
+
+      <div class="modalActions">
+        <button id="debugCancel" class="danger" type="button">Cancel</button>
+        <button id="debugUnlock" class="primary" type="button">Unlock</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ----------------------------
-    // Tech Trace — Mobile-friendly debug console
+    // Tech Trace — Debug console
     // ----------------------------
     const $ = (id) => document.getElementById(id);
     const cEl = $("console");
 
     function logLine(msg, cls="muted"){
+      // In simple mode, console element exists but is hidden; still safe.
+      if (!cEl) return;
       const t = new Date().toLocaleTimeString();
       const div = document.createElement("div");
       div.className = cls;
@@ -562,8 +584,17 @@
       console.log(`[Tech Trace] ${msg}`);
     }
 
-    window.addEventListener("error", (e) => logLine(`window.error: ${e.message}`, "bad"));
-    window.addEventListener("unhandledrejection", (e) => logLine(`unhandledrejection: ${String(e.reason)}`, "bad"));
+    // Only log to UI console when debug is enabled (still logs to browser console always)
+    function debugLog(msg, cls="muted"){
+      if (!document.body.classList.contains("debug-on")) {
+        console.log(`[Tech Trace] ${msg}`);
+        return;
+      }
+      logLine(msg, cls);
+    }
+
+    window.addEventListener("error", (e) => debugLog(`window.error: ${e.message}`, "bad"));
+    window.addEventListener("unhandledrejection", (e) => debugLog(`unhandledrejection: ${String(e.reason)}`, "bad"));
 
     // Elements
     const video = $("video");
@@ -573,18 +604,40 @@
     const startBtn = $("start");
     const stopBtn = $("stop");
 
+    // Debug gate UI
+    const DEBUG_PASSWORD = "cisco"; // UI-only gate; not secure against view-source
+    const debugBtn = $("debugBtn");
+    const hideDebugBtn = $("hideDebugBtn");
+    const debugModal = $("debugModal");
+    const debugPass = $("debugPass");
+    const debugErr = $("debugErr");
+    const debugCancel = $("debugCancel");
+    const debugUnlock = $("debugUnlock");
+
+    // Admin controls (exist but hidden in simple mode)
     const apiUrlInput = $("apiUrl");
     const fpsInput = $("fps");
     const confInput = $("conf");
     const camModeSelect = $("cameraMode");
     const jpegQInput = $("jpegQ");
-
     const statusEl = $("status");
+
     const miniStatsEl = $("miniStats");
-
-
     const dot = $("dot");
     const connText = $("connText");
+
+    // Defaults for simple mode if debug panel is hidden
+    const DEFAULT_API_URL = "https://d2b462eb5d88.ngrok-free.app/predict/";
+    const DEFAULT_FPS = 5;
+    const DEFAULT_CONF = 0.25;
+    const DEFAULT_CAM = "environment";
+    const DEFAULT_JPEG_Q = 0.7;
+
+    function getApiUrl(){ return (apiUrlInput?.value || DEFAULT_API_URL).trim() || DEFAULT_API_URL; }
+    function getFps(){ return Math.max(1, Math.min(30, parseInt(fpsInput?.value || DEFAULT_FPS, 10))); }
+    function getConf(){ return Math.max(0, Math.min(1, parseFloat(confInput?.value || DEFAULT_CONF))); }
+    function getCamMode(){ return (camModeSelect?.value || DEFAULT_CAM); }
+    function getJpegQ(){ return Math.max(0.3, Math.min(0.95, parseFloat(jpegQInput?.value || DEFAULT_JPEG_Q))); }
 
     // State
     let stream = null;
@@ -592,8 +645,6 @@
     let busy = false;
 
     let lastSendTs = 0;
-    let lastFpsTs = performance.now();
-    let framesSent = 0;
 
     function setConn(state, text){
       dot.className = "dot " + (state || "");
@@ -601,19 +652,10 @@
     }
 
     function setStatus(msg, type){
-      statusEl.innerHTML = `<b>Status:</b> ${msg}`;
+      if (statusEl) statusEl.innerHTML = `<b>Status:</b> ${msg}`;
       if (type === "ok") setConn("ok", "Connected");
       else if (type === "bad") setConn("bad", "Error");
       else setConn("", "Running");
-    }
-
-    function parseApiHost(url){
-      try{
-        const u = new URL(url, location.href);
-        return `${u.protocol}//${u.host}`;
-      }catch{
-        return "—";
-      }
     }
 
     function resizeOverlayToVideo(){
@@ -632,8 +674,6 @@
       const rect = video.getBoundingClientRect();
       ctx.clearRect(0, 0, rect.width, rect.height);
 
-      ctx.font = "14px system-ui";
-
       const vw = video.videoWidth || 1;
       const vh = video.videoHeight || 1;
       const sx = rect.width / vw;
@@ -648,25 +688,14 @@
         const w = (x2 - x1) * sx;
         const h = (y2 - y1) * sy;
 
-        // HUD box
         ctx.strokeStyle = "#00e5ff";
         ctx.lineWidth = 2;
         ctx.shadowColor = "rgba(0,229,255,0.40)";
         ctx.shadowBlur = 6;
         ctx.strokeRect(x, y, w, h);
 
-        // Corner ticks
+        // Label
         ctx.shadowBlur = 0;
-        ctx.strokeStyle = "rgba(255,43,214,.75)";
-        ctx.lineWidth = 3;
-        const t = 14;
-
-        ctx.beginPath(); ctx.moveTo(x, y+t); ctx.lineTo(x, y); ctx.lineTo(x+t, y); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x+w-t, y); ctx.lineTo(x+w, y); ctx.lineTo(x+w, y+t); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x, y+h-t); ctx.lineTo(x, y+h); ctx.lineTo(x+t, y+h); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x+w-t, y+h); ctx.lineTo(x+w, y+h); ctx.lineTo(x+w, y+h-t); ctx.stroke();
-
-        // Label block
         ctx.font = "13px system-ui";
         const tw = ctx.measureText(label).width;
         const boxH = 18;
@@ -686,7 +715,7 @@
       off.height = video.videoHeight;
       off.getContext("2d").drawImage(video, 0, 0);
 
-      const q = Math.max(0.3, Math.min(0.95, parseFloat(jpegQInput.value || "0.7")));
+      const q = getJpegQ();
       return await new Promise((res, rej) => {
         off.toBlob((blob) => {
           if (!blob) return rej(new Error("toBlob returned null (camera/memory constraint)"));
@@ -699,7 +728,7 @@
       if (!running || busy) return;
       if (!video.videoWidth) return;
 
-      const fps = Math.max(1, Math.min(30, parseInt(fpsInput.value || "5", 10)));
+      const fps = getFps();
       const intervalMs = Math.floor(1000 / fps);
 
       const now = performance.now();
@@ -708,10 +737,10 @@
 
       busy = true;
       try{
-        const API_URL = apiUrlInput.value.trim();
+        const API_URL = getApiUrl();
         if (!API_URL){
-          setStatus("Missing Django Predict URL. Please enter it first.", "bad");
-          logLine("Missing API URL.", "bad");
+          setStatus("Missing Django Predict URL.", "bad");
+          debugLog("Missing API URL.", "bad");
           running = false;
           return;
         }
@@ -723,19 +752,19 @@
         const apiIsHttp = resolvedApi.protocol === "http:";
         if (pageIsHttps && apiIsHttp){
           setStatus("Blocked: HTTPS page cannot call HTTP API (mixed content). Use an https:// API URL.", "bad");
-          logLine("MIXED CONTENT: https page → http api (blocked).", "bad");
+          debugLog("MIXED CONTENT: https page → http api (blocked).", "bad");
           running = false;
           return;
         }
 
         const blob = await captureBlob();
-        const conf = Math.max(0, Math.min(1, parseFloat(confInput.value || "0.25")));
+        const conf = getConf();
 
         const form = new FormData();
         form.append("image", blob, "frame.jpg");
         form.append("conf", String(conf));
 
-        logLine(`POST ${resolvedApi.href} (jpg=${Math.round(blob.size/1024)}KB, conf=${conf.toFixed(2)})`, "muted");
+        debugLog(`POST ${resolvedApi.href} (jpg=${Math.round(blob.size/1024)}KB, conf=${conf.toFixed(2)})`, "muted");
 
         const r = await fetch(resolvedApi.href, { method:"POST", body: form });
         if (!r.ok) throw new Error(`API error ${r.status}`);
@@ -745,18 +774,10 @@
 
         drawBoxes(dets);
         miniStatsEl.textContent = `Detections: ${dets.length}`;
-
-        framesSent++;
-        const t = performance.now();
-        if (t - lastFpsTs >= 1000){
-          framesSent = 0;
-          lastFpsTs = t;
-        }
-
         setConn("ok", "Connected");
       }catch(e){
         setStatus(`Error: ${e.message}`, "bad");
-        logLine(`ERROR: ${e.message}`, "bad");
+        debugLog(`ERROR: ${e.message}`, "bad");
       }finally{
         busy = false;
       }
@@ -768,22 +789,21 @@
       sendFrame();
       requestAnimationFrame(loop);
     }
-    async function start(){
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setStatus("Camera API not available in this browser/context. Open this page in Safari/Chrome over HTTPS (or localhost).", "bad");
-        logLine("navigator.mediaDevices is undefined. This usually means: not HTTPS, or an in-app browser/WebView.", "bad");
-        return;
-    }
-      try{
-        logLine(`UserAgent: ${navigator.userAgent}`, "muted");
-        logLine(`Page protocol: ${location.protocol}`, "muted");
 
-        const API_URL = apiUrlInput.value.trim();
+    async function start(){
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setStatus("Camera API not available in this browser/context. Open in Safari/Chrome over HTTPS (or localhost).", "bad");
+        debugLog("navigator.mediaDevices is undefined. Likely: not HTTPS, or in-app browser/WebView.", "bad");
+        return;
+      }
+
+      try{
+        debugLog(`UserAgent: ${navigator.userAgent}`, "muted");
+        debugLog(`Page protocol: ${location.protocol}`, "muted");
 
         setConn("", "Starting...");
-        const mode = camModeSelect.value;
-
-        logLine(`Requesting camera (facingMode=${mode})...`, "warn");
+        const mode = getCamMode();
+        debugLog(`Requesting camera (facingMode=${mode})...`, "warn");
 
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -798,13 +818,11 @@
         await new Promise(res => { video.onloadedmetadata = () => res(); });
         await video.play();
 
-        logLine(`Camera ready. video=${video.videoWidth}x${video.videoHeight}`, "ok");
+        debugLog(`Camera ready. video=${video.videoWidth}x${video.videoHeight}`, "ok");
 
         running = true;
         busy = false;
         lastSendTs = 0;
-        framesSent = 0;
-        lastFpsTs = performance.now();
 
         setStatus("Scanning… sending frames to /predict and rendering overlay.", "ok");
         startBtn.disabled = true;
@@ -813,7 +831,7 @@
         requestAnimationFrame(loop);
       }catch(e){
         setStatus(`Camera start failed: ${e.message}`, "bad");
-        logLine(`Camera start failed: ${e.message}`, "bad");
+        debugLog(`Camera start failed: ${e.message}`, "bad");
         startBtn.disabled = false;
         stopBtn.disabled = true;
       }
@@ -830,30 +848,81 @@
       ctx.clearRect(0, 0, rect.width, rect.height);
 
       miniStatsEl.textContent = "Detections: 0";
-      fpsLiveEl.textContent = "0";
-
       setConn("", "Idle");
-      $("status").innerHTML = "<b>Status:</b> Stopped.";
-      logLine("Stopped.", "warn");
+      if (statusEl) statusEl.innerHTML = "<b>Status:</b> Stopped.";
+      debugLog("Stopped.", "warn");
 
       startBtn.disabled = false;
       stopBtn.disabled = true;
     }
 
-    (function init(){
-        const hasCam = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-        logLine(`mediaDevices: ${hasCam ? "present" : "missing"}`, hasCam ? "ok" : "bad");
-        if (!hasCam) {
-        startBtn.disabled = true;
-        setStatus("Camera not available here. Open this page in Safari/Chrome over HTTPS (or localhost).", "bad");
-        }
-      // Default API (edit to your Render/Fly/etc URL)
-      logLine(`mediaDevices: ${navigator.mediaDevices ? "present" : "missing"}`, navigator.mediaDevices ? "ok" : "bad");
-      apiUrlInput.value = "https://d2b462eb5d88.ngrok-free.app/predict/";
+    // ----------------------------
+    // Debug mode gate
+    // ----------------------------
+    function openDebugModal(){
+      debugErr.style.display = "none";
+      debugPass.value = "";
+      debugModal.classList.add("show");
+      debugPass.focus();
+    }
+    function closeDebugModal(){
+      debugModal.classList.remove("show");
+    }
+    function enableDebug(){
+      document.body.classList.add("debug-on");
+      hideDebugBtn.style.display = "inline-block";
+      debugBtn.style.display = "none";
+      debugLog("Debug mode enabled.", "warn");
+    }
+    function disableDebug(){
+      document.body.classList.remove("debug-on");
+      hideDebugBtn.style.display = "none";
+      debugBtn.style.display = "inline-block";
+      console.log("[Tech Trace] Debug mode disabled.");
+    }
 
-      logLine("Tech Trace initialized.", "muted");
-      logLine(`Default Predict URL: ${apiUrlInput.value}`, "muted");
+    debugBtn.addEventListener("click", openDebugModal);
+    hideDebugBtn.addEventListener("click", disableDebug);
+    debugCancel.addEventListener("click", closeDebugModal);
+    debugModal.addEventListener("click", (e) => { if (e.target === debugModal) closeDebugModal(); });
+
+    debugUnlock.addEventListener("click", () => {
+      const val = (debugPass.value || "").trim();
+      if (val !== DEBUG_PASSWORD){
+        debugErr.style.display = "block";
+        debugPass.focus();
+        return;
+      }
+      closeDebugModal();
+      enableDebug();
+    });
+
+    debugPass.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") debugUnlock.click();
+      if (e.key === "Escape") closeDebugModal();
+    });
+
+    // ----------------------------
+    // Init
+    // ----------------------------
+    (function init(){
+      const hasCam = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+      // Set defaults into debug inputs (even when hidden)
+      if (apiUrlInput) apiUrlInput.value = DEFAULT_API_URL;
+      if (fpsInput) fpsInput.value = String(DEFAULT_FPS);
+      if (confInput) confInput.value = String(DEFAULT_CONF);
+      if (camModeSelect) camModeSelect.value = DEFAULT_CAM;
+      if (jpegQInput) jpegQInput.value = String(DEFAULT_JPEG_Q);
+
+      console.log(`[Tech Trace] mediaDevices: ${hasCam ? "present" : "missing"}`);
+      console.log(`[Tech Trace] Default Predict URL: ${DEFAULT_API_URL}`);
       setConn("", "Idle");
+
+      if (!hasCam){
+        startBtn.disabled = true;
+        setStatus("Camera not available here. Open in Safari/Chrome over HTTPS (or localhost).", "bad");
+      }
     })();
 
     startBtn.addEventListener("click", start);
