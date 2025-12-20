@@ -499,7 +499,7 @@
 
           <label>
             Django Predict URL
-            <input id="apiUrl" placeholder="https://ict-daytrade-backend.onrender.com/predict/" />
+            <input id="apiUrl" placeholder="https://2b934cb499af.ngrok-free.app/predict/" />
           </label>
 
           <div class="row">
@@ -861,7 +861,7 @@
         }
       // Default API (edit to your Render/Fly/etc URL)
       logLine(`mediaDevices: ${navigator.mediaDevices ? "present" : "missing"}`, navigator.mediaDevices ? "ok" : "bad");
-      apiUrlInput.value = "https://ict-daytrade-backend.onrender.com/predict/";
+      apiUrlInput.value = "https://2b934cb499af.ngrok-free.app/predict/";
       hostLiveEl.textContent = parseApiHost(apiUrlInput.value);
       confLiveEl.textContent = parseFloat(confInput.value || "0.25").toFixed(2);
 
