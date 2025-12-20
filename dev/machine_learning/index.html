@@ -470,12 +470,7 @@
           <video id="video" playsinline autoplay muted></video>
           <canvas id="overlay"></canvas>
 
-          <div class="hud">
-            <div class="pill"><span class="kv">FPS</span> <span class="val" id="fpsLive">0</span></div>
-            <div class="pill"><span class="kv">Confidence</span> <span class="val" id="confLive">0.25</span></div>
-            <div class="pill"><span class="kv">Camera</span> <span class="val" id="camLive">rear</span></div>
-            <div class="pill"><span class="kv">API Host</span> <span class="val" id="hostLive">—</span></div>
-          </div>
+
         </div>
       </div>
 
@@ -586,10 +581,7 @@
 
     const statusEl = $("status");
     const miniStatsEl = $("miniStats");
-    const fpsLiveEl = $("fpsLive");
-    const confLiveEl = $("confLive");
-    const camLiveEl = $("camLive");
-    const hostLiveEl = $("hostLive");
+
 
     const dot = $("dot");
     const connText = $("connText");
@@ -738,7 +730,6 @@
 
         const blob = await captureBlob();
         const conf = Math.max(0, Math.min(1, parseFloat(confInput.value || "0.25")));
-        confLiveEl.textContent = conf.toFixed(2);
 
         const form = new FormData();
         form.append("image", blob, "frame.jpg");
@@ -758,7 +749,6 @@
         framesSent++;
         const t = performance.now();
         if (t - lastFpsTs >= 1000){
-          fpsLiveEl.textContent = String(framesSent);
           framesSent = 0;
           lastFpsTs = t;
         }
@@ -789,11 +779,9 @@
         logLine(`Page protocol: ${location.protocol}`, "muted");
 
         const API_URL = apiUrlInput.value.trim();
-        hostLiveEl.textContent = parseApiHost(API_URL);
 
         setConn("", "Starting...");
         const mode = camModeSelect.value;
-        camLiveEl.textContent = (mode === "user") ? "front" : "rear";
 
         logLine(`Requesting camera (facingMode=${mode})...`, "warn");
 
@@ -862,8 +850,6 @@
       // Default API (edit to your Render/Fly/etc URL)
       logLine(`mediaDevices: ${navigator.mediaDevices ? "present" : "missing"}`, navigator.mediaDevices ? "ok" : "bad");
       apiUrlInput.value = "https://d2b462eb5d88.ngrok-free.app/predict/";
-      hostLiveEl.textContent = parseApiHost(apiUrlInput.value);
-      confLiveEl.textContent = parseFloat(confInput.value || "0.25").toFixed(2);
 
       logLine("Tech Trace initialized.", "muted");
       logLine(`Default Predict URL: ${apiUrlInput.value}`, "muted");
