@@ -1,8 +1,8 @@
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+# from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-HOST = "0.0.0.0"
-PORT = 8000
+# HOST = "0.0.0.0"
+# PORT = 8002
 
-httpd = HTTPServer((HOST, PORT), SimpleHTTPRequestHandler)
-print(f"Serving HTTP on http://10.0.0.159:{PORT}")
-httpd.serve_forever()
+# httpd = HTTPServer((HOST, PORT), SimpleHTTPRequestHandler)
+# print(f"Serving HTTP on http://10.0.0.159:{PORT}")
+# httpd.serve_forever()
