@@ -3,52 +3,78 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Tektos — Face ID</title>
+  <title>Eagle Eye — Face ID</title>
 
   <style>
     :root{
-      --bg: #f4f7ff;
-      --bg2:#eef3ff;
-      --card:#ffffff;
-      --ink:#0f172a;
-      --muted:#5b6b86;
+      --bg0:#07080b;
+      --bg1:#0a0c11;
+      --bg2:#0f131b;
 
-      --blue:#3b82f6;
-      --blue2:#2563eb;
-      --lav:#7c3aed;
+      --glass: rgba(255,255,255,.06);
+      --glass2: rgba(255,255,255,.045);
 
-      --stroke: rgba(15, 23, 42, .10);
-      --shadow: 0 22px 55px rgba(15, 23, 42, .12);
+      --line: rgba(255,255,255,.10);
+      --line2: rgba(255,255,255,.14);
 
-      --r30: 30px;
-      --r24: 24px;
-      --r18: 18px;
-      --r14: 14px;
+      --ink:#eef1f7;
+      --muted:#a8b0c0;
+      --muted2:#7f889b;
 
-      --ok:#22c55e;
-      --warn:#fbbf24;
-      --bad:#ef4444;
+      --ice:#8fb8ff;    /* restrained accent */
+      --ok:#7ddc9a;
+      --warn:#e1c07d;
+      --bad:#d67d7d;
+
+      --r34: 34px;
+      --r28: 28px;
+      --r22: 22px;
+      --r16: 16px;
+
+      --shadow: 0 30px 90px rgba(0,0,0,.55);
+      --shadow2: 0 18px 55px rgba(0,0,0,.45);
+
+      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+              "Inter", "Segoe UI", Roboto, Helvetica, Arial, system-ui;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     }
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+
     body{
       margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      font-family: var(--sans);
       color:var(--ink);
       background:
-        radial-gradient(900px 520px at 70% 35%, rgba(37,99,235,.16), transparent 62%),
-        radial-gradient(900px 520px at 35% 75%, rgba(59,130,246,.10), transparent 60%),
-        linear-gradient(180deg, var(--bg), var(--bg2));
+        radial-gradient(1000px 560px at 70% 18%, rgba(143,184,255,.12), transparent 62%),
+        radial-gradient(900px 540px at 26% 82%, rgba(255,255,255,.05), transparent 62%),
+        linear-gradient(180deg, var(--bg0), var(--bg1) 38%, var(--bg2));
       overflow-x:hidden;
     }
 
-    .page{
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 18px 18px 40px;
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(1200px 700px at 50% 0%, rgba(0,0,0,.10), transparent 55%),
+        radial-gradient(1300px 900px at 50% 100%, rgba(0,0,0,.34), transparent 58%),
+        repeating-linear-gradient(180deg, rgba(255,255,255,.03) 0 1px, transparent 1px 6px);
+      opacity:.10;
+      mix-blend-mode: overlay;
+      z-index:0;
     }
 
+    .page{
+      position:relative;
+      z-index:1;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 18px 44px;
+    }
+
+    /* NAV */
     .nav{
       display:flex;
       align-items:center;
@@ -61,15 +87,44 @@
       display:flex;
       align-items:center;
       gap:12px;
-      min-width: 240px;
+      min-width: 260px;
     }
+
     .mark{
-      width:40px; height:40px;
+      width:42px; height:42px;
       border-radius: 14px;
       background:
-        radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.85), transparent 60%),
-        linear-gradient(135deg, rgba(59,130,246,.95), rgba(37,99,235,.95), rgba(124,58,237,.85));
-      box-shadow: 0 16px 40px rgba(37,99,235,.22);
+        radial-gradient(14px 14px at 28% 28%, rgba(255,255,255,.18), transparent 60%),
+        linear-gradient(135deg, rgba(143,184,255,.20), rgba(255,255,255,.06));
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+      position:relative;
+      overflow:hidden;
+    }
+    .mark::after{
+      content:"";
+      position:absolute;
+      inset:-55%;
+      background: radial-gradient(circle at 30% 35%, rgba(143,184,255,.22), transparent 55%);
+      transform: rotate(18deg);
+      animation: markFloat 7.4s ease-in-out infinite;
+      opacity:.85;
+      pointer-events:none;
+    }
+    .mark::before{
+      content:"";
+      position:absolute;
+      left:7px; right:7px;
+      top: 22px;
+      height:1px;
+      background: rgba(255,255,255,.18);
+      opacity:.6;
+      pointer-events:none;
+    }
+
+    @keyframes markFloat{
+      0%,100%{ transform: translate(-6%, -4%) rotate(18deg); opacity:.6; }
+      50%{ transform: translate(8%, 6%) rotate(18deg); opacity:.95; }
     }
 
     .brandTitle{
@@ -77,8 +132,17 @@
       gap:2px;
       line-height:1.15;
     }
-    .brandTitle b{ font-size:14px; letter-spacing:.2px; }
-    .brandTitle span{ font-size:12px; color:var(--muted); }
+    .brandTitle b{
+      font-size:13px;
+      letter-spacing:.12em;
+      text-transform: uppercase;
+      font-weight: 740;
+    }
+    .brandTitle span{
+      font-size:12px;
+      color:var(--muted);
+      opacity:.92;
+    }
 
     .navLinks{
       display:flex;
@@ -94,43 +158,71 @@
       text-decoration:none;
       padding:8px 10px;
       border-radius: 999px;
-      transition: background .12s ease;
+      border: 1px solid transparent;
+      transition: background .16s ease, border-color .16s ease, color .16s ease;
     }
-    .navLinks a:hover{ background: rgba(15,23,42,.04); }
+    .navLinks a:hover{
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.10);
+      color: var(--ink);
+    }
 
     .pill{
       display:flex;
       align-items:center;
       gap:10px;
       padding:10px 12px;
-      background: rgba(255,255,255,.72);
-      border:1px solid var(--stroke);
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,.10);
       border-radius: 999px;
-      box-shadow: 0 10px 28px rgba(15,23,42,.08);
-      backdrop-filter: blur(8px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+      backdrop-filter: blur(10px);
       font-size:12px;
       color:var(--muted);
       white-space:nowrap;
-      min-width: 170px;
+      min-width: 200px;
       justify-content:center;
     }
     .dot{
       width:9px; height:9px; border-radius: 999px;
-      background:#fbbf24;
-      box-shadow:0 0 0 4px rgba(251,191,36,.18);
+      background: var(--warn);
+      box-shadow: 0 0 0 4px rgba(225,192,125,.12);
     }
 
+    /* HERO */
     .hero{
       position:relative;
-      background: rgba(255,255,255,.70);
-      border: 1px solid var(--stroke);
-      border-radius: var(--r30);
+      border-radius: var(--r34);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      border: 1px solid rgba(255,255,255,.10);
       box-shadow: var(--shadow);
       overflow:hidden;
       padding: 22px;
+      backdrop-filter: blur(14px);
+    }
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(900px 340px at 60% 0%, rgba(143,184,255,.10), transparent 62%),
+        linear-gradient(180deg, rgba(255,255,255,.10), transparent 22%);
+      opacity:.85;
+    }
+    .hero::after{
+      content:"";
+      position:absolute; inset:-30%;
+      pointer-events:none;
+      background:
+        repeating-radial-gradient(circle at 58% 42%, rgba(255,255,255,.03) 0 1px, transparent 1px 46px);
+      opacity:.08;
+      transform: rotate(-6deg);
     }
 
     .heroGrid{
+      position:relative;
+      z-index:2;
       display:grid;
       grid-template-columns: 1.05fr .95fr;
       gap: 22px;
@@ -146,38 +238,37 @@
       .heroGrid{ grid-template-columns: 1fr; min-height: unset; }
     }
 
+    /* LEFT */
     .copy{
       padding: 12px 10px;
       display:flex;
       flex-direction:column;
       justify-content:flex-start;
       gap: 14px;
-      position:relative;
-      z-index:2;
     }
 
     .kicker{
       font-size:12px;
       color: var(--muted);
-      letter-spacing:.16em;
+      letter-spacing:.22em;
       text-transform: uppercase;
     }
 
     .headline{
-      font-size: clamp(44px, 5.6vw, 76px);
-      line-height: .92;
-      letter-spacing: -0.02em;
+      font-size: clamp(44px, 5.6vw, 70px);
+      line-height: .94;
+      letter-spacing: -0.03em;
       margin:0;
-      font-weight: 900;
+      font-weight: 780;
     }
-    .headline .accentDot{
-      display:inline-block;
-      width:12px; height:12px;
+
+    .headlineBar{
+      width: 84px;
+      height: 3px;
       border-radius: 999px;
-      background: linear-gradient(135deg, var(--blue), var(--lav));
-      box-shadow: 0 0 0 6px rgba(59,130,246,.14);
-      vertical-align: middle;
-      margin-left: 10px;
+      background: linear-gradient(90deg, rgba(143,184,255,.85), rgba(255,255,255,.08));
+      margin-top: 6px;
+      opacity:.85;
     }
 
     .sub{
@@ -185,22 +276,22 @@
       margin:0;
       color: var(--muted);
       font-size: 14px;
-      line-height: 1.65;
+      line-height: 1.7;
     }
 
     .meaning{
-      border-radius: var(--r18);
-      border: 1px solid rgba(15,23,42,.08);
-      background: rgba(255,255,255,.85);
+      border-radius: var(--r22);
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
       padding: 12px 12px;
       display:grid;
       gap:6px;
     }
     .meaning b{
       font-size:12px;
-      letter-spacing:.14em;
+      letter-spacing:.16em;
       text-transform: uppercase;
-      color: rgba(15,23,42,.70);
+      color: rgba(238,241,247,.82);
     }
     .meaning p{
       margin:0;
@@ -218,36 +309,41 @@
 
     button{
       appearance:none;
-      border:1px solid rgba(15,23,42,.10);
-      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
       color: var(--ink);
       padding: 12px 14px;
-      border-radius: 16px;
+      border-radius: var(--r16);
       font-size: 13px;
       cursor:pointer;
-      transition: transform .12s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease;
-      box-shadow: 0 14px 35px rgba(15,23,42,.10);
+      transition: transform .12s ease, background .16s ease, border-color .16s ease;
+      box-shadow: 0 16px 45px rgba(0,0,0,.35);
       min-height: 44px;
+      font-weight: 650;
     }
-    button:hover{ transform: translateY(-1px); border-color: rgba(15,23,42,.16); }
+    button:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.18);
+    }
     button:active{ transform: translateY(0px) scale(.99); }
 
     .primary{
-      background: linear-gradient(135deg, rgba(59,130,246,.16), rgba(124,58,237,.10));
-      border-color: rgba(37,99,235,.20);
+      background: linear-gradient(180deg, rgba(143,184,255,.12), rgba(255,255,255,.05));
+      border-color: rgba(143,184,255,.20);
     }
     .danger{
-      background: rgba(239,68,68,.06);
-      border-color: rgba(239,68,68,.18);
+      background: rgba(214,125,125,.10);
+      border-color: rgba(214,125,125,.22);
     }
 
     .log{
       margin-top: 4px;
       max-height: 240px;
       overflow:auto;
-      border-radius: var(--r18);
-      border: 1px solid rgba(15,23,42,.08);
-      background: rgba(255,255,255,.80);
+      border-radius: var(--r22);
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
       padding: 10px;
       display:flex;
       flex-direction:column;
@@ -255,46 +351,62 @@
     }
     .entry{
       border-radius: 14px;
-      border: 1px solid rgba(15,23,42,.08);
-      background: rgba(255,255,255,.95);
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
       padding: 10px 12px;
       font-size: 12px;
       color: var(--muted);
       line-height: 1.4;
+      font-family: var(--mono);
     }
-    .entry strong{ color: var(--ink); }
+    .entry strong{ color: var(--ink); font-family: var(--sans); }
 
+    /* RIGHT */
     .right{
-      position:relative;
       display:grid;
       grid-template-rows: 1fr auto;
       gap: 14px;
       padding: 8px;
-      z-index:2;
     }
 
     .orb{
       position:relative;
-      border-radius: var(--r30);
-      background: radial-gradient(70% 85% at 55% 35%, rgba(59,130,246,.22), rgba(37,99,235,.10), rgba(255,255,255,.0));
-      border: 1px solid rgba(37,99,235,.18);
+      border-radius: var(--r34);
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
       overflow:hidden;
       min-height: 360px;
       display:grid;
       place-items:center;
+      box-shadow: var(--shadow2);
+    }
+    .orb::before{
+      content:"";
+      position:absolute;
+      inset:-30%;
+      background: radial-gradient(circle at 30% 30%, rgba(143,184,255,.10), transparent 55%);
+      transform: rotate(12deg);
+      animation: orbFloat 10.5s ease-in-out infinite;
+      opacity:.9;
+      pointer-events:none;
+    }
+    @keyframes orbFloat{
+      0%,100%{ transform: translate(-2%, -2%) rotate(12deg); }
+      50%{ transform: translate(3%, 4%) rotate(12deg); }
     }
 
-    .circleStage{
-      width: min(390px, 92%);
-      aspect-ratio: 1 / 1;
-      border-radius: 999px;
-      background:
-        radial-gradient(14px 14px at 30% 28%, rgba(255,255,255,.9), transparent 60%),
-        radial-gradient(420px 420px at 50% 50%, rgba(37,99,235,.20), rgba(59,130,246,.12), rgba(255,255,255,.35));
-      border: 1px solid rgba(15,23,42,.10);
-      box-shadow: 0 30px 70px rgba(37,99,235,.18);
-      overflow:hidden;
+    /* Scan stage */
+    .scanStage{
+      width: min(520px, 94%);
+      aspect-ratio: 4 / 3;
+      border-radius: 24px;
       position:relative;
+      z-index:1;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 50% 40%, rgba(255,255,255,.06), rgba(0,0,0,.30) 64%, rgba(0,0,0,.65));
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 34px 90px rgba(0,0,0,.55);
     }
 
     #video{
@@ -303,48 +415,215 @@
       object-fit: cover;
       display:block;
       transform: scaleX(-1);
-      filter: saturate(1.05) contrast(1.02);
+      filter: saturate(1.02) contrast(1.03) brightness(.96);
+      position:relative;
+      z-index:1;
     }
     #canvas{ display:none; }
 
-    .ring{
+    .bracket{
       position:absolute;
-      inset: 10px;
-      border-radius: 999px;
+      width: 46px;
+      height: 46px;
+      border: 1px solid rgba(255,255,255,.20);
+      opacity:.55;
+      z-index:5;
       pointer-events:none;
-      border: 1px solid rgba(255,255,255,.55);
-      box-shadow:
-        inset 0 0 0 1px rgba(37,99,235,.18),
-        inset 0 0 50px rgba(37,99,235,.14);
+    }
+    .bracket::after{
+      content:"";
+      position:absolute;
+      inset: 0;
+      border-radius: 10px;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.45);
+      opacity:.65;
+    }
+    .b-tl{ top:14px; left:14px; border-right:none; border-bottom:none; border-top-left-radius: 14px; }
+    .b-tr{ top:14px; right:14px; border-left:none; border-bottom:none; border-top-right-radius: 14px; }
+    .b-bl{ bottom:14px; left:14px; border-right:none; border-top:none; border-bottom-left-radius: 14px; }
+    .b-br{ bottom:14px; right:14px; border-left:none; border-top:none; border-bottom-right-radius: 14px; }
+
+    .frameLine{
+      position:absolute;
+      inset: 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.08);
+      z-index:4;
+      pointer-events:none;
+      opacity:.75;
     }
 
-    .sweep{
+    .scanLine{
       position:absolute;
-      left: 10px; right: 10px; top: 10px;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, rgba(59,130,246,.95), rgba(124,58,237,.85), transparent);
-      filter: drop-shadow(0 0 18px rgba(37,99,235,.35));
-      animation: sweep 2.2s linear infinite;
-      opacity:.65;
+      left: 16px; right: 16px; top: 16px;
+      height: 1px;
+      background: rgba(255,255,255,.40);
+      opacity:.0;
       pointer-events:none;
-      display:none;
+      z-index:6;
     }
-    @keyframes sweep{
-      0%{ transform: translateY(0); opacity:.25; }
-      10%{ opacity:.70; }
+    .scanBand{
+      position:absolute;
+      left: 16px; right: 16px; top: 16px;
+      height: 80px;
+      background: linear-gradient(
+        180deg,
+        transparent,
+        rgba(143,184,255,.10),
+        rgba(255,255,255,.06),
+        transparent
+      );
+      opacity:0;
+      pointer-events:none;
+      z-index:6;
+      filter: blur(0.2px);
+    }
+
+    .scanOn .scanLine,
+    .scanOn .scanBand{
+      opacity:.55;
+      animation: scanSweep 2.9s ease-in-out infinite;
+    }
+
+    @keyframes scanSweep{
+      0%{ transform: translateY(0); opacity:.18; }
+      35%{ opacity:.55; }
+      70%{ opacity:.55; }
+      100%{ transform: translateY(calc(100% - 32px)); opacity:.18; }
+    }
+
+    /* processing overlay */
+    .processing{
+      position:absolute;
+      inset:0;
+      background: radial-gradient(circle at 50% 40%, rgba(0,0,0,.10), rgba(0,0,0,.72));
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease;
+      z-index:10;
+      display:grid;
+      place-items:center;
+    }
+    .processing.on{ opacity:1; pointer-events:auto; }
+
+    .procCard{
+      width: min(420px, 86%);
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(15,19,27,.68);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 30px 90px rgba(0,0,0,.60);
+      padding: 14px 14px 12px;
+      display:grid;
+      gap:10px;
+    }
+
+    .procTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+    }
+    .procTitle{
+      display:grid;
+      gap:4px;
+    }
+    .procTitle b{
+      font-size:12px;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      color: rgba(238,241,247,.85);
+      font-weight: 760;
+    }
+    .procTitle span{
+      font-size:13px;
+      color: var(--muted);
+      line-height:1.35;
+    }
+
+    .procBadge{
+      font-family: var(--mono);
+      font-size: 11px;
+      color: rgba(238,241,247,.78);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      padding: 8px 10px;
+      border-radius: 999px;
+      white-space:nowrap;
+    }
+
+    .procBars{
+      display:grid;
+      gap:8px;
+    }
+    .bar{
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      position:relative;
+    }
+    .bar > i{
+      position:absolute;
+      inset:0;
+      width: 45%;
+      background: linear-gradient(90deg,
+        rgba(255,255,255,.06),
+        rgba(143,184,255,.16),
+        rgba(255,255,255,.06)
+      );
+      transform: translateX(-60%);
+      animation: barMove 1.25s ease-in-out infinite;
+    }
+    .bar:nth-child(2) > i{ animation-duration: 1.45s; }
+    .bar:nth-child(3) > i{ animation-duration: 1.65s; }
+
+    @keyframes barMove{
+      0%{ transform: translateX(-60%); opacity:.45; }
       50%{ opacity:.85; }
-      90%{ opacity:.70; }
-      100%{ transform: translateY(calc(100% - 24px)); opacity:.25; }
+      100%{ transform: translateX(220%); opacity:.45; }
+    }
+
+    .procFooter{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      color: var(--muted2);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing:.02em;
+    }
+
+    .procDots{
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+    .procDots span{
+      width:6px; height:6px;
+      border-radius:999px;
+      background: rgba(255,255,255,.20);
+      animation: dotPulse 1.1s ease-in-out infinite;
+    }
+    .procDots span:nth-child(2){ animation-delay:.12s; }
+    .procDots span:nth-child(3){ animation-delay:.24s; }
+
+    @keyframes dotPulse{
+      0%,100%{ transform: translateY(0); opacity:.30; }
+      50%{ transform: translateY(-2px); opacity:.85; }
     }
 
     .panel{
-      border-radius: var(--r24);
-      border: 1px solid rgba(15,23,42,.08);
-      background: rgba(255,255,255,.82);
-      box-shadow: 0 16px 40px rgba(15,23,42,.10);
+      border-radius: var(--r28);
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      box-shadow: var(--shadow2);
       padding: 14px;
       display:grid;
       gap:10px;
+      backdrop-filter: blur(10px);
     }
 
     .who{
@@ -355,17 +634,17 @@
     }
     .who h2{
       margin:0;
-      font-size: 13px;
-      color: var(--muted);
+      font-size: 12px;
+      color: var(--muted2);
       font-weight:700;
-      letter-spacing:.12em;
+      letter-spacing:.18em;
       text-transform: uppercase;
     }
     .bigName{
       margin:6px 0 0 0;
       font-size: 28px;
       letter-spacing: -0.01em;
-      font-weight: 900;
+      font-weight: 780;
       line-height:1.05;
     }
 
@@ -381,9 +660,9 @@
     }
 
     .metric{
-      border-radius: var(--r14);
-      border:1px solid rgba(15,23,42,.08);
-      background: rgba(255,255,255,.92);
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.12);
       padding: 10px 12px;
       display:flex;
       justify-content:space-between;
@@ -392,53 +671,75 @@
       color: var(--muted);
       font-size:12px;
     }
-    .metric b{ color: var(--ink); font-weight: 800; }
+    .metric b{ color: var(--ink); font-weight: 760; }
 
+    /* MODAL */
     .modalBack{
       position:fixed; inset:0;
-      background: rgba(15,23,42,.35);
+      background: rgba(0,0,0,.55);
       display:none;
       align-items:center;
       justify-content:center;
       padding: 18px;
       z-index: 99;
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(10px);
     }
     .modal{
       width: min(520px, 100%);
-      border-radius: var(--r30);
-      border: 1px solid rgba(15,23,42,.12);
-      background: rgba(255,255,255,.92);
-      box-shadow: 0 30px 80px rgba(15,23,42,.20);
+      border-radius: var(--r34);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(15,19,27,.72);
+      box-shadow: 0 45px 120px rgba(0,0,0,.65);
       overflow:hidden;
+      backdrop-filter: blur(16px);
     }
     .modalHead{
       display:flex;
       align-items:center;
       justify-content:space-between;
       padding: 14px 16px;
-      border-bottom: 1px solid rgba(15,23,42,.08);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
     }
-    .modalHead h3{ margin:0; font-size:14px; }
-    .modalBody{ padding: 16px; display:grid; gap:12px; }
-    .modalBody p{ margin:0; color: var(--muted); font-size: 13px; line-height:1.55; }
+    .modalHead h3{
+      margin:0;
+      font-size:14px;
+      font-weight: 760;
+      letter-spacing: .01em;
+    }
+    .modalBody{
+      padding: 16px;
+      display:grid;
+      gap:12px;
+    }
+    .modalBody p{
+      margin:0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height:1.55;
+    }
     .field{ display:grid; gap:8px; }
-    .field label{ font-size:12px; color: var(--muted); }
+    .field label{
+      font-size:12px;
+      color: var(--muted2);
+      letter-spacing:.08em;
+      text-transform: uppercase;
+    }
 
     input{
       width:100%;
       border-radius: 16px;
-      border: 1px solid rgba(15,23,42,.12);
-      background: rgba(255,255,255,.98);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
       padding: 12px 14px;
       outline:none;
       font-size: 14px;
       color: var(--ink);
-      box-shadow: 0 10px 26px rgba(15,23,42,.08);
+      box-shadow: 0 14px 40px rgba(0,0,0,.35);
     }
     input:focus{
-      border-color: rgba(37,99,235,.28);
-      box-shadow: 0 0 0 5px rgba(37,99,235,.12);
+      border-color: rgba(143,184,255,.35);
+      box-shadow: 0 0 0 5px rgba(143,184,255,.12);
     }
 
     .modalActions{
@@ -446,40 +747,292 @@
       display:flex;
       justify-content:flex-end;
       gap:10px;
-      border-top: 1px solid rgba(15,23,42,.08);
+      border-top: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
     }
 
+    /* SUCCESS BURST */
     .burst{
       position:absolute; inset:0;
       pointer-events:none;
       opacity:0;
       transition: opacity .35s ease;
       background:
-        radial-gradient(500px 360px at 35% 40%, rgba(255, 215, 128, .30), transparent 60%),
-        radial-gradient(520px 380px at 70% 55%, rgba(59,130,246,.18), transparent 62%),
-        radial-gradient(560px 420px at 55% 70%, rgba(124,58,237,.14), transparent 64%);
+        radial-gradient(520px 380px at 50% 45%, rgba(143,184,255,.14), transparent 60%),
+        radial-gradient(520px 380px at 40% 55%, rgba(125,220,154,.10), transparent 62%);
+      z-index:7;
     }
     .burst.on{ opacity:1; }
 
-    .toast button{
-      border: 1px solid rgba(15,23,42,.12);
-      background: rgba(255,255,255,.98);
-      color: var(--ink);
+    /* SUCCESS POPUP */
+    .successPop{
+      position:absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      z-index: 11;
+      display:none;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 12px 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(15,19,27,.76);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 26px 80px rgba(0,0,0,.55);
+    }
+    .successPop.on{ display:flex; animation: popIn .22s ease-out; }
+    @keyframes popIn{
+      from{ transform: translateY(8px); opacity:0; }
+      to{ transform: translateY(0px); opacity:1; }
+    }
+    .successLeft{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      min-width: 0;
+    }
+    .successIcon{
+      width: 34px; height: 34px;
+      border-radius: 12px;
+      border: 1px solid rgba(125,220,154,.30);
+      background: rgba(125,220,154,.10);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      position:relative;
+      flex: 0 0 auto;
+    }
+    .successIcon::after{
+      content:"";
+      position:absolute;
+      left: 10px;
+      top: 9px;
+      width: 12px;
+      height: 7px;
+      border-left: 2px solid rgba(238,241,247,.90);
+      border-bottom: 2px solid rgba(238,241,247,.90);
+      transform: rotate(-45deg);
+      opacity:.95;
+    }
+    .successText{
+      display:grid;
+      gap:2px;
+      min-width: 0;
+    }
+    .successText b{
+      font-size: 12px;
+      letter-spacing:.16em;
+      text-transform: uppercase;
+      color: rgba(238,241,247,.88);
+    }
+    .successText span{
+      font-size: 13px;
+      color: var(--muted);
+      line-height:1.35;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      white-space:nowrap;
+      max-width: 100%;
+    }
+    .successPop button{
+      min-height: 38px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      box-shadow: none;
+    }
+
+    /* ======= NEW: TECHNICAL ERROR OVERLAY ======= */
+    .errorBack{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 160;
+      background: rgba(0,0,0,.62);
+      backdrop-filter: blur(12px);
+    }
+    .errorBack.on{ display:flex; }
+
+    .errorModal{
+      width: min(760px, 100%);
+      border-radius: var(--r34);
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(15,19,27,.78);
+      box-shadow: 0 55px 140px rgba(0,0,0,.72);
+      overflow:hidden;
+      backdrop-filter: blur(16px);
+      position:relative;
+    }
+
+    .errorModal::before{
+      content:"";
+      position:absolute; inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(900px 420px at 50% 0%, rgba(214,125,125,.16), transparent 62%),
+        linear-gradient(180deg, rgba(255,255,255,.08), transparent 24%);
+      opacity:.85;
+    }
+
+    .errorHead{
+      position:relative;
+      z-index:2;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+    }
+    .errorTitle{
+      display:grid;
+      gap:6px;
+    }
+    .errorTitle b{
+      font-size:12px;
+      letter-spacing:.18em;
+      text-transform: uppercase;
+      font-weight: 820;
+      color: rgba(238,241,247,.88);
+    }
+    .errorTitle span{
+      font-size: 13px;
+      color: var(--muted);
+      line-height:1.35;
+    }
+
+    .errorBadge{
+      font-family: var(--mono);
+      font-size: 11px;
+      color: rgba(238,241,247,.78);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
       padding: 8px 10px;
       border-radius: 999px;
-      cursor: pointer;
-      font-size: 12px;
-      box-shadow: 0 10px 26px rgba(15,23,42,.08);
+      white-space:nowrap;
     }
-    .toast button:hover{ transform: translateY(-1px); }
-    .toast button:active{ transform: translateY(0px) scale(.99); }
+
+    .errorBody{
+      position:relative;
+      z-index:2;
+      padding: 14px 16px 16px;
+      display:grid;
+      gap: 12px;
+    }
+
+    .diag{
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      padding: 12px;
+      box-shadow: 0 20px 70px rgba(0,0,0,.45);
+      position:relative;
+      overflow:hidden;
+    }
+    .diag::after{
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background:
+        repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0 1px, transparent 1px 14px);
+      opacity:.08;
+      transform: rotate(8deg);
+      pointer-events:none;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 720px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .kv{
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      padding: 10px 12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+    .kv b{
+      color: rgba(238,241,247,.90);
+      font-family: var(--sans);
+      font-weight: 780;
+      letter-spacing:.04em;
+    }
+
+    .trace{
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      padding: 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: rgba(238,241,247,.78);
+      line-height: 1.55;
+      max-height: 160px;
+      overflow:auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .trace .weak{ color: rgba(168,176,192,.78); }
+    .trace .hot{ color: rgba(214,125,125,.92); }
+
+    .errorActions{
+      position:relative;
+      z-index:2;
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      padding: 12px 16px 16px;
+      border-top: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+    }
+
+    .errorBtn{
+      min-height: 42px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--ink);
+      font-weight: 720;
+      cursor:pointer;
+      transition: transform .12s ease, background .16s ease, border-color .16s ease;
+      box-shadow: 0 16px 45px rgba(0,0,0,.35);
+    }
+    .errorBtn:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.18);
+    }
+    .errorBtn:active{ transform: translateY(0px) scale(.99); }
+
+    .errorBtnDanger{
+      border-color: rgba(214,125,125,.24);
+      background: rgba(214,125,125,.10);
+    }
+
+    /* TOAST (kept for normal notices) */
     .toast{
       position: fixed;
       left: 50%;
       bottom: 18px;
       transform: translateX(-50%);
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(15,23,42,.10);
+      background: rgba(15,19,27,.72);
+      border: 1px solid rgba(255,255,255,.12);
       border-radius: 999px;
       padding: 12px 14px;
       font-size: 12px;
@@ -487,17 +1040,27 @@
       display:none;
       gap:10px;
       align-items:center;
-      box-shadow: 0 18px 55px rgba(15,23,42,.18);
+      box-shadow: 0 26px 80px rgba(0,0,0,.55);
       z-index: 120;
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(16px);
     }
     .toast .tDot{
       width:9px; height:9px; border-radius:999px;
       background: var(--ok);
-      box-shadow:0 0 0 4px rgba(34,197,94,.18);
+      box-shadow:0 0 0 4px rgba(125,220,154,.14);
+    }
+    .toast button{
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--ink);
+      padding: 8px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 12px;
+      box-shadow: 0 12px 34px rgba(0,0,0,.35);
     }
 
-    /* Floating mobile scan button */
+    /* Floating scan */
     #fabCapture{
       position: fixed;
       right: 18px;
@@ -505,7 +1068,13 @@
       z-index: 140;
       padding: 14px 18px;
       border-radius: 999px;
-      font-weight: 800;
+      font-weight: 770;
+      background: rgba(143,184,255,.14);
+      border-color: rgba(143,184,255,.28);
+    }
+    #fabCapture:hover{
+      background: rgba(143,184,255,.18);
+      border-color: rgba(143,184,255,.35);
     }
   </style>
 </head>
@@ -516,13 +1085,13 @@
       <div class="brand">
         <div class="mark"></div>
         <div class="brandTitle">
-          <b>Tektos</b>
-          <span>Face ID • Recognition + Live Enrollment</span>
+          <b>Eagle Eye</b>
+          <span>Long-range identity verification • Vision system</span>
         </div>
       </div>
 
       <div class="navLinks" aria-label="Navigation">
-        <a href="javascript:void(0)">Dashboard</a>
+        <a href="javascript:void(0)">Overview</a>
         <a href="javascript:void(0)">Enrollment</a>
         <a href="javascript:void(0)">Security</a>
       </div>
@@ -536,18 +1105,21 @@
     <section class="hero">
       <div class="heroGrid">
         <div class="copy">
-          <div class="kicker">VISION • IDENTITY • TEKTOS</div>
-          <h1 class="headline">TEKTOS<span class="accentDot"></span></h1>
+          <div class="kicker">LONG-RANGE VISION • IDENTITY • EAGLE EYE</div>
+
+          <h1 class="headline">Eagle Eye</h1>
+          <div class="headlineBar"></div>
 
           <p class="sub">
-            A clean Face ID workflow for your robot. Recognize known users instantly, or enroll new users in one step.
+            A long-range Face ID workflow for your robot. Identify known users quickly, or enroll new users in one step—built for
+            clarity, speed, and trust.
           </p>
 
           <div class="meaning">
-            <b>Meaning</b>
+            <b>Concept</b>
             <p>
-              <strong>Tektos</strong> is inspired by the Greek root <em>tektōn</em>, associated with a builder/craftsman.
-              Here, Tektos “builds” trust by verifying identity before actions are allowed.
+              <strong>Eagle Eye</strong> is inspired by the eagle’s ability to see far and wide—sharp vision at long distance,
+              rapid target focus, and confident identification.
             </p>
           </div>
 
@@ -562,14 +1134,56 @@
 
         <div class="right">
           <div class="orb">
-            <div class="circleStage">
+            <div class="scanStage" id="scanStage">
               <video id="video" playsinline autoplay muted></video>
               <canvas id="canvas"></canvas>
 
               <div class="burst" id="burst"></div>
 
-              <div class="ring"></div>
-              <div class="sweep" id="scanLine"></div>
+              <div class="frameLine"></div>
+              <div class="bracket b-tl"></div>
+              <div class="bracket b-tr"></div>
+              <div class="bracket b-bl"></div>
+              <div class="bracket b-br"></div>
+
+              <div class="scanLine" id="scanLine"></div>
+              <div class="scanBand" id="scanBand"></div>
+
+              <!-- Processing overlay -->
+              <div class="processing" id="processing">
+                <div class="procCard" role="status" aria-live="polite">
+                  <div class="procTop">
+                    <div class="procTitle">
+                      <b id="procMode">EAGLE EYE</b>
+                      <span id="procText">Processing frame…</span>
+                    </div>
+                    <div class="procBadge" id="procBadge">AI • VISION</div>
+                  </div>
+
+                  <div class="procBars">
+                    <div class="bar"><i></i></div>
+                    <div class="bar"><i></i></div>
+                    <div class="bar"><i></i></div>
+                  </div>
+
+                  <div class="procFooter">
+                    <span id="procSub">Calibrating depth • Matching encodings</span>
+                    <span class="procDots" aria-hidden="true"><span></span><span></span><span></span></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Success popup -->
+              <div class="successPop" id="successPop">
+                <div class="successLeft">
+                  <div class="successIcon" aria-hidden="true"></div>
+                  <div class="successText">
+                    <b id="successTitle">Capture complete</b>
+                    <span id="successMsg">Saved successfully.</span>
+                  </div>
+                </div>
+                <button id="successDismiss">Done</button>
+              </div>
             </div>
           </div>
 
@@ -594,6 +1208,7 @@
     </section>
   </div>
 
+  <!-- Enrollment modal -->
   <div class="modalBack" id="modalBack">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modalHead">
@@ -602,7 +1217,8 @@
       </div>
       <div class="modalBody">
         <p>
-          Your face was not recognized. Enter your name to enroll. This stores a face encoding in your local database.
+          This face was not recognized. Enter a name to enroll.
+          The system stores a face encoding in your local database.
         </p>
         <div class="field">
           <label for="nameInput">Name</label>
@@ -615,6 +1231,40 @@
     </div>
   </div>
 
+  <!-- NEW: Technical error overlay -->
+  <div class="errorBack" id="errorBack" aria-hidden="true">
+    <div class="errorModal" role="dialog" aria-modal="true" aria-labelledby="errTitle">
+      <div class="errorHead">
+        <div class="errorTitle">
+          <b id="errTitle">EAGLE EYE • SYSTEM EXCEPTION</b>
+          <span id="errSummary">A failure occurred while contacting the vision backend.</span>
+        </div>
+        <div class="errorBadge" id="errBadge">E-000</div>
+      </div>
+
+      <div class="errorBody">
+        <div class="diag">
+          <div class="grid2">
+            <div class="kv"><span>Subsystem</span><b id="errSubsystem">NETWORK_IO</b></div>
+            <div class="kv"><span>Endpoint</span><b id="errEndpoint">/recognize</b></div>
+            <div class="kv"><span>HTTP</span><b id="errHttp">—</b></div>
+            <div class="kv"><span>Timestamp</span><b id="errTime">—</b></div>
+          </div>
+        </div>
+
+        <div class="trace" id="errTrace">
+          <span class="weak">Trace:</span> <span class="hot">Uninitialized</span>
+        </div>
+      </div>
+
+      <div class="errorActions">
+        <button class="errorBtn" id="errClose">Dismiss</button>
+        <button class="errorBtn errorBtnDanger" id="errRestart">Restart Flow</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast (still used for normal notices) -->
   <div class="toast" id="toast" aria-live="polite">
     <span class="tDot"></span>
     <span id="toastText">Saved.</span>
@@ -661,10 +1311,31 @@
   const toastText = document.getElementById("toastText");
   const toastRestartBtn = document.getElementById("toastRestartBtn");
 
-  const scanLine = document.getElementById("scanLine");
+  const scanStage = document.getElementById("scanStage");
+  const processing = document.getElementById("processing");
+  const procMode = document.getElementById("procMode");
+  const procText = document.getElementById("procText");
+  const procSub = document.getElementById("procSub");
+
+  const successPop = document.getElementById("successPop");
+  const successTitle = document.getElementById("successTitle");
+  const successMsg = document.getElementById("successMsg");
+  const successDismiss = document.getElementById("successDismiss");
 
   const btnDebugOn = document.getElementById("btnDebugOn");
   const btnDebugOff = document.getElementById("btnDebugOff");
+
+  // Error overlay refs
+  const errorBack = document.getElementById("errorBack");
+  const errSummary = document.getElementById("errSummary");
+  const errBadge = document.getElementById("errBadge");
+  const errSubsystem = document.getElementById("errSubsystem");
+  const errEndpoint = document.getElementById("errEndpoint");
+  const errHttp = document.getElementById("errHttp");
+  const errTime = document.getElementById("errTime");
+  const errTrace = document.getElementById("errTrace");
+  const errClose = document.getElementById("errClose");
+  const errRestart = document.getElementById("errRestart");
 
   let stream = null;
   let busy = false;
@@ -676,12 +1347,17 @@
     }[s]));
   }
 
+  function nowIso() {
+    const d = new Date();
+    return d.toISOString();
+  }
+
   function setNetwork(ok) {
     if (!netDot || !netText) return;
-    netDot.style.background = ok ? "#22c55e" : "#fbbf24";
+    netDot.style.background = ok ? "var(--ok)" : "var(--warn)";
     netDot.style.boxShadow = ok
-      ? "0 0 0 4px rgba(34,197,94,.18)"
-      : "0 0 0 4px rgba(251,191,36,.18)";
+      ? "0 0 0 4px rgba(125,220,154,.14)"
+      : "0 0 0 4px rgba(225,192,125,.12)";
     netText.textContent = ok ? "Connected" : "Not connected";
   }
 
@@ -716,9 +1392,61 @@
   }
 
   function setScanning(on) {
-    if (!scanLine) return;
-    scanLine.style.display = on ? "block" : "none";
+    if (!scanStage) return;
+    scanStage.classList.toggle("scanOn", !!on);
   }
+
+  function showProcessing(on, { mode="EAGLE EYE", text="Processing frame…", sub="Calibrating depth • Matching encodings" } = {}) {
+    if (!processing) return;
+    if (procMode) procMode.textContent = mode;
+    if (procText) procText.textContent = text;
+    if (procSub) procSub.textContent = sub;
+    processing.classList.toggle("on", !!on);
+  }
+
+  function showSuccessPopup({ title="Capture complete", message="Saved successfully." } = {}) {
+    if (!successPop) return;
+    if (successTitle) successTitle.textContent = title;
+    if (successMsg) successMsg.textContent = message;
+    successPop.classList.add("on");
+    setTimeout(() => successPop.classList.remove("on"), 2400);
+  }
+
+  // ====== NEW: Technical error overlay helpers ======
+  function openErrorOverlay({
+    code="E-500",
+    summary="A failure occurred while contacting the vision backend.",
+    subsystem="NETWORK_IO",
+    endpoint="—",
+    http="—",
+    trace="—"
+  } = {}) {
+    if (!errorBack) return;
+
+    errSummary.textContent = summary;
+    errBadge.textContent = code;
+    errSubsystem.textContent = subsystem;
+    errEndpoint.textContent = endpoint;
+    errHttp.textContent = http;
+    errTime.textContent = new Date().toLocaleString();
+
+    const safeTrace = escapeHtml(trace || "—");
+    errTrace.innerHTML = `<span class="weak">Trace:</span> <span class="hot">${safeTrace}</span>`;
+
+    errorBack.classList.add("on");
+    errorBack.setAttribute("aria-hidden", "false");
+  }
+
+  function closeErrorOverlay() {
+    if (!errorBack) return;
+    errorBack.classList.remove("on");
+    errorBack.setAttribute("aria-hidden", "true");
+  }
+
+  errClose?.addEventListener("click", closeErrorOverlay);
+  errorBack?.addEventListener("click", (e) => { if (e.target === errorBack) closeErrorOverlay(); });
+
+  successDismiss?.addEventListener("click", () => successPop?.classList.remove("on"));
 
   let DEBUG_ENABLED = false;
   function setDebugEnabled(enabled) {
@@ -728,7 +1456,7 @@
   }
   function dlog(...args) {
     if (!DEBUG_ENABLED) return;
-    console.log("[TEKTOS]", ...args);
+    console.log("[EAGLE EYE]", ...args);
     if (!logEl) return;
     const div = document.createElement("div");
     div.className = "entry";
@@ -793,8 +1521,17 @@
     const form = new FormData();
     form.append("image", imageBlob, "frame.jpg");
     const res = await fetch(API_RECOGNIZE, { method: "POST", body: form });
+
+    // Try to parse JSON for detail. If it fails, still throw a structured error.
     const json = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+    if (!res.ok) {
+      const msg = json.error || json.detail || `HTTP ${res.status}`;
+      const err = new Error(msg);
+      err.http = String(res.status);
+      err.endpoint = "/recognize";
+      err.payload = json;
+      throw err;
+    }
     return json;
   }
 
@@ -804,7 +1541,14 @@
     form.append("name", name);
     const res = await fetch(API_ENROLL, { method: "POST", body: form });
     const json = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+    if (!res.ok) {
+      const msg = json.error || json.detail || `HTTP ${res.status}`;
+      const err = new Error(msg);
+      err.http = String(res.status);
+      err.endpoint = "/enroll";
+      err.payload = json;
+      throw err;
+    }
     return json;
   }
 
@@ -820,24 +1564,48 @@
       if (!blob) return;
       lastFrameBlob = blob;
 
+      showProcessing(true, {
+        mode: "EAGLE EYE • SCAN",
+        text: "Analyzing… locating identity signature",
+        sub: "Vector match • Distance scoring • Confidence check"
+      });
+
       const data = await apiRecognize(blob);
       setNetwork(true);
+
+      showProcessing(false);
 
       if (data.recognized) {
         setIdentity({ name: data.name, distance: data.distance, status: "Recognized", timestamp: data.timestamp });
         pulseSuccess();
-        showToast(`Welcome, ${data.name}.`);
+        showSuccessPopup({
+          title: "Target acquired",
+          message: `Eagle Eye has located you — ${data.name}.`
+        });
       } else {
         setIdentity({ name: "Unknown", distance: data.distance, status: "Not recognized", timestamp: data.timestamp });
-        showToast("Unknown user. Enrollment required.");
+        showSuccessPopup({
+          title: "No match found",
+          message: "Enrollment required to add this identity."
+        });
         showModal(true);
       }
 
       dlog("Recognize response:", JSON.stringify(data));
     } catch (err) {
       setNetwork(false);
+      showProcessing(false);
       dlog("Recognize error:", err.message || err);
-      showToast("Backend error. Tap Restart to try again.", { showRestart: true });
+
+      // Replace the little bottom box with the technical overlay
+      openErrorOverlay({
+        code: err.http ? `E-${err.http}` : "E-500",
+        summary: "Vision backend unreachable or returned an exception.",
+        subsystem: "VISION_BACKEND",
+        endpoint: err.endpoint || "/recognize",
+        http: err.http || "—",
+        trace: err.message || "Unknown error"
+      });
     } finally {
       busy = false;
       setScanning(false);
@@ -846,16 +1614,30 @@
 
   async function restartFlow() {
     try {
+      closeErrorOverlay();
       showModal(false);
       stopCamera();
       await startCamera();
       setNetwork(false);
       showToast("Restarted. Try again.", { showRestart: false });
     } catch {
-      showToast("Restart failed. Refresh the page.");
+      // If restart fails, still show the technical overlay
+      openErrorOverlay({
+        code: "E-RESTART",
+        summary: "Restart sequence failed. A page refresh may be required.",
+        subsystem: "CLIENT_RUNTIME",
+        endpoint: "restartFlow()",
+        http: "—",
+        trace: "Unable to reinitialize camera stream."
+      });
     }
   }
+
+  // Keep the toast restart button for non-fatal flows (optional)
   toastRestartBtn?.addEventListener("click", restartFlow);
+
+  // Also wire restart in the technical overlay
+  errRestart?.addEventListener("click", restartFlow);
 
   async function enrollNow() {
     if (!lastFrameBlob) { showToast("No frame to enroll. Scan again."); return; }
@@ -866,16 +1648,38 @@
     setScanning(true);
 
     try {
+      showProcessing(true, {
+        mode: "EAGLE EYE • ENROLL",
+        text: "Writing identity profile…",
+        sub: "Encoding face • Persisting record • Verifying integrity"
+      });
+
       const out = await apiEnroll(lastFrameBlob, name);
       setNetwork(true);
+
+      showProcessing(false);
       showModal(false);
       pulseSuccess();
-      showToast(`Enrolled ${out.name} (${out.samples_total} samples).`);
-      setTimeout(() => scanOnce(), 250);
+
+      showSuccessPopup({
+        title: "Capture successful",
+        message: `Identity stored — ${out.name} (${out.samples_total} samples).`
+      });
+
+      setTimeout(() => scanOnce(), 350);
     } catch (err) {
       setNetwork(false);
+      showProcessing(false);
       dlog("Enroll error:", err.message || err);
-      showToast("Backend error. Tap Restart to try again.", { showRestart: true });
+
+      openErrorOverlay({
+        code: err.http ? `E-${err.http}` : "E-500",
+        summary: "Enrollment failed due to a backend exception.",
+        subsystem: "VISION_BACKEND",
+        endpoint: err.endpoint || "/enroll",
+        http: err.http || "—",
+        trace: err.message || "Unknown error"
+      });
     } finally {
       busy = false;
       setScanning(false);
