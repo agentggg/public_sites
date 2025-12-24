@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+
+  <title>Tech & Faith — Tech Trace</title>
+  <meta name="application-name" content="Tech & Faith" />
+  <meta name="apple-mobile-web-app-title" content="Tech & Faith" />
+  <meta name="theme-color" content="#0b0f14" />
+  <meta name="description" content="Tech Trace by Tech & Faith: live camera detection overlay using a Django /predict endpoint." />
+
+  <style>
+    :root{
+      --bg0:#050608; --bg1:#0b0f14; --bg2:#11161c;
+      --panel:rgba(18,22,28,0.92);
+      --panel-border:rgba(0,229,255,0.18);
+      --txt:#e6f1ff;
+      --muted:#9fb0c2;
+      --cyan:#00e5ff;
+      --green:#7cff00;
+      --amber:#ffb300;
+      --red:#ff3355;
+      --magenta:#ff2bd6;
+
+      --glow-cyan:0 0 8px rgba(0,229,255,0.28);
+      --glow-green:0 0 8px rgba(124,255,0,0.22);
+
+      --radius:12px;
+      --shadow:0 22px 60px rgba(0,0,0,0.75);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--txt);
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(0,229,255,0.10), transparent 60%),
+        radial-gradient(1000px 500px at 100% 0%, rgba(124,255,0,0.06), transparent 62%),
+        linear-gradient(180deg, var(--bg0), var(--bg1) 42%, var(--bg2));
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.045), rgba(255,255,255,.045) 1px, transparent 1px, transparent 6px);
+      background-size:64px 64px, 64px 64px, auto;
+      opacity:.10;
+      mask-image: radial-gradient(circle at 50% 10%, rgba(0,0,0,.95), transparent 75%);
+    }
+
+    .app{
+      max-width:1180px;
+      margin:0 auto;
+      padding:16px;
+      padding-bottom:max(16px, env(safe-area-inset-bottom));
+    }
+
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-width:280px;
+    }
+
+    .titleRow{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .title{
+      font-weight:950;
+      letter-spacing:.8px;
+      font-size:18px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      text-transform:uppercase;
+    }
+
+    .badge{
+      font-size:11px;
+      letter-spacing:.55px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.22);
+      color:rgba(255,255,255,.75);
+    }
+
+    .logoMark{
+      width:16px; height:16px; border-radius:5px;
+      background: conic-gradient(from 220deg, var(--cyan), var(--green), var(--magenta), var(--cyan));
+      box-shadow: var(--glow-cyan);
+      border:1px solid rgba(255,255,255,.18);
+      position:relative;
+      overflow:hidden;
+    }
+    .logoMark::after{
+      content:"";
+      position:absolute; inset:-40%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.40), transparent);
+      transform: rotate(18deg) translateX(-40%);
+      animation: sheen 3.2s linear infinite;
+      opacity:.28;
+    }
+    @keyframes sheen{
+      0%{ transform: rotate(18deg) translateX(-55%); }
+      100%{ transform: rotate(18deg) translateX(55%); }
+    }
+
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.22);
+      border-radius:999px;
+      font-size:12px;
+      color:var(--muted);
+      backdrop-filter: blur(10px);
+    }
+
+    .dot{
+      width:8px; height:8px; border-radius:999px;
+      background:var(--amber);
+      box-shadow:0 0 0 6px rgba(255,179,0,.10);
+    }
+    .dot.ok{ background:var(--green); box-shadow:0 0 0 6px rgba(124,255,0,.10); }
+    .dot.bad{ background:var(--red); box-shadow:0 0 0 6px rgba(255,51,85,.10); }
+
+    .subcopy{
+      font-size:12px;
+      color:rgba(255,255,255,.72);
+      line-height:1.5;
+      max-width:920px;
+    }
+
+    .btns{ display:flex; gap:10px; flex-wrap:wrap; }
+
+    button{
+      border:1px solid rgba(0,229,255,0.45);
+      background: rgba(0,229,255,0.08);
+      color:var(--txt);
+      padding:10px 14px;
+      border-radius:10px;
+      font-weight:800;
+      letter-spacing:.45px;
+      cursor:pointer;
+      transition: transform .08s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    button:active{ transform:scale(.985); }
+    button:disabled{ opacity:.45; cursor:not-allowed; }
+
+    button.primary{
+      border-color:rgba(124,255,0,0.60);
+      box-shadow:var(--glow-green);
+      background:rgba(124,255,0,0.08);
+    }
+    button.danger{
+      border-color:rgba(255,51,85,0.65);
+      background:rgba(255,51,85,0.10);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.35fr .65fr;
+      gap:14px;
+    }
+    @media (max-width:900px){
+      .grid{ grid-template-columns:1fr; }
+    }
+
+    .card{
+      background:var(--panel);
+      border:1px solid var(--panel-border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .card::before{
+      content:"";
+      position:absolute; inset:0;
+      pointer-events:none;
+      background: linear-gradient(90deg, transparent 0%, rgba(0,229,255,0.10) 50%, transparent 100%);
+      opacity:.30;
+    }
+
+    .card-h{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:12px 12px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background:rgba(0,0,0,.20);
+      position:relative;
+      z-index:2;
+    }
+    .card-h .left{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .card-h .left b{
+      font-size:12px;
+      letter-spacing:.55px;
+      text-transform:uppercase;
+    }
+    .card-h .left span{
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .stage{
+      position:relative;
+      width:100%;
+      aspect-ratio:16/10;
+      background:rgba(0,0,0,.22);
+      z-index:1;
+    }
+    @media (max-width:900px){
+      .stage{ aspect-ratio:3/4; }
+    }
+
+    video, canvas{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    canvas{ pointer-events:none; }
+
+    .panel{
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      position:relative;
+      z-index:2;
+    }
+
+    .section{
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.20);
+      border-radius:12px;
+      padding:10px;
+    }
+    .section h3{
+      margin:0 0 6px 0;
+      font-size:12px;
+      letter-spacing:.55px;
+      text-transform:uppercase;
+      color:rgba(255,255,255,.88);
+    }
+    .section p{
+      margin:0;
+      font-size:12px;
+      line-height:1.5;
+      color:rgba(255,255,255,.68);
+    }
+    .section code{
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      padding:2px 6px;
+      border-radius:8px;
+      color:rgba(255,255,255,.90);
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width:900px){
+      .row{ grid-template-columns:1fr; }
+    }
+
+    label{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    input, select{
+      width:100%;
+      padding:10px 10px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.30);
+      color:var(--txt);
+      outline:none;
+    }
+    input:focus, select:focus{
+      border-color: rgba(0,229,255,.55);
+      box-shadow: 0 0 0 6px rgba(0,229,255,.10);
+    }
+
+    .status{
+      font-size:12px;
+      color:rgba(255,255,255,.76);
+      line-height:1.5;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.22);
+    }
+    .status b{ color:rgba(255,255,255,.92); }
+
+    .console{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:11px;
+      line-height:1.5;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.32);
+      color:rgba(255,255,255,.80);
+      max-height:240px;
+      overflow:auto;
+    }
+    .console .ok{ color: rgba(124,255,0,.95); }
+    .console .bad{ color: rgba(255,51,85,.95); }
+    .console .warn{ color: rgba(255,179,0,.95); }
+    .console .muted{ color: rgba(255,255,255,.55); }
+
+    .divider{
+      height:1px;
+      background:rgba(255,255,255,.10);
+      margin:4px 0;
+    }
+
+    .fineprint{
+      font-size:11px;
+      color:rgba(255,255,255,.58);
+      line-height:1.45;
+    }
+
+    /* Debug mode: simple by default */
+    .debugOnly{ display:none; }
+    body.debug-on .debugOnly{ display:block; }
+
+    /* Debug password modal */
+    .modalBack{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.65);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:9999;
+    }
+    .modalBack.show{ display:flex; }
+
+    .modal{
+      width: min(420px, 100%);
+      background: rgba(18,22,28,0.96);
+      border: 1px solid rgba(0,229,255,0.22);
+      border-radius: 14px;
+      box-shadow: 0 22px 60px rgba(0,0,0,.75);
+      padding: 14px;
+    }
+    .modal h3{
+      margin: 0 0 8px 0;
+      font-size: 13px;
+      letter-spacing: .55px;
+      text-transform: uppercase;
+    }
+    .modal p{
+      margin: 0 0 10px 0;
+      font-size: 12px;
+      color: rgba(255,255,255,.70);
+      line-height: 1.5;
+    }
+    .modalActions{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      margin-top:10px;
+    }
+    #debugErr{
+      font-size:12px;
+      color: rgba(255,51,85,.95);
+      display:none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="top">
+      <div class="brand">
+        <div class="titleRow">
+          <div class="title">
+            <span class="logoMark"></span>
+            Tech Trace
+            <span class="badge">Tech & Faith</span>
+          </div>
+
+          <span class="chip">
+            <span id="dot" class="dot"></span>
+            <span id="connText">Idle</span>
+          </span>
+
+          <span class="chip" id="miniStats">Detections: 0</span>
+        </div>
+
+        <!-- SIMPLE 2 SENTENCES -->
+        <div class="subcopy">
+          Point your camera at an object and press <b>Start Scan</b> to detect what it sees. Press <b>Stop</b> to end the scan.
+        </div>
+      </div>
+
+      <div class="btns">
+        <button id="start" class="primary">Start Scan</button>
+        <button id="stop" class="danger" disabled>Stop</button>
+        <button id="debugBtn">Debug</button>
+        <button id="hideDebugBtn" style="display:none;">Hide Debug</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Live feed (always visible) -->
+      <div class="card">
+        <div class="card-h">
+          <div class="left">
+            <b>Live Feed</b>
+            <span>Detection overlay drawn on top of your camera view</span>
+          </div>
+          <span class="chip"><span class="muted">Tip:</span>&nbsp;Rear camera is best</span>
+        </div>
+
+        <div class="stage">
+          <video id="video" playsinline autoplay muted></video>
+          <canvas id="overlay"></canvas>
+        </div>
+      </div>
+
+      <!-- Admin / debug panel (hidden unless debug-on) -->
+      <div class="card debugOnly">
+        <div class="card-h">
+          <div class="left">
+            <b>Controls & Notes</b>
+            <span>Configure your API, tune performance, and troubleshoot</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="section">
+            <h3>How to use</h3>
+            <p>
+              Set <code>Django Predict URL</code> to your backend endpoint (example: <code>https://your-domain.com/predict/</code>).
+              Then press <b>Start Scan</b> and check logs below if anything fails.
+            </p>
+          </div>
+
+          <label>
+            Django Predict URL
+            <input id="apiUrl" placeholder="https://.app/predict/" />
+          </label>
+
+          <div class="row">
+            <label>
+              Target FPS (requests/sec)
+              <input id="fps" type="number" min="1" max="30" value="5" />
+            </label>
+
+            <label>
+              Confidence Threshold
+              <input id="conf" type="number" min="0" max="1" step="0.05" value="0.25" />
+            </label>
+          </div>
+
+          <div class="row">
+            <label>
+              Camera
+              <select id="cameraMode">
+                <option value="environment" selected>Rear (environment)</option>
+                <option value="user">Front (user)</option>
+              </select>
+            </label>
+
+            <label>
+              JPEG Quality (0.3–0.95)
+              <input id="jpegQ" type="number" min="0.3" max="0.95" step="0.05" value="0.7" />
+            </label>
+          </div>
+
+          <div class="status" id="status">
+            <b>Status:</b> Ready.
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="fineprint">
+            If your page is <code>https://</code>, your API should also be <code>https://</code> (iOS blocks mixed content).
+          </div>
+
+          <div class="console" id="console"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Debug password modal -->
+  <div id="debugModal" class="modalBack" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dbgTitle">
+      <h3 id="dbgTitle">Enter Debug Password</h3>
+      <p>Debug mode reveals API controls and logs. Password is required.</p>
+
+      <input id="debugPass" type="password" placeholder="Password" autocomplete="current-password" />
+      <div id="debugErr">Incorrect password.</div>
+
+      <div class="modalActions">
+        <button id="debugCancel" class="danger" type="button">Cancel</button>
+        <button id="debugUnlock" class="primary" type="button">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    // UI
+    const video = $("video");
+    const canvas = $("overlay");
+    const ctx = canvas.getContext("2d");
+
+    const startBtn = $("start");
+    const stopBtn = $("stop");
+
+    const miniStatsEl = $("miniStats");
+    const dot = $("dot");
+    const connText = $("connText");
+
+    // Debug gate UI
+    const DEBUG_PASSWORD = "cisco"; // UI-only gate (not secure against view-source)
+    const debugBtn = $("debugBtn");
+    const hideDebugBtn = $("hideDebugBtn");
+    const debugModal = $("debugModal");
+    const debugPass = $("debugPass");
+    const debugErr = $("debugErr");
+    const debugCancel = $("debugCancel");
+    const debugUnlock = $("debugUnlock");
+
+    // Debug/admin controls (exist but hidden in simple mode)
+    const apiUrlInput = $("apiUrl");
+    const fpsInput = $("fps");
+    const confInput = $("conf");
+    const camModeSelect = $("cameraMode");
+    const jpegQInput = $("jpegQ");
+    const statusEl = $("status");
+    const cEl = $("console");
+
+    // Defaults for simple mode if debug panel is hidden
+    const DEFAULT_API_URL = "https://38beafde7ec6.ngrok-free.app/predict/";
+    const DEFAULT_FPS = 5;
+    const DEFAULT_CONF = 0.25;
+    const DEFAULT_CAM = "environment";
+    const DEFAULT_JPEG_Q = 0.7;
+
+    function logLine(msg, cls="muted"){
+      // Only write to UI console when debug is enabled
+      console.log(`[Tech Trace] ${msg}`);
+      if (!document.body.classList.contains("debug-on")) return;
+      if (!cEl) return;
+
+      const t = new Date().toLocaleTimeString();
+      const div = document.createElement("div");
+      div.className = cls;
+      div.textContent = `[${t}] ${msg}`;
+      cEl.appendChild(div);
+      cEl.scrollTop = cEl.scrollHeight;
+    }
+
+    window.addEventListener("error", (e) => logLine(`window.error: ${e.message}`, "bad"));
+    window.addEventListener("unhandledrejection", (e) => logLine(`unhandledrejection: ${String(e.reason)}`, "bad"));
+
+    function setConn(state, text){
+      dot.className = "dot " + (state || "");
+      connText.textContent = text || "Idle";
+    }
+
+    function setStatus(msg, type){
+      if (statusEl) statusEl.innerHTML = `<b>Status:</b> ${msg}`;
+      if (type === "ok") setConn("ok", "Connected");
+      else if (type === "bad") setConn("bad", "Error");
+      else setConn("", "Running");
+    }
+
+    function getApiUrl(){ return (apiUrlInput?.value || DEFAULT_API_URL).trim() || DEFAULT_API_URL; }
+    function getFps(){ return Math.max(1, Math.min(30, parseInt(fpsInput?.value || DEFAULT_FPS, 10))); }
+    function getConf(){ return Math.max(0, Math.min(1, parseFloat(confInput?.value || DEFAULT_CONF))); }
+    function getCamMode(){ return (camModeSelect?.value || DEFAULT_CAM); }
+    function getJpegQ(){ return Math.max(0.3, Math.min(0.95, parseFloat(jpegQInput?.value || DEFAULT_JPEG_Q))); }
+
+    // State
+    let stream = null;
+    let running = false;
+    let busy = false;
+    let lastSendTs = 0;
+
+    function resizeOverlayToVideo(){
+      const rect = video.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const w = Math.max(1, Math.floor(rect.width * dpr));
+      const h = Math.max(1, Math.floor(rect.height * dpr));
+      if (canvas.width !== w || canvas.height !== h){
+        canvas.width = w;
+        canvas.height = h;
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function drawBoxes(dets){
+      const rect = video.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      const vw = video.videoWidth || 1;
+      const vh = video.videoHeight || 1;
+      const sx = rect.width / vw;
+      const sy = rect.height / vh;
+
+      for (const d of dets){
+        const [x1,y1,x2,y2] = d.bbox_xyxy;
+        const label = `${d.class_name} ${Number(d.confidence).toFixed(2)}`;
+
+        const x = x1 * sx;
+        const y = y1 * sy;
+        const w = (x2 - x1) * sx;
+        const h = (y2 - y1) * sy;
+
+        ctx.strokeStyle = "#00e5ff";
+        ctx.lineWidth = 2;
+        ctx.shadowColor = "rgba(0,229,255,0.40)";
+        ctx.shadowBlur = 6;
+        ctx.strokeRect(x, y, w, h);
+
+        ctx.shadowBlur = 0;
+        ctx.font = "13px system-ui";
+        const tw = ctx.measureText(label).width;
+        const boxH = 18;
+        const ly = Math.max(0, y - boxH - 3);
+
+        ctx.fillStyle = "#00e5ff";
+        ctx.fillRect(x, ly, tw + 10, boxH);
+
+        ctx.fillStyle = "#050608";
+        ctx.fillText(label, x + 5, ly + 13);
+      }
+    }
+
+    async function captureBlob(){
+      const off = document.createElement("canvas");
+      off.width = video.videoWidth;
+      off.height = video.videoHeight;
+      off.getContext("2d").drawImage(video, 0, 0);
+
+      const q = getJpegQ();
+      return await new Promise((res, rej) => {
+        off.toBlob((blob) => {
+          if (!blob) return rej(new Error("toBlob returned null (camera/memory constraint)"));
+          res(blob);
+        }, "image/jpeg", q);
+      });
+    }
+
+    async function sendFrame(){
+      if (!running || busy) return;
+      if (!video.videoWidth) return;
+
+      const fps = getFps();
+      const intervalMs = Math.floor(1000 / fps);
+
+      const now = performance.now();
+      if (now - lastSendTs < intervalMs) return;
+      lastSendTs = now;
+
+      busy = true;
+      try{
+        const API_URL = getApiUrl();
+        if (!API_URL){
+          setStatus("Missing Django Predict URL.", "bad");
+          logLine("Missing API URL.", "bad");
+          running = false;
+          return;
+        }
+
+        const resolvedApi = new URL(API_URL, location.href);
+
+        // Mixed-content guard
+        const pageIsHttps = location.protocol === "https:";
+        const apiIsHttp = resolvedApi.protocol === "http:";
+        if (pageIsHttps && apiIsHttp){
+          setStatus("Blocked: HTTPS page cannot call HTTP API (mixed content). Use an https:// API URL.", "bad");
+          logLine("MIXED CONTENT: https page → http api (blocked).", "bad");
+          running = false;
+          return;
+        }
+
+        const blob = await captureBlob();
+        const conf = getConf();
+
+        const form = new FormData();
+        form.append("image", blob, "frame.jpg");
+        form.append("conf", String(conf));
+
+        logLine(`POST ${resolvedApi.href} (jpg=${Math.round(blob.size/1024)}KB, conf=${conf.toFixed(2)})`, "muted");
+
+        const r = await fetch(resolvedApi.href, { method:"POST", body: form });
+        if (!r.ok) throw new Error(`API error ${r.status}`);
+
+        const data = await r.json();
+        const dets = data.detections || [];
+
+        drawBoxes(dets);
+        miniStatsEl.textContent = `Detections: ${dets.length}`;
+        setConn("ok", "Connected");
+      }catch(e){
+        setStatus(`Error: ${e.message}`, "bad");
+        logLine(`ERROR: ${e.message}`, "bad");
+      }finally{
+        busy = false;
+      }
+    }
+
+    function loop(){
+      if (!running) return;
+      resizeOverlayToVideo();
+      sendFrame();
+      requestAnimationFrame(loop);
+    }
+
+    async function start(){
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setStatus("Camera API not available here. Open in Safari/Chrome over HTTPS (or localhost).", "bad");
+        logLine("navigator.mediaDevices missing. Likely: not HTTPS, or in-app browser/WebView.", "bad");
+        return;
+      }
+
+      try{
+        setConn("", "Starting...");
+        const mode = getCamMode();
+        logLine(`Requesting camera (facingMode=${mode})...`, "warn");
+
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: mode },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+
+        video.srcObject = stream;
+        await new Promise(res => { video.onloadedmetadata = () => res(); });
+        await video.play();
+
+        logLine(`Camera ready. video=${video.videoWidth}x${video.videoHeight}`, "ok");
+
+        running = true;
+        busy = false;
+        lastSendTs = 0;
+
+        setStatus("Scanning…", "ok");
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+
+        requestAnimationFrame(loop);
+      }catch(e){
+        setStatus(`Camera start failed: ${e.message}`, "bad");
+        logLine(`Camera start failed: ${e.message}`, "bad");
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      }
+    }
+
+    function stop(){
+      running = false;
+      busy = false;
+
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      stream = null;
+
+      const rect = video.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      miniStatsEl.textContent = "Detections: 0";
+      setConn("", "Idle");
+      if (statusEl) statusEl.innerHTML = "<b>Status:</b> Stopped.";
+      logLine("Stopped.", "warn");
+
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+    }
+
+    // Debug mode gate
+    function openDebugModal(){
+      debugErr.style.display = "none";
+      debugPass.value = "";
+      debugModal.classList.add("show");
+      debugPass.focus();
+    }
+    function closeDebugModal(){
+      debugModal.classList.remove("show");
+    }
+    function enableDebug(){
+      document.body.classList.add("debug-on");
+      hideDebugBtn.style.display = "inline-block";
+      debugBtn.style.display = "none";
+      logLine("Debug mode enabled.", "warn");
+    }
+    function disableDebug(){
+      document.body.classList.remove("debug-on");
+      hideDebugBtn.style.display = "none";
+      debugBtn.style.display = "inline-block";
+      console.log("[Tech Trace] Debug mode disabled.");
+    }
+
+    debugBtn.addEventListener("click", openDebugModal);
+    hideDebugBtn.addEventListener("click", disableDebug);
+    debugCancel.addEventListener("click", closeDebugModal);
+    debugModal.addEventListener("click", (e) => { if (e.target === debugModal) closeDebugModal(); });
+
+    debugUnlock.addEventListener("click", () => {
+      const val = (debugPass.value || "").trim();
+      if (val !== DEBUG_PASSWORD){
+        debugErr.style.display = "block";
+        debugPass.focus();
+        return;
+      }
+      closeDebugModal();
+      enableDebug();
+    });
+
+    debugPass.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") debugUnlock.click();
+      if (e.key === "Escape") closeDebugModal();
+    });
+
+    // Init
+    (function init(){
+      const hasCam = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+      if (apiUrlInput) apiUrlInput.value = DEFAULT_API_URL;
+      if (fpsInput) fpsInput.value = String(DEFAULT_FPS);
+      if (confInput) confInput.value = String(DEFAULT_CONF);
+      if (camModeSelect) camModeSelect.value = DEFAULT_CAM;
+      if (jpegQInput) jpegQInput.value = String(DEFAULT_JPEG_Q);
+
+      setConn("", "Idle");
+      if (!hasCam){
+        startBtn.disabled = true;
+        setStatus("Camera not available here. Open in Safari/Chrome over HTTPS (or localhost).", "bad");
+      }
+    })();
+
+    startBtn.addEventListener("click", start);
+    stopBtn.addEventListener("click", stop);
+    window.addEventListener("resize", () => resizeOverlayToVideo());
+  </script>
+</body>
+</html>
