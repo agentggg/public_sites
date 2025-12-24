@@ -1,0 +1,1420 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>ATLAS-VIEW // Object Gesture Finder</title>
+
+  <!--
+    =========================
+    DJANGO CONTRACT (what you send / what Django returns)
+    =========================
+
+    FRONTEND -> DJANGO (POST JSON):
+    {
+      "session_id": "av_9f31a2c1",
+      "frame_id": 17,
+      "ts_client_ms": 1730000000000,
+      "image": { "format": "jpeg", "data_b64": "<BASE64_NO_PREFIX>" },
+      "focus_label": "wallet",              // null => "Find Anything"
+      "telemetry": {
+        "width": 720,
+        "height": 540,
+        "camera": "user|environment",
+        "mirror": true,
+        "quality": 0.72,
+        "rate": "normal|fast|battery|pause",
+        "overlays": { "boxes": true, "labels": true },
+        "focus": { "enabled": true, "name": "wallet" }  // enabled false when focus_label null
+      }
+    }
+
+    DJANGO -> FRONTEND (200 JSON):
+    {
+      "ok": true,
+      "session_id": "av_9f31a2c1",
+      "frame_id": 17,
+      "ts_server_ms": 1730000000102,
+      "latency_ms": 41,
+      "objects": [
+        { "name":"wallet", "score":0.86, "box": { "x1":0.12, "y1":0.33, "x2":0.46, "y2":0.78 } },
+        { "name":"phone",  "score":0.73, "box": { "x1":0.55, "y1":0.20, "x2":0.92, "y2":0.66 } }
+      ],
+      "top": { "name":"wallet", "score":0.86 },         // optional convenience
+      "warnings": [],
+      "error": null
+    }
+
+    NO OBJECTS:
+    { "ok": true, "objects": [], "warnings": ["NO_OBJECTS"] }
+
+    ERROR:
+    { "ok": false, "error": { "code":"IMAGE_MISSING", "message":"image.data_b64 missing" } }
+  -->
+
+  <style>
+    :root{
+      /* Entirely different from PRISM: warm bright “atlas parchment + sky” */
+      --bg0:#fff7e8;
+      --bg1:#e9fbff;
+      --bg2:#f2ffe9;
+
+      --ink:#1b1a16;
+      --muted: rgba(27,26,22,.64);
+      --faint: rgba(27,26,22,.42);
+      --line: rgba(27,26,22,.12);
+
+      --c1:#ff6a00;      /* orange */
+      --c1s: rgba(255,106,0,.16);
+      --c2:#00a7ff;      /* sky blue */
+      --c2s: rgba(0,167,255,.16);
+      --c3:#2dd36f;      /* green */
+      --c3s: rgba(45,211,111,.16);
+      --c4:#7b61ff;      /* violet */
+      --c4s: rgba(123,97,255,.14);
+
+      --card: rgba(255,255,255,.74);
+      --card2: rgba(255,255,255,.56);
+
+      --shadow: 0 24px 80px rgba(27,26,22,.14);
+      --shadow2: 0 12px 34px rgba(27,26,22,.10);
+
+      --r: 22px;
+
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--ink);
+      background:
+        radial-gradient(900px 560px at 12% 12%, rgba(0,167,255,.16), transparent 60%),
+        radial-gradient(900px 560px at 88% 18%, rgba(255,106,0,.14), transparent 58%),
+        radial-gradient(900px 560px at 55% 95%, rgba(45,211,111,.14), transparent 62%),
+        linear-gradient(180deg, var(--bg1), var(--bg0) 55%, var(--bg2));
+      overflow-x:hidden;
+      overflow-y:auto;
+    }
+
+    /* Layout: banner + two-column deck */
+    .wrap{
+      min-height:100vh;
+      padding: clamp(12px, 2.8vw, 22px);
+      padding-top: calc(clamp(12px, 2.8vw, 22px) + env(safe-area-inset-top));
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    /* Banner with cut corners (not the other UI) */
+    .banner{
+      border: 1px solid rgba(27,26,22,.10);
+      background: linear-gradient(180deg, rgba(255,255,255,.84), rgba(255,255,255,.62));
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(14px);
+      padding: 12px 14px;
+      border-radius: var(--r);
+      clip-path: polygon(
+        0% 14px, 14px 0%,
+        calc(100% - 14px) 0%, 100% 14px,
+        100% calc(100% - 14px), calc(100% - 14px) 100%,
+        14px 100%, 0% calc(100% - 14px)
+      );
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .idBlock{
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+      min-width: 220px;
+    }
+    .idBlock .k{
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: rgba(27,26,22,.78);
+    }
+    .idBlock .t{
+      font-size: 18px;
+      font-weight: 950;
+      letter-spacing: .02em;
+      line-height: 1.1;
+    }
+    .idBlock .s{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: rgba(27,26,22,.62);
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      max-width: 86vw;
+    }
+
+    .btnRow{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+
+    /* Status flag: diamond + label */
+    .statusStrip{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      border: 1px solid rgba(27,26,22,.12);
+      background: rgba(255,255,255,.60);
+      border-radius: 18px;
+      padding: 10px 12px;
+      box-shadow: var(--shadow2);
+      min-width: 190px;
+    }
+    .flag{
+      width: 14px; height: 14px;
+      transform: rotate(45deg);
+      background: rgba(27,26,22,.22);
+      box-shadow: 0 0 0 8px rgba(27,26,22,.06);
+      flex:0 0 auto;
+    }
+    .flag.ok{ background: var(--c3); box-shadow: 0 0 0 8px var(--c3s); }
+    .flag.warn{ background: var(--c1); box-shadow: 0 0 0 8px var(--c1s); }
+    .flag.bad{ background: #ff2d55; box-shadow: 0 0 0 8px rgba(255,45,85,.16); }
+
+    .statusText{
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: rgba(27,26,22,.74);
+      white-space: nowrap;
+    }
+
+    /* Buttons: slanted tiles */
+    .btn{
+      border: 1px solid rgba(27,26,22,.14);
+      background: rgba(255,255,255,.62);
+      color: rgba(27,26,22,.92);
+      padding: 11px 14px;
+      border-radius: 16px;
+      cursor:pointer;
+      user-select:none;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      box-shadow: 0 10px 26px rgba(27,26,22,.10);
+      transform: skewX(-10deg);
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      min-width: 170px;
+      text-align:center;
+    }
+    .btn > span{ display:inline-block; transform: skewX(10deg); }
+    .btn:hover{ background: rgba(255,255,255,.84); border-color: rgba(27,26,22,.20); }
+    .btn:active{ transform: skewX(-10deg) scale(.99); }
+    .btn[disabled]{ opacity:.45; cursor:not-allowed; }
+    .btn.primary{
+      border-color: rgba(0,167,255,.28);
+      background: linear-gradient(180deg, rgba(0,167,255,.16), rgba(255,255,255,.64));
+    }
+
+    .deck{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      align-items:start;
+    }
+    @media (min-width: 980px){
+      .wrap{ max-width: 1200px; margin: 0 auto; }
+      .deck{ grid-template-columns: 1.45fr 0.55fr; }
+    }
+
+    /* Stage: asymmetric “viewport” */
+    .stage{
+      border: 1px solid rgba(27,26,22,.12);
+      background: linear-gradient(180deg, var(--card), var(--card2));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      border-radius: var(--r);
+      overflow:hidden;
+      position:relative;
+      min-height: 520px;
+    }
+
+    .glass{
+      position:absolute;
+      inset: 12px;
+      border: 1px solid rgba(27,26,22,.12);
+      background: rgba(27,26,22,.04);
+      border-radius: 18px;
+      overflow:hidden;
+      /* Not a box / not a square: asymmetric corner cut */
+      clip-path: polygon(0% 12%, 10% 0%, 100% 0%, 100% 84%, 88% 100%, 0% 100%);
+    }
+
+    video{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      filter: contrast(1.03) saturate(1.07);
+      transform: none;
+    }
+
+    /* Processing sweep */
+    .sweep{
+      position:absolute;
+      inset:-50%;
+      pointer-events:none;
+      opacity: 0;
+      background:
+        conic-gradient(from 180deg, transparent, rgba(0,167,255,.14), transparent, rgba(255,106,0,.12), transparent);
+      filter: blur(18px);
+      transform: rotate(10deg);
+    }
+    .processing .sweep{
+      opacity: 1;
+      animation: sweep 1.2s ease-in-out infinite;
+    }
+    @keyframes sweep{
+      0%{ transform: translateX(-10%) rotate(8deg); opacity: 0; }
+      25%{ opacity: .85; }
+      100%{ transform: translateX(10%) rotate(18deg); opacity: 0; }
+    }
+
+    canvas.overlay{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      pointer-events:none;
+    }
+
+    .stack{
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+
+    .card{
+      border: 1px solid rgba(27,26,22,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,.80), rgba(255,255,255,.58));
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(12px);
+      border-radius: var(--r);
+      padding: 12px 12px;
+      overflow:hidden;
+      position:relative;
+    }
+
+    .card:before{
+      content:"";
+      position:absolute;
+      inset:-70%;
+      background:
+        repeating-linear-gradient(135deg, rgba(0,167,255,.10) 0px, rgba(0,167,255,.10) 10px, transparent 10px, transparent 26px);
+      opacity:.14;
+      pointer-events:none;
+      transform: rotate(-10deg);
+      mask-image: radial-gradient(closest-side at 30% 20%, rgba(0,0,0,1) 52%, rgba(0,0,0,0) 78%);
+    }
+
+    .card h3{
+      margin:0 0 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: rgba(27,26,22,.74);
+      position:relative;
+      z-index:1;
+    }
+
+    /* Tiles */
+    .tiles{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      position:relative;
+      z-index:1;
+    }
+
+    .tile{
+      border: 1px solid rgba(27,26,22,.12);
+      background: rgba(255,255,255,.64);
+      border-radius: 18px;
+      padding: 12px 12px;
+      cursor:pointer;
+      user-select:none;
+      box-shadow: 0 10px 24px rgba(27,26,22,.10);
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+      min-height: 72px;
+      position:relative;
+      overflow:hidden;
+    }
+    .tile:hover{ transform: translateY(-1px); background: rgba(255,255,255,.84); border-color: rgba(27,26,22,.20); }
+    .tile:active{ transform: translateY(0px) scale(.99); }
+    .tile.active{
+      border-color: rgba(0,167,255,.30);
+      background: linear-gradient(180deg, rgba(0,167,255,.14), rgba(255,255,255,.64));
+    }
+
+    .tile .a{
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(27,26,22,.78);
+    }
+    .tile .b{
+      font-size: 12px;
+      color: rgba(27,26,22,.62);
+      line-height: 1.25;
+    }
+
+    .toggleTile{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .switch{
+      width: 46px;
+      height: 24px;
+      border-radius: 10px;   /* not pill */
+      border: 1px solid rgba(27,26,22,.14);
+      background: rgba(27,26,22,.06);
+      position:relative;
+      flex:0 0 auto;
+      transform: skewX(-10deg);
+    }
+    .knob{
+      width: 18px;
+      height: 18px;
+      background: rgba(255,255,255,.95);
+      border-radius: 6px; /* not circle */
+      position:absolute;
+      left: 3px;
+      top: 2px;
+      box-shadow: 0 10px 22px rgba(27,26,22,.14);
+      transition: left 140ms ease;
+    }
+    .tile.on .switch{ background: rgba(45,211,111,.16); border-color: rgba(45,211,111,.26); }
+    .tile.on .knob{ left: 24px; }
+
+    /* Big readout */
+    .bigReadout{
+      position:relative;
+      z-index:1;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+    .bigLine{
+      border: 1px solid rgba(27,26,22,.12);
+      background: rgba(255,255,255,.64);
+      border-radius: 18px;
+      padding: 12px 12px;
+      box-shadow: 0 10px 24px rgba(27,26,22,.10);
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      overflow:hidden;
+    }
+    .glyph{
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      border: 1px solid rgba(27,26,22,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,.90), rgba(255,255,255,.60));
+      box-shadow: 0 16px 40px rgba(27,26,22,.12);
+      position:relative;
+      flex:0 0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 28px;
+    }
+    .glyph:before{
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background: conic-gradient(from 140deg, rgba(0,167,255,.16), rgba(255,106,0,.14), rgba(45,211,111,.14), rgba(123,97,255,.12), rgba(0,167,255,.16));
+      opacity:.45;
+      filter: blur(10px);
+      transform: rotate(12deg);
+    }
+    .glyph > span{ position:relative; z-index:2; }
+
+    .readText{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+    }
+    .readText .k{
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: rgba(27,26,22,.68);
+    }
+    .readText .v{
+      font-size: 22px;
+      font-weight: 950;
+      letter-spacing: .01em;
+      line-height: 1.05;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      max-width: min(78vw, 520px);
+    }
+
+    .bar{
+      height: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(27,26,22,.12);
+      background: rgba(27,26,22,.05);
+      overflow:hidden;
+    }
+    .fill{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(255,106,0,.25), rgba(0,167,255,.88), rgba(45,211,111,.88));
+      box-shadow: 0 0 0 12px rgba(0,167,255,.10);
+      transition: width 140ms ease;
+    }
+
+    /* Legend library */
+    .legend{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      position:relative;
+      z-index:1;
+    }
+    @media (min-width: 560px){
+      .legend{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    .legendItem{
+      border: 1px solid rgba(27,26,22,.12);
+      background: rgba(255,255,255,.60);
+      border-radius: 16px;
+      padding: 10px 8px;
+      box-shadow: 0 10px 22px rgba(27,26,22,.08);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap: 6px;
+      text-align:center;
+      min-height: 74px;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .legendItem:hover{ transform: translateY(-1px); background: rgba(255,255,255,.84); border-color: rgba(27,26,22,.20); }
+    .legendItem:active{ transform: translateY(0) scale(.99); }
+    .legendItem.active{
+      border-color: rgba(255,106,0,.34);
+      background: linear-gradient(180deg, rgba(255,106,0,.12), rgba(255,255,255,.64));
+    }
+    .legendItem .e{ font-size: 22px; }
+    .legendItem .n{
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(27,26,22,.72);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      max-width: 18ch;
+    }
+
+    /* Find Anything block */
+    .findBlock{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      position:relative;
+      z-index:1;
+    }
+    .findRow{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items:center;
+    }
+    .findInput{
+      flex: 1 1 220px;
+      border: 1px solid rgba(27,26,22,.12);
+      background: rgba(255,255,255,.70);
+      border-radius: 16px;
+      padding: 12px 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: .08em;
+      color: rgba(27,26,22,.86);
+      outline: none;
+      box-shadow: 0 10px 22px rgba(27,26,22,.08);
+    }
+
+    .hint{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: rgba(27,26,22,.62);
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .debug{
+      display:none;
+      gap: 8px;
+      flex-wrap: wrap;
+      position:relative;
+      z-index:1;
+    }
+    .debugOn .debug{ display:flex; }
+    .tag{
+      border: 1px solid rgba(27,26,22,.12);
+      background: rgba(255,255,255,.56);
+      border-radius: 16px;
+      padding: 8px 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: rgba(27,26,22,.70);
+    }
+    .tag b{ color: rgba(27,26,22,.92); }
+
+    @media (max-width: 520px){
+      .stage{ min-height: 460px; }
+      .readText .v{ font-size: 20px; max-width: 84vw; }
+      .btn{ min-width: 150px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap" id="wrap">
+    <div class="banner">
+      <div class="idBlock">
+        <div class="k">ATLAS-VIEW</div>
+        <div class="t">Object Gesture Finder</div>
+        <div class="s" id="sessionLine">session: —</div>
+      </div>
+
+      <div class="btnRow">
+        <div class="statusStrip" title="System status">
+          <div class="flag" id="flag"></div>
+          <div class="statusText" id="statusText">STANDBY</div>
+        </div>
+        <button class="btn primary" id="startBtn"><span>Turn Camera On</span></button>
+        <button class="btn" id="stopBtn" disabled><span>Turn Camera Off</span></button>
+        <button class="btn" id="debugBtn"><span>Debug</span></button>
+      </div>
+    </div>
+
+    <div class="deck">
+      <div class="stage" id="stage">
+        <div class="glass" id="glass">
+          <video id="video" autoplay playsinline muted></video>
+          <canvas class="overlay" id="overlay"></canvas>
+          <div class="sweep" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card">
+          <h3>Quick Controls</h3>
+          <div class="tiles" id="tiles">
+            <div class="tile active" data-rate="normal">
+              <div class="a">Normal</div>
+              <div class="b">Balanced updates</div>
+            </div>
+            <div class="tile" data-rate="fast">
+              <div class="a">Fast</div>
+              <div class="b">More responsive</div>
+            </div>
+            <div class="tile" data-rate="battery">
+              <div class="a">Battery</div>
+              <div class="b">Fewer sends</div>
+            </div>
+            <div class="tile" data-rate="pause">
+              <div class="a">Pause</div>
+              <div class="b">Stop sending</div>
+            </div>
+
+            <div class="tile on toggleTile" id="mirrorTile" role="switch" aria-checked="true" tabindex="0">
+              <div>
+                <div class="a">Mirror</div>
+                <div class="b">Selfie flip</div>
+              </div>
+              <div class="switch"><div class="knob"></div></div>
+            </div>
+
+            <div class="tile on toggleTile" id="camTile" role="button" tabindex="0" title="Toggle front/back camera">
+              <div>
+                <div class="a">Camera</div>
+                <div class="b" id="camLabel">Front</div>
+              </div>
+              <div class="switch"><div class="knob" style="left:24px;"></div></div>
+            </div>
+
+            <div class="tile on toggleTile" id="boxTile" role="switch" aria-checked="true" tabindex="0">
+              <div>
+                <div class="a">Boxes</div>
+                <div class="b">Overlay frames</div>
+              </div>
+              <div class="switch"><div class="knob"></div></div>
+            </div>
+
+            <div class="tile on toggleTile" id="lblTile" role="switch" aria-checked="true" tabindex="0">
+              <div>
+                <div class="a">Labels</div>
+                <div class="b">Names + scores</div>
+              </div>
+              <div class="switch"><div class="knob"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Find Anything</h3>
+
+          <div class="findBlock">
+            <div class="findRow">
+              <input id="anyInput" class="findInput" placeholder="Type any object… (wallet, keys, bible, remote)" />
+              <button class="btn" id="applyAny"><span>Apply Focus</span></button>
+              <button class="btn" id="clearFocus"><span>Find Anything</span></button>
+            </div>
+
+            <div class="hint">
+              <div>focus: <b id="focusOut" style="color:rgba(27,26,22,.92)">none</b></div>
+              <div style="color:rgba(27,26,22,.54)">Click a library item or type your own</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Object Readout</h3>
+
+          <div class="bigReadout">
+            <div class="bigLine">
+              <div class="glyph"><span id="objEmoji">🧭</span></div>
+              <div class="readText">
+                <div class="k" id="readK">Detected</div>
+                <div class="v" id="detectedLine">No objects detected</div>
+              </div>
+            </div>
+
+            <div class="bar" title="Confidence">
+              <div class="fill" id="confFill"></div>
+            </div>
+
+            <div class="debug" id="debugRow">
+              <div class="tag">lat <b id="lat">—</b></div>
+              <div class="tag">frame <b id="frameId">—</b></div>
+              <div class="tag">jpeg <b id="jpegQ">0.72</b></div>
+              <div class="tag">rate <b id="rateOut">normal</b></div>
+              <div class="tag">seen <b id="seenOut">0</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Library (quick focus)</h3>
+          <div class="legend" id="legend"></div>
+          <div class="hint" style="margin-top:10px">
+            <div>Tip: click again to un-focus</div>
+            <div style="color:rgba(27,26,22,.54)">or press “Find Anything”</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="capture" style="display:none;"></canvas>
+
+  <script>
+    // =========================
+    // CONFIG
+    // =========================
+    // const DJANGO_URL = "http://localhost:8000/object_gesture/"; // <-- change to your endpoint
+    const DJANGO_URL = "https://38beafde7ec6.ngrok-free.app/object_gesture/"; 
+    const AUTH_TOKEN = ""; // optional
+
+    const RATE = {
+      normal:  { interval: 230, jpeg: 0.72 },
+      fast:    { interval: 150, jpeg: 0.74 },
+      battery: { interval: 420, jpeg: 0.70 },
+      pause:   { interval: 999999, jpeg: 0.76 },
+    };
+
+    // A friendly “starter library” (user can still type ANYTHING)
+    const LIBRARY = [
+      { name:"phone",   emoji:"📱" },
+      { name:"wallet",  emoji:"👛" },
+      { name:"keys",    emoji:"🔑" },
+      { name:"remote",  emoji:"📺" },
+      { name:"bible",   emoji:"📖" },
+      { name:"book",    emoji:"📚" },
+      { name:"cup",     emoji:"☕" },
+      { name:"bottle",  emoji:"🧴" },
+      { name:"laptop",  emoji:"💻" },
+      { name:"mouse",   emoji:"🖱️" },
+      { name:"keyboard",emoji:"⌨️" },
+      { name:"bag",     emoji:"🎒" },
+    ];
+
+    // Emoji fallback if Django returns an object not in library
+    function emojiFor(name){
+      const n = normalizeLabel(name);
+      const hit = LIBRARY.find(x => normalizeLabel(x.name) === n);
+      if (hit) return hit.emoji;
+      if (n.includes("person")) return "🧍";
+      if (n.includes("car")) return "🚗";
+      if (n.includes("dog")) return "🐶";
+      if (n.includes("cat")) return "🐱";
+      if (n.includes("chair")) return "🪑";
+      if (n.includes("bottle")) return "🧴";
+      if (n.includes("cup") || n.includes("mug")) return "☕";
+      return "🎯";
+    }
+
+    // =========================
+    // DOM
+    // =========================
+    const sessionLine = document.getElementById("sessionLine");
+    const flag = document.getElementById("flag");
+    const statusText = document.getElementById("statusText");
+
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const debugBtn = document.getElementById("debugBtn");
+
+    const glass = document.getElementById("glass");
+    const video = document.getElementById("video");
+    const overlay = document.getElementById("overlay");
+    const octx = overlay.getContext("2d");
+    const capture = document.getElementById("capture");
+
+    const tiles = document.getElementById("tiles");
+    const mirrorTile = document.getElementById("mirrorTile");
+    const camTile = document.getElementById("camTile");
+    const camLabel = document.getElementById("camLabel");
+    const boxTile = document.getElementById("boxTile");
+    const lblTile = document.getElementById("lblTile");
+
+    const anyInput = document.getElementById("anyInput");
+    const applyAny = document.getElementById("applyAny");
+    const clearFocusBtn = document.getElementById("clearFocus");
+    const focusOut = document.getElementById("focusOut");
+
+    const legend = document.getElementById("legend");
+
+    const objEmoji = document.getElementById("objEmoji");
+    const readK = document.getElementById("readK");
+    const detectedLine = document.getElementById("detectedLine");
+    const confFill = document.getElementById("confFill");
+
+    const latEl = document.getElementById("lat");
+    const frameIdEl = document.getElementById("frameId");
+    const jpegQ = document.getElementById("jpegQ");
+    const rateOut = document.getElementById("rateOut");
+    const seenOut = document.getElementById("seenOut");
+
+    // =========================
+    // STATE
+    // =========================
+    let sessionId = "av_" + Math.random().toString(16).slice(2, 10);
+    let frameId = 0;
+
+    let stream = null;
+    let running = false;
+    let inflight = 0;
+    let timer = null;
+
+    let currentRate = "normal";
+    let jpegQuality = RATE[currentRate].jpeg;
+    let paused = false;
+
+    let debugEnabled = false;
+
+    let facingMode = "user";   // "user" front, "environment" back
+    let mirror = true;         // selfie flip
+
+    let showBoxes = true;      // overlay
+    let showLabels = true;     // overlay
+
+    let lastObjects = [];
+
+    // Focus: if disabled -> “Find Anything”
+    const focus = { enabled:false, name:"" };
+
+    // =========================
+    // Utils
+    // =========================
+    function normalizeLabel(s){ return String(s || "").trim().toLowerCase(); }
+    function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+    // =========================
+    // UI helpers
+    // =========================
+    function setStatus(mode, text){
+      statusText.textContent = text;
+      flag.className = "flag " + (mode || "");
+    }
+
+    function setProcessing(on){
+      glass.classList.toggle("processing", !!on);
+    }
+
+    function setDebug(on){
+      debugEnabled = !!on;
+      document.body.classList.toggle("debugOn", debugEnabled);
+    }
+
+    function setTileOn(tile, on){
+      tile.classList.toggle("on", !!on);
+      tile.setAttribute("aria-checked", on ? "true" : "false");
+      const knob = tile.querySelector(".knob");
+      if (knob) knob.style.left = on ? "24px" : "3px";
+    }
+
+    function setRate(rateKey){
+      currentRate = rateKey;
+      const cfg = RATE[currentRate] || RATE.normal;
+      paused = (currentRate === "pause");
+      jpegQuality = cfg.jpeg;
+
+      jpegQ.textContent = jpegQuality.toFixed(2);
+      rateOut.textContent = currentRate;
+
+      [...tiles.querySelectorAll("[data-rate]")].forEach(t => {
+        t.classList.toggle("active", t.dataset.rate === currentRate);
+      });
+
+      if (running){
+        clearInterval(timer);
+        timer = setInterval(tick, cfg.interval);
+      }
+    }
+
+    function resizeOverlay(){
+      const r = video.getBoundingClientRect();
+      overlay.width = Math.max(1, Math.round(r.width * devicePixelRatio));
+      overlay.height = Math.max(1, Math.round(r.height * devicePixelRatio));
+    }
+    window.addEventListener("resize", resizeOverlay);
+
+    // =========================
+    // Focus controls
+    // =========================
+    function setFocus(label){
+      const clean = normalizeLabel(label);
+      if (!clean){
+        focus.enabled = false;
+        focus.name = "";
+        focusOut.textContent = "none";
+        [...legend.children].forEach(c => c.classList.remove("active"));
+        readK.textContent = "Detected";
+        return;
+      }
+      focus.enabled = true;
+      focus.name = clean;
+      focusOut.textContent = clean;
+
+      [...legend.children].forEach(c => c.classList.remove("active"));
+      for (const item of legend.children){
+        const n = normalizeLabel(item.querySelector(".n")?.textContent);
+        if (n === clean) item.classList.add("active");
+      }
+      readK.textContent = "Focused";
+    }
+
+    // =========================
+    // Render Library
+    // =========================
+    function renderLegend(){
+      legend.innerHTML = "";
+      for (const item of LIBRARY){
+        const el = document.createElement("div");
+        el.className = "legendItem";
+        el.innerHTML = `<div class="e">${item.emoji}</div><div class="n">${item.name}</div>`;
+        el.addEventListener("click", () => {
+          const clicked = item.name;
+          const same = focus.enabled && normalizeLabel(focus.name) === normalizeLabel(clicked);
+          if (same) setFocus(""); else setFocus(clicked);
+        });
+        legend.appendChild(el);
+      }
+    }
+
+    // =========================
+    // Camera
+    // =========================
+    async function startCamera(){
+      if (!navigator?.mediaDevices?.getUserMedia){
+        const isSecure = window.isSecureContext || location.hostname === "localhost" || location.hostname === "127.0.0.1";
+        alert(
+          "Camera API unavailable.\n\nFix:\n- Use HTTPS (or localhost)\n- Open in Safari/Chrome directly\n- Allow Camera permission\n\nSecure: " + (isSecure ? "YES" : "NO")
+        );
+        throw new Error("getUserMedia unavailable");
+      }
+
+      await stopCamera();
+
+      const constraints = {
+        video: { facingMode, width:{ideal:720}, height:{ideal:540} },
+        audio: false
+      };
+
+      try{
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (e){
+        stream = await navigator.mediaDevices.getUserMedia({ video:true, audio:false });
+      }
+
+      video.srcObject = stream;
+      await video.play();
+
+      video.style.transform = mirror ? "scaleX(-1)" : "none";
+      requestAnimationFrame(resizeOverlay);
+    }
+
+    async function stopCamera(){
+      if (stream){
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+      }
+    }
+
+    function captureBase64(){
+      const w = video.videoWidth;
+      const h = video.videoHeight;
+      if (!w || !h) return null;
+
+      capture.width = w;
+      capture.height = h;
+
+      const ctx = capture.getContext("2d");
+      if (mirror){
+        ctx.save();
+        ctx.translate(w, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0, w, h);
+        ctx.restore();
+      } else {
+        ctx.drawImage(video, 0, 0, w, h);
+      }
+
+      const dataUrl = capture.toDataURL("image/jpeg", jpegQuality);
+      return { b64: (dataUrl.split(",")[1] || ""), w, h };
+    }
+
+    // =========================
+    // Network
+    // =========================
+    async function post(payload){
+      const headers = { "Content-Type": "application/json" };
+      if (AUTH_TOKEN) headers["Authorization"] = "Bearer " + AUTH_TOKEN;
+
+      const res = await fetch(DJANGO_URL, { method:"POST", headers, body: JSON.stringify(payload) });
+      const txt = await res.text();
+      let data = null;
+      try { data = JSON.parse(txt); } catch {}
+
+      if (!res.ok){
+        const msg = data?.error?.message || txt || `HTTP ${res.status}`;
+        const code = data?.error?.code || "HTTP_ERROR";
+        return { ok:false, error:{ code, message: msg } };
+      }
+      return data;
+    }
+
+    // =========================
+    // Overlay drawing (no circles: angled corners + diamond markers)
+    // =========================
+    function clearOverlay(){
+      octx.clearRect(0,0,overlay.width,overlay.height);
+    }
+
+    function drawCorner(x,y,dir,sz){
+      // dir: "tl","tr","bl","br"
+      octx.beginPath();
+      if (dir === "tl"){ octx.moveTo(x, y+sz); octx.lineTo(x, y); octx.lineTo(x+sz, y); }
+      if (dir === "tr"){ octx.moveTo(x-sz, y); octx.lineTo(x, y); octx.lineTo(x, y+sz); }
+      if (dir === "bl"){ octx.moveTo(x, y-sz); octx.lineTo(x, y); octx.lineTo(x+sz, y); }
+      if (dir === "br"){ octx.moveTo(x-sz, y); octx.lineTo(x, y); octx.lineTo(x, y-sz); }
+      octx.stroke();
+    }
+
+    function diamond(x,y,size){
+      octx.beginPath();
+      octx.moveTo(x, y - size);
+      octx.lineTo(x + size, y);
+      octx.lineTo(x, y + size);
+      octx.lineTo(x - size, y);
+      octx.closePath();
+    }
+
+    function drawObjects(objects){
+      clearOverlay();
+      if ((!showBoxes && !showLabels) || !objects?.length) return;
+
+      const W = overlay.width, H = overlay.height;
+
+      for (const obj of objects){
+        const name = obj?.name || "object";
+        const score = obj?.score ?? 0;
+        const box = obj?.box || {};
+        const x1 = (box.x1 ?? 0) * W;
+        const y1 = (box.y1 ?? 0) * H;
+        const x2 = (box.x2 ?? 0) * W;
+        const y2 = (box.y2 ?? 0) * H;
+
+        const focused = focus.enabled && normalizeLabel(focus.name) === normalizeLabel(name);
+
+        // Frame corners
+        if (showBoxes){
+          octx.save();
+          octx.lineWidth = Math.max(2, Math.round(2 * devicePixelRatio));
+          octx.strokeStyle = focused ? "rgba(255,106,0,0.92)" : "rgba(0,167,255,0.90)";
+          octx.shadowColor = focused ? "rgba(255,106,0,0.18)" : "rgba(0,167,255,0.16)";
+          octx.shadowBlur = 14 * devicePixelRatio;
+
+          const sz = 18 * devicePixelRatio;
+          drawCorner(x1, y1, "tl", sz);
+          drawCorner(x2, y1, "tr", sz);
+          drawCorner(x1, y2, "bl", sz);
+          drawCorner(x2, y2, "br", sz);
+
+          // center marker
+          const cx = (x1+x2)/2, cy = (y1+y2)/2;
+          octx.fillStyle = focused ? "rgba(255,106,0,0.92)" : "rgba(45,211,111,0.88)";
+          octx.shadowColor = "rgba(45,211,111,0.14)";
+          octx.shadowBlur = 10 * devicePixelRatio;
+          diamond(cx, cy, 4.2 * devicePixelRatio);
+          octx.fill();
+
+          octx.restore();
+        }
+
+        // Label
+        if (showLabels){
+          const pct = Math.round(clamp(score,0,1) * 100);
+          const label = `${emojiFor(name)} ${name.toUpperCase()} • ${pct}%`;
+
+          octx.save();
+          octx.font = `${Math.round(12*devicePixelRatio)}px ${getComputedStyle(document.body).fontFamily}`;
+          octx.lineWidth = 3 * devicePixelRatio;
+
+          // Backplate
+          const padX = 10 * devicePixelRatio;
+          const padY = 7 * devicePixelRatio;
+          const textW = octx.measureText(label).width;
+          const bx = x1;
+          const by = Math.max(0, y1 - (28 * devicePixelRatio));
+
+          octx.fillStyle = focused ? "rgba(255,106,0,0.18)" : "rgba(255,255,255,0.70)";
+          octx.strokeStyle = focused ? "rgba(255,106,0,0.34)" : "rgba(27,26,22,0.12)";
+          octx.beginPath();
+          octx.roundRect(bx, by, textW + padX*2, 24*devicePixelRatio, 10*devicePixelRatio);
+          octx.fill();
+          octx.stroke();
+
+          // Text
+          octx.strokeStyle = "rgba(255,255,255,0.92)";
+          octx.fillStyle = "rgba(27,26,22,0.92)";
+          octx.strokeText(label, bx + padX, by + (16*devicePixelRatio));
+          octx.fillText(label, bx + padX, by + (16*devicePixelRatio));
+
+          octx.restore();
+        }
+      }
+    }
+
+    // polyfill for roundRect on older canvas
+    if (!CanvasRenderingContext2D.prototype.roundRect){
+      CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+        r = Math.min(r, w/2, h/2);
+        this.beginPath();
+        this.moveTo(x+r, y);
+        this.lineTo(x+w-r, y);
+        this.quadraticCurveTo(x+w, y, x+w, y+r);
+        this.lineTo(x+w, y+h-r);
+        this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+        this.lineTo(x+r, y+h);
+        this.quadraticCurveTo(x, y+h, x, y+h-r);
+        this.lineTo(x, y+r);
+        this.quadraticCurveTo(x, y, x+r, y);
+        this.closePath();
+        return this;
+      }
+    }
+
+    // =========================
+    // Readout
+    // =========================
+    function setReadout(objects){
+      const n = objects?.length || 0;
+      seenOut.textContent = String(n);
+
+      if (!n){
+        objEmoji.textContent = "🧭";
+        detectedLine.textContent = "No objects detected";
+        confFill.style.width = "0%";
+        return;
+      }
+
+      // Choose top: if focused exists, prefer it, else highest score
+      let top = null;
+      if (focus.enabled){
+        top = objects.find(o => normalizeLabel(o.name) === normalizeLabel(focus.name)) || null;
+      }
+      if (!top){
+        top = objects.slice().sort((a,b) => (b.score??0) - (a.score??0))[0];
+      }
+
+      const name = top?.name || "object";
+      const score = top?.score ?? 0;
+
+      objEmoji.textContent = emojiFor(name);
+      const pct = Math.round(clamp(score,0,1) * 100);
+      confFill.style.width = pct + "%";
+
+      if (focus.enabled){
+        const hit = normalizeLabel(name) === normalizeLabel(focus.name);
+        detectedLine.textContent = hit
+          ? `FOUND: ${name} • ${pct}%`
+          : `SEEKING: ${focus.name} • best: ${name} (${pct}%)`;
+      } else {
+        detectedLine.textContent = `${name} • ${pct}%`;
+      }
+    }
+
+    // =========================
+    // Loop
+    // =========================
+    async function tick(){
+      if (!running) return;
+      if (inflight >= 1) return;
+      if (paused) return;
+
+      inflight++;
+      setProcessing(true);
+
+      const localFrameId = ++frameId;
+      frameIdEl.textContent = String(localFrameId);
+
+      const t0 = performance.now();
+      try{
+        const snap = captureBase64();
+        if (!snap) return;
+
+        const focusLabel = focus.enabled ? focus.name : null;
+
+        const payload = {
+          session_id: sessionId,
+          frame_id: localFrameId,
+          ts_client_ms: Date.now(),
+          image: { format: "jpeg", data_b64: snap.b64 },
+          focus_label: focusLabel, // null => Find Anything
+          telemetry: {
+            width: snap.w,
+            height: snap.h,
+            camera: facingMode,
+            mirror: mirror,
+            quality: jpegQuality,
+            rate: currentRate,
+            overlays: { boxes: showBoxes, labels: showLabels },
+            focus: focusLabel ? { enabled:true, name: focusLabel } : { enabled:false }
+          }
+        };
+
+        const data = await post(payload);
+        const latency = Math.round(performance.now() - t0);
+        latEl.textContent = (data?.latency_ms ?? latency) + "ms";
+
+        if (!data || data.ok !== true){
+          setStatus("bad", "FAULT");
+          lastObjects = [];
+          drawObjects(lastObjects);
+          setReadout(lastObjects);
+          return;
+        }
+
+        lastObjects = data.objects || [];
+        drawObjects(lastObjects);
+        setReadout(lastObjects);
+
+        if (lastObjects.length) setStatus("ok", focus.enabled ? "FOCUS" : "TRACKING");
+        else setStatus("warn", focus.enabled ? "SEEKING" : "SEEKING");
+
+      } catch (e){
+        setStatus("bad", "FAULT");
+      } finally {
+        inflight--;
+        setProcessing(false);
+      }
+    }
+
+    function startLoop(){
+      clearInterval(timer);
+      timer = setInterval(tick, RATE[currentRate].interval);
+    }
+
+    function stopLoop(){
+      running = false;
+      clearInterval(timer);
+      timer = null;
+      inflight = 0;
+
+      setStatus("", "STANDBY");
+      setProcessing(false);
+
+      lastObjects = [];
+      drawObjects(lastObjects);
+      setReadout(lastObjects);
+
+      frameIdEl.textContent = "—";
+      latEl.textContent = "—";
+    }
+
+    // =========================
+    // Events
+    // =========================
+    tiles.addEventListener("click", (e) => {
+      const rateTile = e.target.closest("[data-rate]");
+      if (rateTile) setRate(rateTile.dataset.rate);
+    });
+
+    function toggleTile(tile, get, set){
+      const next = !get();
+      set(next);
+      setTileOn(tile, next);
+      return next;
+    }
+
+    mirrorTile.addEventListener("click", () => {
+      const v = toggleTile(mirrorTile, () => mirror, x => mirror = x);
+      video.style.transform = v ? "scaleX(-1)" : "none";
+    });
+
+    boxTile.addEventListener("click", () => {
+      toggleTile(boxTile, () => showBoxes, x => showBoxes = x);
+      drawObjects(lastObjects);
+    });
+
+    lblTile.addEventListener("click", () => {
+      toggleTile(lblTile, () => showLabels, x => showLabels = x);
+      drawObjects(lastObjects);
+    });
+
+    camTile.addEventListener("click", async () => {
+      facingMode = (facingMode === "user") ? "environment" : "user";
+      camLabel.textContent = (facingMode === "user") ? "Front" : "Back";
+
+      const knob = camTile.querySelector(".knob");
+      if (knob) knob.style.left = (facingMode === "user") ? "24px" : "3px";
+
+      if (running){
+        await stopCamera();
+        await startCamera();
+      }
+    });
+
+    // Keyboard support for tiles
+    [mirrorTile, boxTile, lblTile, camTile].forEach(el => {
+      el.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter" || ev.key === " "){
+          ev.preventDefault();
+          el.click();
+        }
+      });
+    });
+
+    // Find Anything
+    applyAny.addEventListener("click", () => setFocus(anyInput.value));
+    clearFocusBtn.addEventListener("click", () => { anyInput.value = ""; setFocus(""); });
+    anyInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter"){ e.preventDefault(); setFocus(anyInput.value); }
+    });
+
+    // Debug gate
+    debugBtn.addEventListener("click", () => {
+      if (debugEnabled){ setDebug(false); setStatus("", "ONLINE"); return; }
+      const pw = prompt("Enter debug password:");
+      if (pw === "cisco"){ setDebug(true); setStatus("ok", "DEBUG"); }
+      else setStatus("bad", "DENIED");
+    });
+
+    // Start / Stop
+    startBtn.addEventListener("click", async () => {
+      try{
+        startBtn.disabled = true;
+        setStatus("warn", "STARTING");
+        await startCamera();
+
+        running = true;
+        stopBtn.disabled = false;
+
+        setRate(currentRate);
+        startLoop();
+
+        setStatus("ok", "ONLINE");
+      } catch (e){
+        startBtn.disabled = false;
+        setStatus("bad", "FAULT");
+      }
+    });
+
+    stopBtn.addEventListener("click", async () => {
+      stopLoop();
+      await stopCamera();
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      setStatus("", "STANDBY");
+    });
+
+    // =========================
+    // Init
+    // =========================
+    sessionLine.textContent = `session: ${sessionId}`;
+    setStatus("", "STANDBY");
+
+    setRate("normal");
+    setTileOn(mirrorTile, true);
+    setTileOn(boxTile, true);
+    setTileOn(lblTile, true);
+
+    camLabel.textContent = "Front";
+    const camKnob = camTile.querySelector(".knob");
+    if (camKnob) camKnob.style.left = "24px";
+
+    renderLegend();
+    focusOut.textContent = "none";
+  </script>
+</body>
+</html>

@@ -356,7 +356,7 @@
       line-height:1.45;
     }
 
-    /* Debug mode: simple by default */
+    /* Debug mode */
     .debugOnly{ display:none; }
     body.debug-on .debugOnly{ display:block; }
 
@@ -423,11 +423,11 @@
           </span>
 
           <span class="chip" id="miniStats">Detections: 0</span>
+          <span class="chip" id="miniFocus">Mode: Find Anything</span>
         </div>
 
-        <!-- SIMPLE 2 SENTENCES -->
         <div class="subcopy">
-          Point your camera at an object and press <b>Start Scan</b> to detect what it sees. Press <b>Stop</b> to end the scan.
+          Choose <b>Find Anything</b> or set a <b>Target</b> (ex: wallet, phone, person), then press <b>Start Scan</b>.
         </div>
       </div>
 
@@ -440,12 +440,12 @@
     </div>
 
     <div class="grid">
-      <!-- Live feed (always visible) -->
+      <!-- Live feed -->
       <div class="card">
         <div class="card-h">
           <div class="left">
             <b>Live Feed</b>
-            <span>Detection overlay drawn on top of your camera view</span>
+            <span>Overlay drawn from backend response (normalized boxes)</span>
           </div>
           <span class="chip"><span class="muted">Tip:</span>&nbsp;Rear camera is best</span>
         </div>
@@ -456,27 +456,27 @@
         </div>
       </div>
 
-      <!-- Admin / debug panel (hidden unless debug-on) -->
+      <!-- Debug / admin panel -->
       <div class="card debugOnly">
         <div class="card-h">
           <div class="left">
             <b>Controls & Notes</b>
-            <span>Configure your API, tune performance, and troubleshoot</span>
+            <span>Matches the new backend contract: ok/top/objects/focus</span>
           </div>
         </div>
 
         <div class="panel">
           <div class="section">
-            <h3>How to use</h3>
+            <h3>Backend contract expected</h3>
             <p>
-              Set <code>Django Predict URL</code> to your backend endpoint (example: <code>https://your-domain.com/predict/</code>).
-              Then press <b>Start Scan</b> and check logs below if anything fails.
+              Response should include <code>ok</code>, <code>objects[]</code> with <code>box.x1..y2</code> normalized (0..1),
+              and optional <code>focus</code>/<code>top</code>.
             </p>
           </div>
 
           <label>
             Django Predict URL
-            <input id="apiUrl" placeholder="https://.app/predict/" />
+            <input id="apiUrl" placeholder="https://your-domain.com/predict/" />
           </label>
 
           <div class="row">
@@ -493,6 +493,18 @@
 
           <div class="row">
             <label>
+              IoU Threshold
+              <input id="iou" type="number" min="0.05" max="0.95" step="0.05" value="0.50" />
+            </label>
+
+            <label>
+              Max Detections
+              <input id="maxDet" type="number" min="1" max="300" value="50" />
+            </label>
+          </div>
+
+          <div class="row">
+            <label>
               Camera
               <select id="cameraMode">
                 <option value="environment" selected>Rear (environment)</option>
@@ -503,6 +515,21 @@
             <label>
               JPEG Quality (0.3–0.95)
               <input id="jpegQ" type="number" min="0.3" max="0.95" step="0.05" value="0.7" />
+            </label>
+          </div>
+
+          <div class="row">
+            <label>
+              Detection Mode
+              <select id="mode">
+                <option value="anything" selected>Find Anything</option>
+                <option value="target">Find Target</option>
+              </select>
+            </label>
+
+            <label>
+              Target Label (when “Find Target”)
+              <input id="targetLabel" placeholder="wallet / phone / person / keys" />
             </label>
           </div>
 
@@ -550,11 +577,12 @@
     const stopBtn = $("stop");
 
     const miniStatsEl = $("miniStats");
+    const miniFocusEl = $("miniFocus");
     const dot = $("dot");
     const connText = $("connText");
 
     // Debug gate UI
-    const DEBUG_PASSWORD = "cisco"; // UI-only gate (not secure against view-source)
+    const DEBUG_PASSWORD = "cisco"; // UI-only gate (not secure)
     const debugBtn = $("debugBtn");
     const hideDebugBtn = $("hideDebugBtn");
     const debugModal = $("debugModal");
@@ -563,24 +591,30 @@
     const debugCancel = $("debugCancel");
     const debugUnlock = $("debugUnlock");
 
-    // Debug/admin controls (exist but hidden in simple mode)
+    // Debug/admin controls
     const apiUrlInput = $("apiUrl");
     const fpsInput = $("fps");
     const confInput = $("conf");
+    const iouInput = $("iou");
+    const maxDetInput = $("maxDet");
     const camModeSelect = $("cameraMode");
     const jpegQInput = $("jpegQ");
+    const modeSelect = $("mode");
+    const targetLabelInput = $("targetLabel");
+
     const statusEl = $("status");
     const cEl = $("console");
 
-    // Defaults for simple mode if debug panel is hidden
+    // Defaults for simple mode
     const DEFAULT_API_URL = "https://38beafde7ec6.ngrok-free.app/predict/";
     const DEFAULT_FPS = 5;
     const DEFAULT_CONF = 0.25;
+    const DEFAULT_IOU = 0.50;
+    const DEFAULT_MAXDET = 50;
     const DEFAULT_CAM = "environment";
     const DEFAULT_JPEG_Q = 0.7;
 
     function logLine(msg, cls="muted"){
-      // Only write to UI console when debug is enabled
       console.log(`[Tech Trace] ${msg}`);
       if (!document.body.classList.contains("debug-on")) return;
       if (!cEl) return;
@@ -608,11 +642,33 @@
       else setConn("", "Running");
     }
 
+    function num(v, d){ const n = Number(v); return Number.isFinite(n) ? n : d; }
+    function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+
     function getApiUrl(){ return (apiUrlInput?.value || DEFAULT_API_URL).trim() || DEFAULT_API_URL; }
-    function getFps(){ return Math.max(1, Math.min(30, parseInt(fpsInput?.value || DEFAULT_FPS, 10))); }
-    function getConf(){ return Math.max(0, Math.min(1, parseFloat(confInput?.value || DEFAULT_CONF))); }
+    function getFps(){ return clamp(parseInt(fpsInput?.value || DEFAULT_FPS, 10), 1, 30); }
+    function getConf(){ return clamp(num(confInput?.value, DEFAULT_CONF), 0, 1); }
+    function getIou(){ return clamp(num(iouInput?.value, DEFAULT_IOU), 0.05, 0.95); }
+    function getMaxDet(){ return clamp(parseInt(maxDetInput?.value || DEFAULT_MAXDET, 10), 1, 300); }
     function getCamMode(){ return (camModeSelect?.value || DEFAULT_CAM); }
-    function getJpegQ(){ return Math.max(0.3, Math.min(0.95, parseFloat(jpegQInput?.value || DEFAULT_JPEG_Q))); }
+    function getJpegQ(){ return clamp(num(jpegQInput?.value, DEFAULT_JPEG_Q), 0.3, 0.95); }
+
+    function getMode(){ return (modeSelect?.value || "anything"); }
+    function getTargetLabel(){
+      const s = (targetLabelInput?.value || "").trim();
+      return s;
+    }
+
+    function updateMiniFocus(mode, label){
+      if (!miniFocusEl) return;
+      if (mode === "target" && label){
+        miniFocusEl.textContent = `Mode: Find "${label}"`;
+      } else if (mode === "target" && !label){
+        miniFocusEl.textContent = `Mode: Find Target (set label)`;
+      } else {
+        miniFocusEl.textContent = "Mode: Find Anything";
+      }
+    }
 
     // State
     let stream = null;
@@ -629,43 +685,67 @@
         canvas.width = w;
         canvas.height = h;
       }
+      // normalize drawing coords into CSS pixels (not raw backing pixels)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
-    function drawBoxes(dets){
+    // === Draw from NEW backend contract:
+    // objects[]: { name, score, class_id, box:{x1,y1,x2,y2} } where box is normalized (0..1)
+    function drawBoxesFromObjects(objects, focus){
       const rect = video.getBoundingClientRect();
       ctx.clearRect(0, 0, rect.width, rect.height);
 
-      const vw = video.videoWidth || 1;
-      const vh = video.videoHeight || 1;
-      const sx = rect.width / vw;
-      const sy = rect.height / vh;
+      const W = rect.width;
+      const H = rect.height;
 
-      for (const d of dets){
-        const [x1,y1,x2,y2] = d.bbox_xyxy;
-        const label = `${d.class_name} ${Number(d.confidence).toFixed(2)}`;
+      const focusEnabled = !!focus?.enabled;
+      const focusName = (focus?.name || "").toLowerCase();
+      const focusFound = !!focus?.found;
 
-        const x = x1 * sx;
-        const y = y1 * sy;
-        const w = (x2 - x1) * sx;
-        const h = (y2 - y1) * sy;
+      for (const o of (objects || [])){
+        const box = o.box || {};
+        const x1 = clamp(num(box.x1, 0), 0, 1) * W;
+        const y1 = clamp(num(box.y1, 0), 0, 1) * H;
+        const x2 = clamp(num(box.x2, 0), 0, 1) * W;
+        const y2 = clamp(num(box.y2, 0), 0, 1) * H;
 
-        ctx.strokeStyle = "#00e5ff";
+        const x = Math.min(x1, x2);
+        const y = Math.min(y1, y2);
+        const w = Math.abs(x2 - x1);
+        const h = Math.abs(y2 - y1);
+
+        const name = String(o.name || "object");
+        const score = clamp(num(o.score, 0), 0, 1);
+        const label = `${name} ${score.toFixed(2)}`;
+
+        const isFocus = focusEnabled && focusName && (name.toLowerCase() === focusName);
+
+        // color logic:
+        // - normal: cyan
+        // - focus match: green if found, amber if searching but not found (matches still unlikely), red is used for errors only
+        const stroke = isFocus ? (focusFound ? "#7cff00" : "#ffb300") : "#00e5ff";
+        const glow = isFocus ? (focusFound ? "rgba(124,255,0,0.40)" : "rgba(255,179,0,0.40)") : "rgba(0,229,255,0.40)";
+        const labelBg = isFocus ? (focusFound ? "#7cff00" : "#ffb300") : "#00e5ff";
+        const labelFg = "#050608";
+
+        // box
+        ctx.strokeStyle = stroke;
         ctx.lineWidth = 2;
-        ctx.shadowColor = "rgba(0,229,255,0.40)";
+        ctx.shadowColor = glow;
         ctx.shadowBlur = 6;
         ctx.strokeRect(x, y, w, h);
 
+        // label
         ctx.shadowBlur = 0;
         ctx.font = "13px system-ui";
         const tw = ctx.measureText(label).width;
         const boxH = 18;
         const ly = Math.max(0, y - boxH - 3);
 
-        ctx.fillStyle = "#00e5ff";
+        ctx.fillStyle = labelBg;
         ctx.fillRect(x, ly, tw + 10, boxH);
 
-        ctx.fillStyle = "#050608";
+        ctx.fillStyle = labelFg;
         ctx.fillText(label, x + 5, ly + 13);
       }
     }
@@ -719,23 +799,73 @@
         }
 
         const blob = await captureBlob();
+
         const conf = getConf();
+        const iou = getIou();
+        const maxDet = getMaxDet();
+
+        const mode = getMode();
+        const target = getTargetLabel();
+        updateMiniFocus(mode, target);
 
         const form = new FormData();
         form.append("image", blob, "frame.jpg");
         form.append("conf", String(conf));
+        form.append("iou", String(iou));
+        form.append("max_det", String(maxDet));
 
-        logLine(`POST ${resolvedApi.href} (jpg=${Math.round(blob.size/1024)}KB, conf=${conf.toFixed(2)})`, "muted");
+        // only send focus_label when user selected Find Target AND a label is provided
+        if (mode === "target" && target){
+          form.append("focus_label", target);
+        }
 
+        logLine(
+          `POST ${resolvedApi.href} (jpg=${Math.round(blob.size/1024)}KB, conf=${conf.toFixed(2)}, iou=${iou.toFixed(2)}, max_det=${maxDet}${(mode==="target"&&target)?`, focus="${target}"`:""})`,
+          "muted"
+        );
+
+        const t0 = performance.now();
         const r = await fetch(resolvedApi.href, { method:"POST", body: form });
-        if (!r.ok) throw new Error(`API error ${r.status}`);
+        const t1 = performance.now();
 
-        const data = await r.json();
-        const dets = data.detections || [];
+        const text = await r.text();
+        let data = null;
+        try{ data = JSON.parse(text); } catch {}
 
-        drawBoxes(dets);
-        miniStatsEl.textContent = `Detections: ${dets.length}`;
+        if (!r.ok){
+          const msg = data?.error?.message || text || `HTTP ${r.status}`;
+          throw new Error(msg);
+        }
+        if (!data || data.ok !== true){
+          const msg = data?.error?.message || "Backend returned ok=false";
+          throw new Error(msg);
+        }
+
+        const objects = data.objects || [];
+        const focus = data.focus || { enabled:false };
+        const top = data.top || null;
+        const latency = data.latency_ms ?? Math.round(t1 - t0);
+        const warnings = data.warnings || [];
+
+        drawBoxesFromObjects(objects, focus);
+
+        miniStatsEl.textContent = `Detections: ${objects.length}`;
         setConn("ok", "Connected");
+
+        // Status line: more informative, matches backend
+        const modeLine =
+          (focus?.enabled && focus?.name)
+            ? (focus.found ? `FOUND "${focus.name}" (${(focus.best_score||0).toFixed(2)})` : `SEEKING "${focus.name}"`)
+            : "FIND ANYTHING";
+
+        const topLine =
+          top ? `Top: ${top.name} ${(top.score||0).toFixed(2)}` : "Top: —";
+
+        const warnLine =
+          warnings.length ? `Warnings: ${warnings.join(", ")}` : "Warnings: none";
+
+        setStatus(`${modeLine} • ${topLine} • Latency ${latency}ms • ${warnLine}`, "ok");
+
       }catch(e){
         setStatus(`Error: ${e.message}`, "bad");
         logLine(`ERROR: ${e.message}`, "bad");
@@ -782,6 +912,9 @@
         busy = false;
         lastSendTs = 0;
 
+        const modeSel = getMode();
+        updateMiniFocus(modeSel, getTargetLabel());
+
         setStatus("Scanning…", "ok");
         startBtn.disabled = true;
         stopBtn.disabled = false;
@@ -806,6 +939,8 @@
       ctx.clearRect(0, 0, rect.width, rect.height);
 
       miniStatsEl.textContent = "Detections: 0";
+      updateMiniFocus(getMode(), getTargetLabel());
+
       setConn("", "Idle");
       if (statusEl) statusEl.innerHTML = "<b>Status:</b> Stopped.";
       logLine("Stopped.", "warn");
@@ -858,6 +993,15 @@
       if (e.key === "Escape") closeDebugModal();
     });
 
+    // Keep mini-focus updated (even in non-debug mode)
+    function wireSimpleModeFocus(){
+      if (!modeSelect || !targetLabelInput) return;
+      const refresh = () => updateMiniFocus(getMode(), getTargetLabel());
+      modeSelect.addEventListener("change", refresh);
+      targetLabelInput.addEventListener("input", refresh);
+      refresh();
+    }
+
     // Init
     (function init(){
       const hasCam = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
@@ -865,10 +1009,18 @@
       if (apiUrlInput) apiUrlInput.value = DEFAULT_API_URL;
       if (fpsInput) fpsInput.value = String(DEFAULT_FPS);
       if (confInput) confInput.value = String(DEFAULT_CONF);
+      if (iouInput) iouInput.value = String(DEFAULT_IOU);
+      if (maxDetInput) maxDetInput.value = String(DEFAULT_MAXDET);
       if (camModeSelect) camModeSelect.value = DEFAULT_CAM;
       if (jpegQInput) jpegQInput.value = String(DEFAULT_JPEG_Q);
+      if (modeSelect) modeSelect.value = "anything";
+      if (targetLabelInput) targetLabelInput.value = "";
 
       setConn("", "Idle");
+      updateMiniFocus("anything", "");
+
+      wireSimpleModeFocus();
+
       if (!hasCam){
         startBtn.disabled = true;
         setStatus("Camera not available here. Open in Safari/Chrome over HTTPS (or localhost).", "bad");
