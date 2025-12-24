@@ -5,73 +5,22 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>ATLAS-VIEW // Object Gesture Finder</title>
 
-  <!--
-    =========================
-    DJANGO CONTRACT (what you send / what Django returns)
-    =========================
-
-    FRONTEND -> DJANGO (POST JSON):
-    {
-      "session_id": "av_9f31a2c1",
-      "frame_id": 17,
-      "ts_client_ms": 1730000000000,
-      "image": { "format": "jpeg", "data_b64": "<BASE64_NO_PREFIX>" },
-      "focus_label": "wallet",              // null => "Find Anything"
-      "telemetry": {
-        "width": 720,
-        "height": 540,
-        "camera": "user|environment",
-        "mirror": true,
-        "quality": 0.72,
-        "rate": "normal|fast|battery|pause",
-        "overlays": { "boxes": true, "labels": true },
-        "focus": { "enabled": true, "name": "wallet" }  // enabled false when focus_label null
-      }
-    }
-
-    DJANGO -> FRONTEND (200 JSON):
-    {
-      "ok": true,
-      "session_id": "av_9f31a2c1",
-      "frame_id": 17,
-      "ts_server_ms": 1730000000102,
-      "latency_ms": 41,
-      "objects": [
-        { "name":"wallet", "score":0.86, "box": { "x1":0.12, "y1":0.33, "x2":0.46, "y2":0.78 } },
-        { "name":"phone",  "score":0.73, "box": { "x1":0.55, "y1":0.20, "x2":0.92, "y2":0.66 } }
-      ],
-      "top": { "name":"wallet", "score":0.86 },         // optional convenience
-      "warnings": [],
-      "error": null
-    }
-
-    NO OBJECTS:
-    { "ok": true, "objects": [], "warnings": ["NO_OBJECTS"] }
-
-    ERROR:
-    { "ok": false, "error": { "code":"IMAGE_MISSING", "message":"image.data_b64 missing" } }
-  -->
-
   <style>
     :root{
-      /* Entirely different from PRISM: warm bright “atlas parchment + sky” */
       --bg0:#fff7e8;
       --bg1:#e9fbff;
       --bg2:#f2ffe9;
 
       --ink:#1b1a16;
       --muted: rgba(27,26,22,.64);
-      --faint: rgba(27,26,22,.42);
       --line: rgba(27,26,22,.12);
 
-      --c1:#ff6a00;      /* orange */
+      --c1:#ff6a00;
       --c1s: rgba(255,106,0,.16);
-      --c2:#00a7ff;      /* sky blue */
+      --c2:#00a7ff;
       --c2s: rgba(0,167,255,.16);
-      --c3:#2dd36f;      /* green */
+      --c3:#2dd36f;
       --c3s: rgba(45,211,111,.16);
-      --c4:#7b61ff;      /* violet */
-      --c4s: rgba(123,97,255,.14);
 
       --card: rgba(255,255,255,.74);
       --card2: rgba(255,255,255,.56);
@@ -100,7 +49,6 @@
       overflow-y:auto;
     }
 
-    /* Layout: banner + two-column deck */
     .wrap{
       min-height:100vh;
       padding: clamp(12px, 2.8vw, 22px);
@@ -111,7 +59,6 @@
       gap: 12px;
     }
 
-    /* Banner with cut corners (not the other UI) */
     .banner{
       border: 1px solid rgba(27,26,22,.10);
       background: linear-gradient(180deg, rgba(255,255,255,.84), rgba(255,255,255,.62));
@@ -171,7 +118,6 @@
       justify-content:flex-end;
     }
 
-    /* Status flag: diamond + label */
     .statusStrip{
       display:flex;
       align-items:center;
@@ -203,7 +149,6 @@
       white-space: nowrap;
     }
 
-    /* Buttons: slanted tiles */
     .btn{
       border: 1px solid rgba(27,26,22,.14);
       background: rgba(255,255,255,.62);
@@ -237,12 +182,13 @@
       gap: 12px;
       align-items:start;
     }
+
     @media (min-width: 980px){
       .wrap{ max-width: 1200px; margin: 0 auto; }
       .deck{ grid-template-columns: 1.45fr 0.55fr; }
     }
 
-    /* Stage: asymmetric “viewport” */
+    /* KEY FIX: stage height is responsive; no forced huge blank block */
     .stage{
       border: 1px solid rgba(27,26,22,.12);
       background: linear-gradient(180deg, var(--card), var(--card2));
@@ -251,7 +197,8 @@
       border-radius: var(--r);
       overflow:hidden;
       position:relative;
-      min-height: 520px;
+
+      height: clamp(320px, 52vh, 640px);
     }
 
     .glass{
@@ -261,7 +208,6 @@
       background: rgba(27,26,22,.04);
       border-radius: 18px;
       overflow:hidden;
-      /* Not a box / not a square: asymmetric corner cut */
       clip-path: polygon(0% 12%, 10% 0%, 100% 0%, 100% 84%, 88% 100%, 0% 100%);
     }
 
@@ -273,7 +219,6 @@
       transform: none;
     }
 
-    /* Processing sweep */
     .sweep{
       position:absolute;
       inset:-50%;
@@ -302,6 +247,100 @@
       pointer-events:none;
     }
 
+    /* HUD: readout ON TOP of camera */
+    .hud{
+      position:absolute;
+      left: 14px;
+      right: 14px;
+      top: 14px;
+      z-index: 5;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      pointer-events:none;
+    }
+
+    .hudLine{
+      pointer-events:none;
+      border: 1px solid rgba(27,26,22,.12);
+      background: rgba(255,255,255,.74);
+      backdrop-filter: blur(10px);
+      border-radius: 18px;
+      padding: 10px 10px;
+      box-shadow: 0 12px 26px rgba(27,26,22,.10);
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      overflow:hidden;
+    }
+
+    .glyph{
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      border: 1px solid rgba(27,26,22,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.64));
+      box-shadow: 0 16px 40px rgba(27,26,22,.10);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 24px;
+      flex:0 0 auto;
+    }
+
+    .readText{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap: 4px;
+      flex: 1 1 auto;
+    }
+    .readText .k{
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: rgba(27,26,22,.68);
+      line-height: 1.1;
+    }
+    .readText .v{
+      font-size: 18px;
+      font-weight: 950;
+      letter-spacing: .01em;
+      line-height: 1.05;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hudMeta{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 0 2px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: rgba(27,26,22,.62);
+    }
+
+    .bar{
+      height: 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(27,26,22,.12);
+      background: rgba(27,26,22,.05);
+      overflow:hidden;
+    }
+    .fill{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(255,106,0,.25), rgba(0,167,255,.88), rgba(45,211,111,.88));
+      box-shadow: 0 0 0 12px rgba(0,167,255,.10);
+      transition: width 140ms ease;
+    }
+
     .stack{
       display:flex;
       flex-direction:column;
@@ -319,18 +358,6 @@
       position:relative;
     }
 
-    .card:before{
-      content:"";
-      position:absolute;
-      inset:-70%;
-      background:
-        repeating-linear-gradient(135deg, rgba(0,167,255,.10) 0px, rgba(0,167,255,.10) 10px, transparent 10px, transparent 26px);
-      opacity:.14;
-      pointer-events:none;
-      transform: rotate(-10deg);
-      mask-image: radial-gradient(closest-side at 30% 20%, rgba(0,0,0,1) 52%, rgba(0,0,0,0) 78%);
-    }
-
     .card h3{
       margin:0 0 10px;
       font-family: var(--mono);
@@ -338,65 +365,100 @@
       letter-spacing: .18em;
       text-transform: uppercase;
       color: rgba(27,26,22,.74);
-      position:relative;
-      z-index:1;
     }
 
-    /* Tiles */
-    .tiles{
+    /* Dropdown controls */
+    .controlsGrid{
       display:grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
-      position:relative;
-      z-index:1;
+    }
+    @media (max-width: 560px){
+      .controlsGrid{ grid-template-columns: 1fr; }
     }
 
-    .tile{
+    .field{
+      border: 1px solid rgba(27,26,22,.12);
+      background: rgba(255,255,255,.64);
+      border-radius: 18px;
+      padding: 10px 10px;
+      box-shadow: 0 10px 24px rgba(27,26,22,.08);
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+    }
+    .field label{
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: rgba(27,26,22,.62);
+    }
+
+    select, input[type="text"]{
+      width:100%;
+      border: 1px solid rgba(27,26,22,.12);
+      background: rgba(255,255,255,.80);
+      border-radius: 14px;
+      padding: 10px 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: .08em;
+      color: rgba(27,26,22,.86);
+      outline: none;
+    }
+
+    .rowBtns{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .rowBtns .btn{ min-width: 170px; }
+
+    /* Filter feature toggles */
+    .toggleGrid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    @media (max-width: 560px){
+      .toggleGrid{ grid-template-columns: 1fr; }
+    }
+
+    .toggleCard{
       border: 1px solid rgba(27,26,22,.12);
       background: rgba(255,255,255,.64);
       border-radius: 18px;
       padding: 12px 12px;
-      cursor:pointer;
+      box-shadow: 0 10px 24px rgba(27,26,22,.08);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
       user-select:none;
-      box-shadow: 0 10px 24px rgba(27,26,22,.10);
-      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      cursor:pointer;
+    }
+    .toggleCard .left{
       display:flex;
       flex-direction:column;
-      gap: 8px;
-      min-height: 72px;
-      position:relative;
-      overflow:hidden;
+      gap: 4px;
     }
-    .tile:hover{ transform: translateY(-1px); background: rgba(255,255,255,.84); border-color: rgba(27,26,22,.20); }
-    .tile:active{ transform: translateY(0px) scale(.99); }
-    .tile.active{
-      border-color: rgba(0,167,255,.30);
-      background: linear-gradient(180deg, rgba(0,167,255,.14), rgba(255,255,255,.64));
-    }
-
-    .tile .a{
+    .toggleCard .a{
       font-family: var(--mono);
       font-size: 12px;
       letter-spacing: .12em;
       text-transform: uppercase;
       color: rgba(27,26,22,.78);
     }
-    .tile .b{
+    .toggleCard .b{
       font-size: 12px;
       color: rgba(27,26,22,.62);
-      line-height: 1.25;
-    }
-
-    .toggleTile{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
     }
     .switch{
       width: 46px;
       height: 24px;
-      border-radius: 10px;   /* not pill */
+      border-radius: 10px;
       border: 1px solid rgba(27,26,22,.14);
       background: rgba(27,26,22,.06);
       position:relative;
@@ -407,106 +469,34 @@
       width: 18px;
       height: 18px;
       background: rgba(255,255,255,.95);
-      border-radius: 6px; /* not circle */
+      border-radius: 6px;
       position:absolute;
       left: 3px;
       top: 2px;
       box-shadow: 0 10px 22px rgba(27,26,22,.14);
       transition: left 140ms ease;
     }
-    .tile.on .switch{ background: rgba(45,211,111,.16); border-color: rgba(45,211,111,.26); }
-    .tile.on .knob{ left: 24px; }
+    .toggleCard.on .switch{ background: rgba(45,211,111,.16); border-color: rgba(45,211,111,.26); }
+    .toggleCard.on .knob{ left: 24px; }
 
-    /* Big readout */
-    .bigReadout{
-      position:relative;
-      z-index:1;
-      display:flex;
-      flex-direction:column;
-      gap: 10px;
-    }
-    .bigLine{
-      border: 1px solid rgba(27,26,22,.12);
-      background: rgba(255,255,255,.64);
-      border-radius: 18px;
-      padding: 12px 12px;
-      box-shadow: 0 10px 24px rgba(27,26,22,.10);
+    .legendLine{
       display:flex;
       align-items:center;
+      justify-content:space-between;
       gap: 12px;
-      overflow:hidden;
-    }
-    .glyph{
-      width: 56px;
-      height: 56px;
-      border-radius: 18px;
-      border: 1px solid rgba(27,26,22,.12);
-      background: linear-gradient(180deg, rgba(255,255,255,.90), rgba(255,255,255,.60));
-      box-shadow: 0 16px 40px rgba(27,26,22,.12);
-      position:relative;
-      flex:0 0 auto;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size: 28px;
-    }
-    .glyph:before{
-      content:"";
-      position:absolute;
-      inset:-40%;
-      background: conic-gradient(from 140deg, rgba(0,167,255,.16), rgba(255,106,0,.14), rgba(45,211,111,.14), rgba(123,97,255,.12), rgba(0,167,255,.16));
-      opacity:.45;
-      filter: blur(10px);
-      transform: rotate(12deg);
-    }
-    .glyph > span{ position:relative; z-index:2; }
-
-    .readText{
-      min-width:0;
-      display:flex;
-      flex-direction:column;
-      gap: 6px;
-    }
-    .readText .k{
+      margin-top: 10px;
       font-family: var(--mono);
       font-size: 12px;
-      letter-spacing: .18em;
+      letter-spacing: .14em;
       text-transform: uppercase;
-      color: rgba(27,26,22,.68);
-    }
-    .readText .v{
-      font-size: 22px;
-      font-weight: 950;
-      letter-spacing: .01em;
-      line-height: 1.05;
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
-      max-width: min(78vw, 520px);
+      color: rgba(27,26,22,.58);
     }
 
-    .bar{
-      height: 14px;
-      border-radius: 18px;
-      border: 1px solid rgba(27,26,22,.12);
-      background: rgba(27,26,22,.05);
-      overflow:hidden;
-    }
-    .fill{
-      height:100%;
-      width:0%;
-      background: linear-gradient(90deg, rgba(255,106,0,.25), rgba(0,167,255,.88), rgba(45,211,111,.88));
-      box-shadow: 0 0 0 12px rgba(0,167,255,.10);
-      transition: width 140ms ease;
-    }
-
-    /* Legend library */
     .legend{
       display:grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
-      position:relative;
-      z-index:1;
+      margin-top: 10px;
     }
     @media (min-width: 560px){
       .legend{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -547,53 +537,11 @@
       max-width: 18ch;
     }
 
-    /* Find Anything block */
-    .findBlock{
-      display:flex;
-      flex-direction:column;
-      gap: 10px;
-      position:relative;
-      z-index:1;
-    }
-    .findRow{
-      display:flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items:center;
-    }
-    .findInput{
-      flex: 1 1 220px;
-      border: 1px solid rgba(27,26,22,.12);
-      background: rgba(255,255,255,.70);
-      border-radius: 16px;
-      padding: 12px 12px;
-      font-family: var(--mono);
-      font-size: 12px;
-      letter-spacing: .08em;
-      color: rgba(27,26,22,.86);
-      outline: none;
-      box-shadow: 0 10px 22px rgba(27,26,22,.08);
-    }
-
-    .hint{
-      font-family: var(--mono);
-      font-size: 12px;
-      color: rgba(27,26,22,.62);
-      letter-spacing: .10em;
-      text-transform: uppercase;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
     .debug{
       display:none;
       gap: 8px;
       flex-wrap: wrap;
-      position:relative;
-      z-index:1;
+      margin-top: 10px;
     }
     .debugOn .debug{ display:flex; }
     .tag{
@@ -607,10 +555,13 @@
     }
     .tag b{ color: rgba(27,26,22,.92); }
 
+    /* Mobile tuning: “110% mobile friendly” */
     @media (max-width: 520px){
-      .stage{ min-height: 460px; }
-      .readText .v{ font-size: 20px; max-width: 84vw; }
       .btn{ min-width: 150px; }
+      .stage{ height: clamp(320px, 56vh, 520px); }
+      .hud{ left: 12px; right: 12px; top: 12px; }
+      .readText .v{ font-size: 16px; }
+      .hudMeta{ font-size: 10px; }
     }
   </style>
 </head>
@@ -638,89 +589,9 @@
     <div class="deck">
       <div class="stage" id="stage">
         <div class="glass" id="glass">
-          <video id="video" autoplay playsinline muted></video>
-          <canvas class="overlay" id="overlay"></canvas>
-          <div class="sweep" aria-hidden="true"></div>
-        </div>
-      </div>
-
-      <div class="stack">
-        <div class="card">
-          <h3>Quick Controls</h3>
-          <div class="tiles" id="tiles">
-            <div class="tile active" data-rate="normal">
-              <div class="a">Normal</div>
-              <div class="b">Balanced updates</div>
-            </div>
-            <div class="tile" data-rate="fast">
-              <div class="a">Fast</div>
-              <div class="b">More responsive</div>
-            </div>
-            <div class="tile" data-rate="battery">
-              <div class="a">Battery</div>
-              <div class="b">Fewer sends</div>
-            </div>
-            <div class="tile" data-rate="pause">
-              <div class="a">Pause</div>
-              <div class="b">Stop sending</div>
-            </div>
-
-            <div class="tile on toggleTile" id="mirrorTile" role="switch" aria-checked="true" tabindex="0">
-              <div>
-                <div class="a">Mirror</div>
-                <div class="b">Selfie flip</div>
-              </div>
-              <div class="switch"><div class="knob"></div></div>
-            </div>
-
-            <div class="tile on toggleTile" id="camTile" role="button" tabindex="0" title="Toggle front/back camera">
-              <div>
-                <div class="a">Camera</div>
-                <div class="b" id="camLabel">Front</div>
-              </div>
-              <div class="switch"><div class="knob" style="left:24px;"></div></div>
-            </div>
-
-            <div class="tile on toggleTile" id="boxTile" role="switch" aria-checked="true" tabindex="0">
-              <div>
-                <div class="a">Boxes</div>
-                <div class="b">Overlay frames</div>
-              </div>
-              <div class="switch"><div class="knob"></div></div>
-            </div>
-
-            <div class="tile on toggleTile" id="lblTile" role="switch" aria-checked="true" tabindex="0">
-              <div>
-                <div class="a">Labels</div>
-                <div class="b">Names + scores</div>
-              </div>
-              <div class="switch"><div class="knob"></div></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>Find Anything</h3>
-
-          <div class="findBlock">
-            <div class="findRow">
-              <input id="anyInput" class="findInput" placeholder="Type any object… (wallet, keys, bible, remote)" />
-              <button class="btn" id="applyAny"><span>Apply Focus</span></button>
-              <button class="btn" id="clearFocus"><span>Find Anything</span></button>
-            </div>
-
-            <div class="hint">
-              <div>focus: <b id="focusOut" style="color:rgba(27,26,22,.92)">none</b></div>
-              <div style="color:rgba(27,26,22,.54)">Click a library item or type your own</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>Object Readout</h3>
-
-          <div class="bigReadout">
-            <div class="bigLine">
+          <!-- HUD Readout (top of camera) -->
+          <div class="hud" aria-hidden="true">
+            <div class="hudLine">
               <div class="glyph"><span id="objEmoji">🧭</span></div>
               <div class="readText">
                 <div class="k" id="readK">Detected</div>
@@ -732,23 +603,106 @@
               <div class="fill" id="confFill"></div>
             </div>
 
-            <div class="debug" id="debugRow">
-              <div class="tag">lat <b id="lat">—</b></div>
-              <div class="tag">frame <b id="frameId">—</b></div>
-              <div class="tag">jpeg <b id="jpegQ">0.72</b></div>
-              <div class="tag">rate <b id="rateOut">normal</b></div>
-              <div class="tag">seen <b id="seenOut">0</b></div>
+            <div class="hudMeta">
+              <div>Scroll down for clickable emojis</div>
+              <div>Focus: <b id="focusOut" style="color:rgba(27,26,22,.92)">none</b></div>
+            </div>
+          </div>
+
+          <video id="video" autoplay playsinline muted></video>
+          <canvas class="overlay" id="overlay"></canvas>
+          <div class="sweep" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card">
+          <h3>Control Panel</h3>
+
+          <div class="controlsGrid">
+            <div class="field">
+              <label for="rateSel">Rate</label>
+              <select id="rateSel">
+                <option value="normal">Normal (balanced)</option>
+                <option value="fast">Fast (responsive)</option>
+                <option value="battery">Battery (fewer sends)</option>
+                <option value="pause">Pause (stop sending)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="camSel">Camera</label>
+              <select id="camSel">
+                <option value="user">Front</option>
+                <option value="environment">Back</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="focusSel">Focus (library)</label>
+              <select id="focusSel">
+                <option value="">Find Anything</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="anyInput">Or type any object</label>
+              <input id="anyInput" type="text" placeholder="wallet, keys, bible, remote..." />
+            </div>
+          </div>
+
+          <div class="rowBtns">
+            <button class="btn" id="applyAny"><span>Apply Focus</span></button>
+            <button class="btn" id="clearFocus"><span>Find Anything</span></button>
+          </div>
+
+          <div class="debug" id="debugRow">
+            <div class="tag">lat <b id="lat">—</b></div>
+            <div class="tag">frame <b id="frameId">—</b></div>
+            <div class="tag">jpeg <b id="jpegQ">0.72</b></div>
+            <div class="tag">rate <b id="rateOut">normal</b></div>
+            <div class="tag">seen <b id="seenOut">0</b></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Filter Features</h3>
+          <div class="toggleGrid">
+            <div class="toggleCard on" id="mirrorToggle" role="switch" aria-checked="true" tabindex="0">
+              <div class="left">
+                <div class="a">Mirror</div>
+                <div class="b">Selfie flip</div>
+              </div>
+              <div class="switch"><div class="knob"></div></div>
+            </div>
+
+            <div class="toggleCard on" id="boxToggle" role="switch" aria-checked="true" tabindex="0">
+              <div class="left">
+                <div class="a">Boxes</div>
+                <div class="b">Overlay frames</div>
+              </div>
+              <div class="switch"><div class="knob"></div></div>
+            </div>
+
+            <div class="toggleCard on" id="lblToggle" role="switch" aria-checked="true" tabindex="0">
+              <div class="left">
+                <div class="a">Labels</div>
+                <div class="b">Names + scores</div>
+              </div>
+              <div class="switch"><div class="knob"></div></div>
             </div>
           </div>
         </div>
 
         <div class="card">
           <h3>Library (quick focus)</h3>
-          <div class="legend" id="legend"></div>
-          <div class="hint" style="margin-top:10px">
-            <div>Tip: click again to un-focus</div>
-            <div style="color:rgba(27,26,22,.54)">or press “Find Anything”</div>
+
+          <div class="legendLine">
+            <div>Scroll down for clickable emojis</div>
+            <div style="color:rgba(27,26,22,.54)">Tap to focus / tap again to clear</div>
           </div>
+
+          <div class="legend" id="legend"></div>
         </div>
       </div>
     </div>
@@ -760,9 +714,8 @@
     // =========================
     // CONFIG
     // =========================
-    // const DJANGO_URL = "http://localhost:8000/object_gesture/"; // <-- change to your endpoint
-    const DJANGO_URL = "https://38beafde7ec6.ngrok-free.app/object_gesture/"; 
-    const AUTH_TOKEN = ""; // optional
+    const DJANGO_URL = "http://localhost:8000/object_gesture/";
+    const AUTH_TOKEN = "";
 
     const RATE = {
       normal:  { interval: 230, jpeg: 0.72 },
@@ -771,7 +724,6 @@
       pause:   { interval: 999999, jpeg: 0.76 },
     };
 
-    // A friendly “starter library” (user can still type ANYTHING)
     const LIBRARY = [
       { name:"phone",   emoji:"📱" },
       { name:"wallet",  emoji:"👛" },
@@ -787,7 +739,9 @@
       { name:"bag",     emoji:"🎒" },
     ];
 
-    // Emoji fallback if Django returns an object not in library
+    function normalizeLabel(s){ return String(s || "").trim().toLowerCase(); }
+    function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
     function emojiFor(name){
       const n = normalizeLabel(name);
       const hit = LIBRARY.find(x => normalizeLabel(x.name) === n);
@@ -819,24 +773,25 @@
     const octx = overlay.getContext("2d");
     const capture = document.getElementById("capture");
 
-    const tiles = document.getElementById("tiles");
-    const mirrorTile = document.getElementById("mirrorTile");
-    const camTile = document.getElementById("camTile");
-    const camLabel = document.getElementById("camLabel");
-    const boxTile = document.getElementById("boxTile");
-    const lblTile = document.getElementById("lblTile");
+    const legend = document.getElementById("legend");
+
+    const rateSel = document.getElementById("rateSel");
+    const camSel = document.getElementById("camSel");
+    const focusSel = document.getElementById("focusSel");
+
+    const mirrorToggle = document.getElementById("mirrorToggle");
+    const boxToggle = document.getElementById("boxToggle");
+    const lblToggle = document.getElementById("lblToggle");
 
     const anyInput = document.getElementById("anyInput");
     const applyAny = document.getElementById("applyAny");
     const clearFocusBtn = document.getElementById("clearFocus");
-    const focusOut = document.getElementById("focusOut");
-
-    const legend = document.getElementById("legend");
 
     const objEmoji = document.getElementById("objEmoji");
     const readK = document.getElementById("readK");
     const detectedLine = document.getElementById("detectedLine");
     const confFill = document.getElementById("confFill");
+    const focusOut = document.getElementById("focusOut");
 
     const latEl = document.getElementById("lat");
     const frameIdEl = document.getElementById("frameId");
@@ -861,45 +816,33 @@
 
     let debugEnabled = false;
 
-    let facingMode = "user";   // "user" front, "environment" back
-    let mirror = true;         // selfie flip
+    let facingMode = "user";
+    let mirror = true;
 
-    let showBoxes = true;      // overlay
-    let showLabels = true;     // overlay
+    let showBoxes = true;
+    let showLabels = true;
 
     let lastObjects = [];
 
-    // Focus: if disabled -> “Find Anything”
     const focus = { enabled:false, name:"" };
 
     // =========================
-    // Utils
-    // =========================
-    function normalizeLabel(s){ return String(s || "").trim().toLowerCase(); }
-    function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
-
-    // =========================
-    // UI helpers
+    // UI
     // =========================
     function setStatus(mode, text){
       statusText.textContent = text;
       flag.className = "flag " + (mode || "");
     }
-
     function setProcessing(on){
       glass.classList.toggle("processing", !!on);
     }
-
     function setDebug(on){
       debugEnabled = !!on;
       document.body.classList.toggle("debugOn", debugEnabled);
     }
-
-    function setTileOn(tile, on){
-      tile.classList.toggle("on", !!on);
-      tile.setAttribute("aria-checked", on ? "true" : "false");
-      const knob = tile.querySelector(".knob");
-      if (knob) knob.style.left = on ? "24px" : "3px";
+    function setToggle(el, on){
+      el.classList.toggle("on", !!on);
+      el.setAttribute("aria-checked", on ? "true" : "false");
     }
 
     function setRate(rateKey){
@@ -910,10 +853,6 @@
 
       jpegQ.textContent = jpegQuality.toFixed(2);
       rateOut.textContent = currentRate;
-
-      [...tiles.querySelectorAll("[data-rate]")].forEach(t => {
-        t.classList.toggle("active", t.dataset.rate === currentRate);
-      });
 
       if (running){
         clearInterval(timer);
@@ -929,7 +868,7 @@
     window.addEventListener("resize", resizeOverlay);
 
     // =========================
-    // Focus controls
+    // Focus
     // =========================
     function setFocus(label){
       const clean = normalizeLabel(label);
@@ -937,27 +876,35 @@
         focus.enabled = false;
         focus.name = "";
         focusOut.textContent = "none";
-        [...legend.children].forEach(c => c.classList.remove("active"));
         readK.textContent = "Detected";
+        focusSel.value = "";
+        [...legend.children].forEach(c => c.classList.remove("active"));
         return;
       }
       focus.enabled = true;
       focus.name = clean;
       focusOut.textContent = clean;
+      readK.textContent = "Focused";
 
       [...legend.children].forEach(c => c.classList.remove("active"));
       for (const item of legend.children){
         const n = normalizeLabel(item.querySelector(".n")?.textContent);
         if (n === clean) item.classList.add("active");
       }
-      readK.textContent = "Focused";
     }
 
-    // =========================
-    // Render Library
-    // =========================
     function renderLegend(){
       legend.innerHTML = "";
+
+      // focus select options
+      focusSel.innerHTML = `<option value="">Find Anything</option>`;
+      for (const item of LIBRARY){
+        const opt = document.createElement("option");
+        opt.value = item.name;
+        opt.textContent = `${item.emoji} ${item.name}`;
+        focusSel.appendChild(opt);
+      }
+
       for (const item of LIBRARY){
         const el = document.createElement("div");
         el.className = "legendItem";
@@ -977,9 +924,7 @@
     async function startCamera(){
       if (!navigator?.mediaDevices?.getUserMedia){
         const isSecure = window.isSecureContext || location.hostname === "localhost" || location.hostname === "127.0.0.1";
-        alert(
-          "Camera API unavailable.\n\nFix:\n- Use HTTPS (or localhost)\n- Open in Safari/Chrome directly\n- Allow Camera permission\n\nSecure: " + (isSecure ? "YES" : "NO")
-        );
+        alert("Camera API unavailable. Use HTTPS (or localhost). Secure: " + (isSecure ? "YES" : "NO"));
         throw new Error("getUserMedia unavailable");
       }
 
@@ -1054,14 +999,13 @@
     }
 
     // =========================
-    // Overlay drawing (no circles: angled corners + diamond markers)
+    // Overlay drawing
     // =========================
     function clearOverlay(){
       octx.clearRect(0,0,overlay.width,overlay.height);
     }
 
     function drawCorner(x,y,dir,sz){
-      // dir: "tl","tr","bl","br"
       octx.beginPath();
       if (dir === "tl"){ octx.moveTo(x, y+sz); octx.lineTo(x, y); octx.lineTo(x+sz, y); }
       if (dir === "tr"){ octx.moveTo(x-sz, y); octx.lineTo(x, y); octx.lineTo(x, y+sz); }
@@ -1088,7 +1032,8 @@
       for (const obj of objects){
         const name = obj?.name || "object";
         const score = obj?.score ?? 0;
-        const box = obj?.box || {};
+
+        const box = obj?.box || obj || {};
         const x1 = (box.x1 ?? 0) * W;
         const y1 = (box.y1 ?? 0) * H;
         const x2 = (box.x2 ?? 0) * W;
@@ -1096,7 +1041,6 @@
 
         const focused = focus.enabled && normalizeLabel(focus.name) === normalizeLabel(name);
 
-        // Frame corners
         if (showBoxes){
           octx.save();
           octx.lineWidth = Math.max(2, Math.round(2 * devicePixelRatio));
@@ -1110,7 +1054,6 @@
           drawCorner(x1, y2, "bl", sz);
           drawCorner(x2, y2, "br", sz);
 
-          // center marker
           const cx = (x1+x2)/2, cy = (y1+y2)/2;
           octx.fillStyle = focused ? "rgba(255,106,0,0.92)" : "rgba(45,211,111,0.88)";
           octx.shadowColor = "rgba(45,211,111,0.14)";
@@ -1121,7 +1064,6 @@
           octx.restore();
         }
 
-        // Label
         if (showLabels){
           const pct = Math.round(clamp(score,0,1) * 100);
           const label = `${emojiFor(name)} ${name.toUpperCase()} • ${pct}%`;
@@ -1130,9 +1072,7 @@
           octx.font = `${Math.round(12*devicePixelRatio)}px ${getComputedStyle(document.body).fontFamily}`;
           octx.lineWidth = 3 * devicePixelRatio;
 
-          // Backplate
           const padX = 10 * devicePixelRatio;
-          const padY = 7 * devicePixelRatio;
           const textW = octx.measureText(label).width;
           const bx = x1;
           const by = Math.max(0, y1 - (28 * devicePixelRatio));
@@ -1144,7 +1084,6 @@
           octx.fill();
           octx.stroke();
 
-          // Text
           octx.strokeStyle = "rgba(255,255,255,0.92)";
           octx.fillStyle = "rgba(27,26,22,0.92)";
           octx.strokeText(label, bx + padX, by + (16*devicePixelRatio));
@@ -1155,7 +1094,6 @@
       }
     }
 
-    // polyfill for roundRect on older canvas
     if (!CanvasRenderingContext2D.prototype.roundRect){
       CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
         r = Math.min(r, w/2, h/2);
@@ -1175,7 +1113,7 @@
     }
 
     // =========================
-    // Readout
+    // Readout (HUD)
     // =========================
     function setReadout(objects){
       const n = objects?.length || 0;
@@ -1188,7 +1126,6 @@
         return;
       }
 
-      // Choose top: if focused exists, prefer it, else highest score
       let top = null;
       if (focus.enabled){
         top = objects.find(o => normalizeLabel(o.name) === normalizeLabel(focus.name)) || null;
@@ -1240,7 +1177,7 @@
           frame_id: localFrameId,
           ts_client_ms: Date.now(),
           image: { format: "jpeg", data_b64: snap.b64 },
-          focus_label: focusLabel, // null => Find Anything
+          focus_label: focusLabel,
           telemetry: {
             width: snap.w,
             height: snap.h,
@@ -1265,7 +1202,7 @@
           return;
         }
 
-        lastObjects = data.objects || [];
+        lastObjects = data.objects || data.detections || [];
         drawObjects(lastObjects);
         setReadout(lastObjects);
 
@@ -1305,48 +1242,44 @@
     // =========================
     // Events
     // =========================
-    tiles.addEventListener("click", (e) => {
-      const rateTile = e.target.closest("[data-rate]");
-      if (rateTile) setRate(rateTile.dataset.rate);
-    });
+    rateSel.addEventListener("change", () => setRate(rateSel.value));
 
-    function toggleTile(tile, get, set){
-      const next = !get();
-      set(next);
-      setTileOn(tile, next);
-      return next;
-    }
-
-    mirrorTile.addEventListener("click", () => {
-      const v = toggleTile(mirrorTile, () => mirror, x => mirror = x);
-      video.style.transform = v ? "scaleX(-1)" : "none";
-    });
-
-    boxTile.addEventListener("click", () => {
-      toggleTile(boxTile, () => showBoxes, x => showBoxes = x);
-      drawObjects(lastObjects);
-    });
-
-    lblTile.addEventListener("click", () => {
-      toggleTile(lblTile, () => showLabels, x => showLabels = x);
-      drawObjects(lastObjects);
-    });
-
-    camTile.addEventListener("click", async () => {
-      facingMode = (facingMode === "user") ? "environment" : "user";
-      camLabel.textContent = (facingMode === "user") ? "Front" : "Back";
-
-      const knob = camTile.querySelector(".knob");
-      if (knob) knob.style.left = (facingMode === "user") ? "24px" : "3px";
-
+    camSel.addEventListener("change", async () => {
+      facingMode = camSel.value;
       if (running){
         await stopCamera();
         await startCamera();
       }
     });
 
-    // Keyboard support for tiles
-    [mirrorTile, boxTile, lblTile, camTile].forEach(el => {
+    focusSel.addEventListener("change", () => {
+      const val = focusSel.value;
+      setFocus(val);
+    });
+
+    function toggleHandler(el, get, set){
+      const next = !get();
+      set(next);
+      setToggle(el, next);
+      return next;
+    }
+
+    mirrorToggle.addEventListener("click", () => {
+      const v = toggleHandler(mirrorToggle, () => mirror, x => mirror = x);
+      video.style.transform = v ? "scaleX(-1)" : "none";
+    });
+
+    boxToggle.addEventListener("click", () => {
+      toggleHandler(boxToggle, () => showBoxes, x => showBoxes = x);
+      drawObjects(lastObjects);
+    });
+
+    lblToggle.addEventListener("click", () => {
+      toggleHandler(lblToggle, () => showLabels, x => showLabels = x);
+      drawObjects(lastObjects);
+    });
+
+    [mirrorToggle, boxToggle, lblToggle].forEach(el => {
       el.addEventListener("keydown", (ev) => {
         if (ev.key === "Enter" || ev.key === " "){
           ev.preventDefault();
@@ -1355,14 +1288,13 @@
       });
     });
 
-    // Find Anything
     applyAny.addEventListener("click", () => setFocus(anyInput.value));
     clearFocusBtn.addEventListener("click", () => { anyInput.value = ""; setFocus(""); });
+
     anyInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter"){ e.preventDefault(); setFocus(anyInput.value); }
     });
 
-    // Debug gate
     debugBtn.addEventListener("click", () => {
       if (debugEnabled){ setDebug(false); setStatus("", "ONLINE"); return; }
       const pw = prompt("Enter debug password:");
@@ -1370,7 +1302,6 @@
       else setStatus("bad", "DENIED");
     });
 
-    // Start / Stop
     startBtn.addEventListener("click", async () => {
       try{
         startBtn.disabled = true;
@@ -1405,13 +1336,13 @@
     setStatus("", "STANDBY");
 
     setRate("normal");
-    setTileOn(mirrorTile, true);
-    setTileOn(boxTile, true);
-    setTileOn(lblTile, true);
+    rateSel.value = "normal";
 
-    camLabel.textContent = "Front";
-    const camKnob = camTile.querySelector(".knob");
-    if (camKnob) camKnob.style.left = "24px";
+    setToggle(mirrorToggle, true);
+    setToggle(boxToggle, true);
+    setToggle(lblToggle, true);
+
+    camSel.value = "user";
 
     renderLegend();
     focusOut.textContent = "none";

@@ -1241,22 +1241,23 @@
     const CONTACT_EMAIL = "stevensongerardeustache@outlook.com";
 
     const LINKS = {
-      scanItemsInRoom: "https://agentggg.github.io/public_sites/dev/machine_learning/techtrace.html",
-      skinHands: "https://agentggg.github.io/public_sites/dev/machine_learning/facial_recognition.html"
-      skinHands: "https://agentggg.github.io/public_sites/dev/machine_learning/hand_recognition.html"
+      eagelsEye: "https://agentggg.github.io/public_sites/dev/machine_learning/facial_recognition.html",
+      objectDiscovery: "https://agentggg.github.io/public_sites/dev/machine_learning/hand_recognition.html",
+      skinHands: "https://agentggg.github.io/public_sites/dev/machine_learning/hand_recognition.html",
+      gestureReaction: "https://agentggg.github.io/public_sites/dev/machine_learning/gesture_recognition.html"
     };
 
     const MODULES = [
       {
         id: "items",
-        title: "EAGLE-LOOT SCAN",
+        title: "DISCOVERY",
         domain: "Vision AI",
         signature: "Room Inventory",
         desc: "Scan items in a room and return a structured list with confidence and bounding regions.",
         status: "live",
-        href: LINKS.scanItemsInRoom,
+        href: LINKS.objectDiscovery,
         popup: {
-          title: "EAGLE-LOOT SCAN",
+          title: "DISCOVERY",
           body: "Uses live camera frames to detect and label objects in a room, returning a clean inventory list. Designed for real-time scanning and fast feedback."
         }
       },
@@ -1274,31 +1275,29 @@
         }
       },
       {
-        id: "raptor",
-        title: "RAPTOR-DRIVE",
-        domain: "Robotics",
-        signature: "Command Vectoring",
-        desc: "Drive stack and teleop pipeline with speed ramping and safety gates.",
-        status: "lab",
-        progress: 28,
-        href: null,
+        id: "eyes",
+        title: "EAGLE EYE",
+        domain: "Vision AI",
+        signature: "Identity Lock",
+        desc: "Real-time facial detection and identification with stabilization, confidence scoring, and jitter reduction.",
+        status: "live",
+        href: LINKS.eagelsEye,
         popup: {
-          title: "RAPTOR-DRIVE (In Lab)",
-          body: "Building the control pipeline: joystick input → velocity vector → motor driver output. Includes dead-zones, smoothing, and emergency cut-off logic."
+          title: "EAGLE EYE - PROD",
+          body: "Facial recognition: stabilized, confidence-gated face tracking for accurate real-time identification"
         }
       },
       {
-        id: "telemetry",
-        title: "EAGLE-TELEMETRY",
+        id: "hands",
+        title: "X-LABS-REACTION",
         domain: "Systems",
-        signature: "Live Diagnostics",
-        desc: "Sensor telemetry, health checks, and alert routing.",
-        status: "lab",
-        progress: 22,
-        href: null,
+        signature: "Reaction Response",
+        desc: "Real-time gesture command interpretation and response execution layer.",
+        status: "live",
+        href: LINKS.gestureReaction,
         popup: {
-          title: "EAGLE-TELEMETRY (In Lab)",
-          body: "Real-time status layer for motors, battery, temperature, and network health. Will support warning thresholds and self-test reports."
+          title: "GESTURE-RESPONSE (In Lab)",
+          body: "Processes validated gesture signals and triggers corresponding system actions. Built for precision control, safety enforcement, and low-latency reaction handling."
         }
       },
       {
@@ -1326,7 +1325,7 @@
         href: null,
         popup: {
           title: "SKYLINE-TRACKER (In Lab)",
-          body: "Lock-on tracking system: follow a target with stabilized bounding boxes, smoothing, and confidence gating to reduce jitter in movement."
+          body: "Facial recognition: stabilized, confidence-gated face tracking for accurate real-time identification"
         }
       }
     ];
