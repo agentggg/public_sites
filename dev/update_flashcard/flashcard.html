@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DeckForge Uploader</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    :root{
+      --bg: #0b0f17;
+      --panel: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.12);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.68);
+      --muted2: rgba(255,255,255,0.52);
+      --accent: #ea5a28;
+      --shadow: 0 18px 50px rgba(0,0,0,0.45);
+      --radius-xl: 18px;
+      --radius-lg: 14px;
+      --radius-md: 12px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% 0%, rgba(234,90,40,0.14), transparent 55%),
+        radial-gradient(900px 700px at 85% 20%, rgba(120,170,255,0.10), transparent 60%),
+        var(--bg);
+    }
+
+    .app{ min-height:100%; display:flex; flex-direction:column; }
+
+    .topbar{
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+      background: rgba(15, 20, 30, 0.55);
+    }
+
+    .brand{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 18px 16px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+
+    .logo{
+      width:44px;
+      height:44px;
+      border-radius: 14px;
+      display:grid;
+      place-items:center;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      background: linear-gradient(135deg, rgba(234,90,40,0.95), rgba(234,90,40,0.55));
+      box-shadow: 0 12px 30px rgba(234,90,40,0.18);
+      user-select:none;
+    }
+
+    .brand-text h1{
+      margin:0;
+      font-size: 16px;
+      line-height: 1.2;
+      letter-spacing: 0.3px;
+    }
+
+    .brand-text p{
+      margin:4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .container{
+      width:100%;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 18px 16px 26px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .card{
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--panel), rgba(255,255,255,0.04));
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      overflow:hidden;
+    }
+
+    .card-header{ margin-bottom: 12px; }
+
+    .card-header h2{
+      margin: 0 0 6px;
+      font-size: 15px;
+      letter-spacing: 0.2px;
+    }
+
+    .muted{ color: var(--muted); }
+
+    .card-header p{
+      margin:0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    code{
+      font-family: var(--mono);
+      font-size: 0.95em;
+      color: rgba(255,255,255,0.86);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.10);
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .field{ display:flex; flex-direction:column; gap: 7px; }
+
+    label{ font-size: 12px; color: rgba(255,255,255,0.78); }
+
+    .hint{ color: var(--muted2); font-size: 12px; line-height: 1.35; }
+
+    input, textarea, select{
+      width:100%;
+      color: var(--text);
+      background: rgba(10, 14, 22, 0.55);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 12px;
+      outline: none;
+      transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    }
+
+    input::placeholder, textarea::placeholder{ color: rgba(255,255,255,0.35); }
+
+    input:focus, textarea:focus, select:focus{
+      border-color: rgba(234,90,40,0.60);
+      box-shadow: 0 0 0 4px rgba(234,90,40,0.18);
+    }
+
+    textarea{
+      min-height: 520px;
+      resize: vertical;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.55;
+      padding: 14px;
+    }
+
+    .meta-row{ display:flex; flex-wrap:wrap; gap:8px; margin-top: 8px; }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.78);
+      font-size: 12px;
+    }
+
+    .chip--soft{ background: rgba(234,90,40,0.10); border-color: rgba(234,90,40,0.22); }
+
+    .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top: 14px; }
+
+    .btn{
+      appearance:none;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 13px;
+      cursor:pointer;
+      transition: transform 140ms ease, background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+    }
+
+    .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,0.09); }
+    .btn:active{ transform: translateY(0px); }
+
+    .btn--ghost{ background: rgba(255,255,255,0.04); }
+
+    .btn--primary{
+      border-color: rgba(234,90,40,0.40);
+      background: linear-gradient(135deg, rgba(234,90,40,0.95), rgba(234,90,40,0.55));
+      box-shadow: 0 14px 30px rgba(234,90,40,0.16);
+    }
+
+    .btn--primary:hover{ box-shadow: 0 18px 45px rgba(234,90,40,0.22); }
+
+    .divider{ height:1px; background: var(--border); margin: 18px 0; }
+
+    .status{ display:grid; grid-template-columns: 1fr; gap: 10px; }
+
+    .status-box{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius-lg);
+      padding: 12px 12px;
+      font-size: 13px;
+    }
+
+    .status-box strong{ display:inline-block; margin-right: 6px; color: rgba(255,255,255,0.86); }
+
+    #statusBox[data-type="loading"]{ border-color: rgba(234,90,40,0.35); background: rgba(234,90,40,0.08); }
+    #statusBox[data-type="success"]{ border-color: rgba(90, 200, 120, 0.35); background: rgba(90, 200, 120, 0.08); }
+    #statusBox[data-type="error"]{ border-color: rgba(255, 90, 90, 0.40); background: rgba(255, 90, 90, 0.08); }
+    #statusBox[data-type="info"]{ border-color: rgba(140, 170, 255, 0.35); background: rgba(140, 170, 255, 0.08); }
+
+    .preview{
+      margin-top: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      border-radius: var(--radius-lg);
+      padding: 12px;
+    }
+
+    .preview-head{ display:flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; gap: 12px; }
+
+    .preview-list{
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .preview-item{
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(10, 14, 22, 0.55);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .preview-top{ display:flex; justify-content: space-between; align-items:center; gap:10px; margin-bottom: 8px; }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(234,90,40,0.22);
+      background: rgba(234,90,40,0.10);
+      font-size: 12px;
+      color: rgba(255,255,255,0.86);
+      max-width: 100%;
+    }
+
+    .idx{ font-family: var(--mono); font-size: 12px; color: rgba(255,255,255,0.55); }
+
+    .preview-item .q{ font-weight: 700; margin: 4px 0 8px; color: rgba(255,255,255,0.92); }
+
+    .preview-item .a, .preview-item .r{
+      font-size: 12.5px;
+      color: rgba(255,255,255,0.78);
+      line-height: 1.45;
+      margin: 4px 0 0;
+      word-break: break-word;
+    }
+
+    .preview-item .a span, .preview-item .r span{ color: rgba(255,255,255,0.92); font-weight: 700; }
+
+    .help-card[hidden]{ display:none; }
+
+    .codeblock{
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(10, 14, 22, 0.60);
+      border-radius: var(--radius-lg);
+      padding: 12px;
+      overflow:auto;
+    }
+
+    .codeblock pre{ margin:0; font-family: var(--mono); font-size: 12px; line-height: 1.55; color: rgba(255,255,255,0.84); }
+
+    .note{
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(234,90,40,0.18);
+      background: rgba(234,90,40,0.08);
+    }
+
+    .note h3{ margin:0 0 8px; font-size: 13px; }
+
+    .note ul{ margin:0; padding-left: 18px; color: rgba(255,255,255,0.80); font-size: 13px; line-height: 1.55; }
+
+    .footer{
+      margin-top:auto;
+      padding: 16px;
+      text-align:center;
+      color: var(--muted2);
+      font-size: 12px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      background: rgba(15, 20, 30, 0.35);
+    }
+
+    @media (max-width: 620px){
+      textarea{ min-height: 460px; }
+      .card{ padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">FC</div>
+        <div class="brand-text">
+          <h1>DeckForge Uploader</h1>
+          <p>Bulk-submit JSON flashcard arrays to your API.</p>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <form id="flashcardForm">
+          <div class="grid">
+            <div class="field">
+              <label for="endpointSelect">Backend environment</label>
+              <select id="endpointSelect" name="endpointSelect" required>
+                <option value="" disabled selected>Select an endpoint…</option>
+                <option value="http://localhost:8001">Dev (localhost:8001)</option>
+                <option value="https://big-gave-coordination-length.trycloudflare.com">Fireon6 (Cloudflare)</option>
+                <option value="https://ict-agentofgod.pythonanywhere.com">Python Server (PythonAnywhere)</option>
+              </select>
+              <small class="hint">This selection determines where your JSON will be POSTed.</small>
+            </div>
+            <div class="field">
+              <label for="cardSetSelect">Card set</label>
+              <select id="cardSetSelect" name="cardSetSelect" required>
+                <option value="upload_flashcard" selected>Flashcard</option>
+                <option value="upload_ai_flashcard">ModelQ AI Flashcard</option>
+                <option value="code_flashcard">Live Coding Flashcard</option>
+              </select>
+              <small class="hint">This selection only changes the endpoint path appended to the base URL.</small>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="jsonPayload">Flashcards JSON array</label>
+            <textarea
+              id="jsonPayload"
+              name="jsonPayload"
+              spellcheck="false"
+              placeholder='[
+  {"course":"ROS2 Launch File","question":"...","answer":"...","reasoning":"..."}
+]'
+              required
+            ></textarea>
+
+            <div class="meta-row">
+              <span class="chip">Same JSON format for all sets: course, question, answer, reasoning</span>
+              <span class="chip chip--soft">Tip: valid JSON uses double quotes</span>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="btnValidate" type="button" class="btn btn--ghost">Validate JSON</button>
+            <button id="btnPreview" type="button" class="btn btn--ghost">Preview Cards</button>
+            <button id="btnHelp" type="button" class="btn btn--ghost">Help</button>
+            <button id="btnSend" type="submit" class="btn btn--primary">Submit</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="status">
+            <div id="statusBox" class="status-box" data-type="idle" aria-live="polite">
+              <strong id="statusTitle">Status:</strong>
+              <span id="statusMessage" class="muted">Waiting for payload…</span>
+            </div>
+            <div class="status-box">
+              <strong>Example:</strong>
+              <span class="muted">Paste your array, validate, preview, then send.</span>
+            </div>
+          </div>
+
+          <div id="previewWrap" class="preview" hidden>
+            <div class="preview-head">
+              <strong>Preview</strong>
+              <span id="previewMeta" class="muted"></span>
+            </div>
+            <ul id="previewList" class="preview-list"></ul>
+          </div>
+        </form>
+      </section>
+
+      <section class="card help-card" id="helpCard" hidden>
+        <div class="card-header">
+          <h2>Help &amp; Schema</h2>
+          <p class="muted">Click Help again to hide this panel.</p>
+        </div>
+
+        <div class="codeblock" role="region" aria-label="JSON schema example">
+<pre><code>[
+  {
+    "course": "ROS2 Launch File",
+    "question": "What is the primary purpose of a ROS 2 launch file?",
+    "answer": "To describe how a system should be started.",
+    "reasoning": "Launch files define startup configuration and intent..."
+  }
+]</code></pre>
+        </div>
+
+        <div class="note">
+          <h3>Notes</h3>
+          <ul>
+            <li>Valid JSON only (double quotes, no trailing commas).</li>
+            <li>Each attempt can be a completely new array; you can paste a different one every time.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p class="muted">Flashcard Loader UI — HTML + CSS + JS.</p>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      function $(id) { return document.getElementById(id); }
+
+      function setStatus(type, title, message) {
+        const box = $("statusBox");
+        $("statusTitle").textContent = title;
+        $("statusMessage").textContent = message;
+        box.dataset.type = type; // idle | success | error | info | loading
+      }
+
+      function safeJsonParse(raw) {
+        try { return { ok: true, value: JSON.parse(raw) }; }
+        catch (e) { return { ok: false, error: e }; }
+      }
+
+      function validateFlashcardsArray(arr) {
+        if (!Array.isArray(arr)) return { ok: false, error: "Payload must be a JSON array of objects." };
+        if (arr.length === 0) return { ok: false, error: "Array is empty. Add at least one flashcard object." };
+
+        const required = ["question"];
+        for (let i = 0; i < arr.length; i++) {
+          const item = arr[i];
+          if (!item || typeof item !== "object" || Array.isArray(item)) {
+            return { ok: false, error: `Item at index ${i} must be an object.` };
+          }
+          for (const key of required) {
+            if (!(key in item)) return { ok: false, error: `Missing "${key}" in item at index ${i}.` };
+            if (!String(item[key] ?? "").trim()) return { ok: false, error: `"${key}" is empty in item at index ${i}.` };
+          }
+        }
+        return { ok: true };
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function renderPreview(arr) {
+        const previewWrap = $("previewWrap");
+        const previewList = $("previewList");
+        const previewMeta = $("previewMeta");
+
+        previewList.innerHTML = "";
+        const max = Math.min(arr.length, 20);
+
+        for (let i = 0; i < max; i++) {
+          const c = arr[i];
+          const li = document.createElement("li");
+          li.className = "preview-item";
+          li.innerHTML = `
+            <div class="preview-top">
+              <span class="badge">${escapeHtml(c.course)}</span>
+              <span class="idx">#${i + 1}</span>
+            </div>
+            <div class="q">${escapeHtml(c.question)}</div>
+            <div class="a"><span>Answer:</span> ${escapeHtml(c.answer)}</div>
+            <div class="r"><span>Reasoning:</span> ${escapeHtml(c.reasoning)}</div>
+          `;
+          previewList.appendChild(li);
+        }
+
+        previewMeta.textContent = arr.length > max ? `Showing ${max} of ${arr.length}` : `Showing ${arr.length} cards`;
+        previewWrap.hidden = false;
+        previewWrap.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function buildEndpointUrl(baseUrl, path) {
+        const base = String(baseUrl || "").trim().replace(/\s+/g, "");
+        const cleanPath = String(path || "").trim().replace(/^\/+/, "");
+        if (!base) return "";
+
+        // If user already pasted a full URL including the path, keep it.
+        if (cleanPath && base.endsWith("/" + cleanPath)) return base;
+
+        const trimmedBase = base.replace(/\/+$/, "");
+        return cleanPath ? `${trimmedBase}/${cleanPath}` : trimmedBase;
+      }
+
+      async function postJson(endpoint, payload) {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const ct = res.headers.get("content-type") || "";
+        const data = ct.includes("application/json")
+          ? await res.json().catch(() => null)
+          : await res.text().catch(() => null);
+
+        if (!res.ok) {
+          const msg =
+            (data && typeof data === "object" && (data.error || data.detail)) ||
+            (typeof data === "string" && data) ||
+            `Request failed with status ${res.status}.`;
+          throw new Error(msg);
+        }
+        return data;
+      }
+
+      function readAndValidatePayload() {
+        const raw = $("jsonPayload").value.trim();
+        if (!raw) return { ok: false, error: "Paste a JSON array into the payload box." };
+
+        const parsed = safeJsonParse(raw);
+        if (!parsed.ok) return { ok: false, error: "Invalid JSON. Fix syntax (double quotes, commas, brackets)." };
+
+        const arr = parsed.value;
+
+        const valid = validateFlashcardsArray(arr);
+        if (!valid.ok) return valid;
+
+        return { ok: true, value: arr };
+      }
+
+      const form = $("flashcardForm");
+      const validateBtn = $("btnValidate");
+      const previewBtn = $("btnPreview");
+      const helpBtn = $("btnHelp");
+      const sendBtn = $("btnSend");
+
+      const helpCard = $("helpCard");
+      helpBtn.addEventListener("click", () => {
+        const isHidden = helpCard.hasAttribute("hidden");
+        if (isHidden) {
+          helpCard.removeAttribute("hidden");
+          setStatus("info", "Help opened", "Schema and notes are now visible below.");
+        } else {
+          helpCard.setAttribute("hidden", "");
+          setStatus("info", "Help closed", "Schema and notes are hidden.");
+        }
+      });
+
+      validateBtn.addEventListener("click", () => {
+        setStatus("info", "Validating…", "Checking JSON format and required keys.");
+        const result = readAndValidatePayload();
+        if (!result.ok) return setStatus("error", "Validation failed", result.error);
+        setStatus("success", "Validation OK", `Array looks valid. Items: ${result.value.length}.`);
+      });
+
+      previewBtn.addEventListener("click", () => {
+        setStatus("info", "Preparing preview…", "Rendering a quick preview of the first items.");
+        const result = readAndValidatePayload();
+        if (!result.ok) return setStatus("error", "Preview failed", result.error);
+        renderPreview(result.value);
+        setStatus("success", "Preview ready", `Loaded ${result.value.length} items for preview.`);
+      });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const baseUrl = String($("endpointSelect").value || "").trim();
+        if (!baseUrl) return setStatus("error", "Missing endpoint", "Select a backend environment.");
+
+        const cardSet = String($("cardSetSelect").value || "").trim();
+        if (!cardSet) return setStatus("error", "Missing card set", "Select which set of cards you are uploading.");
+
+        const endpoint = buildEndpointUrl(baseUrl, cardSet);
+        if (!endpoint) return setStatus("error", "Invalid endpoint", "Could not build the final endpoint URL.");
+
+        const result = readAndValidatePayload();
+        if (!result.ok) return setStatus("error", "Cannot send", result.error);
+
+        // If your backend expects RAW ARRAY ONLY, replace payload with: result.value
+        const payload = result.value;
+
+        setStatus("loading", "Sending…", `Posting ${result.value.length} flashcards to ${endpoint}`);
+        sendBtn.disabled = true;
+        validateBtn.disabled = true;
+        previewBtn.disabled = true;
+
+        try {
+          const response = await postJson(endpoint, payload);
+          const pretty =
+            response && typeof response === "object"
+              ? JSON.stringify(response).slice(0, 800)
+              : String(response).slice(0, 800);
+
+          setStatus("success", "Sent successfully", pretty || "Backend returned success.");
+        } catch (err) {
+          setStatus("error", "Send failed", err.message || "Unknown error.");
+        } finally {
+          sendBtn.disabled = false;
+          validateBtn.disabled = false;
+          previewBtn.disabled = false;
+        }
+      });
+
+      setStatus("idle", "Status:", "Waiting for payload…");
+    })();
+  </script>
+</body>
+</html>
