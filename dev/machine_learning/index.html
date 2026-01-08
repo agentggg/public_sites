@@ -7,24 +7,44 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Primary Meta -->
+
+  <!-- Primary Meta -->
   <meta name="title" content="Gerard Lab-X — Robotics, Vision & Systems" />
-  <meta name="description" content="Gerard Lab-X is a research interface for robotics, computer vision, and intelligent systems." />
+  <meta
+    name="description"
+    content="Gerard Lab-X is a research interface for robotics, computer vision, and intelligent systems."
+  />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://agentggg.github.io/public_sites/dev/machine_learning/index.html" />
+  <meta
+    property="og:url"
+    content="https://agentggg.github.io/public_sites/dev/machine_learning/index.html"
+  />
   <meta property="og:title" content="Gerard Lab-X" />
   <meta property="og:description" content="Robotics • Vision • Systems — Lab Interface Online." />
-  <meta property="og:image" content="https://agentggg.github.io/public_sites/dev/machine_learning/gerard-lab-x-logo.png" />
+  <meta
+    property="og:image"
+    content="https://agentggg.github.io/public_sites/dev/machine_learning/gerard-lab-x-logo.png"
+  />
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content="https://agentggg.github.io/public_sites/dev/machine_learning/index.html" />
+  <meta
+    property="twitter:url"
+    content="https://agentggg.github.io/public_sites/dev/machine_learning/index.html"
+  />
   <meta property="twitter:title" content="Gerard Lab-X" />
   <meta property="twitter:description" content="Robotics • Vision • Systems — Lab Interface Online." />
-  <meta property="twitter:image" content="https://agentggg.github.io/public_sites/dev/machine_learning/gerard-lab-x-logo.png" />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <meta
+    property="twitter:image"
+    content="https://agentggg.github.io/public_sites/dev/machine_learning/gerard-lab-x-logo.png"
+  />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
 
   <style>
     :root{
@@ -781,7 +801,7 @@
       box-shadow: 0 0 0 6px rgba(255,77,77,.10);
     }
 
-    /* GOOD TO GO cards match the clean panel style (like the removed “Launch Verified Tools” card) */
+    /* GOOD TO GO cards match the clean panel style */
     .p-card.good{
       background: rgba(14,18,24,.70);
       border: 1px solid rgba(255,255,255,.30);
@@ -963,7 +983,7 @@
       z-index:2;
     }
 
-    /* MODAL */
+    /* MODAL (your existing popup) */
     .modal{
       position:fixed; inset:0;
       z-index:9999;
@@ -1021,6 +1041,29 @@
       line-height: 1.6;
       font-size: 14px;
     }
+
+    /* NEW: a simple Help section inside popup */
+    .modalHelp{
+      margin-top: 10px;
+      border-top: 1px solid rgba(255,255,255,.12);
+      padding-top: 12px;
+    }
+    .modalHelp h4{
+      margin: 0 0 8px;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing:.12px;
+      color: rgba(255,255,255,.92);
+    }
+    .modalHelp ul{
+      margin: 0;
+      padding-left: 18px;
+      color: rgba(232,237,246,.72);
+      line-height: 1.6;
+      font-size: 13px;
+    }
+    .modalHelp li{ margin: 6px 0; }
+
     .modalRow{
       display:flex;
       gap:10px;
@@ -1198,6 +1241,7 @@
 
       <div class="controls">
         <button id="systemBtn" class="btn primary" type="button">System Check</button>
+        <button id="helpBtn" class="btn" type="button">How to Use</button>
         <a id="contactLink" class="btn" href="mailto:stevensongerardeustache@outlook.com">Contact</a>
       </div>
     </div>
@@ -1211,7 +1255,10 @@
           <div class="card-inner">
             <div class="kicker"><span class="dot"></span> STATUS: GOOD TO GO</div>
             <h1 class="h1">Gerard Lab-X Modules</h1>
-            <p class="sub">Two builds are verified and ready: Scan Items In Room and DERMA-SHIELD. Everything else is being assembled in the lab.</p>
+            <p class="sub">
+              Two builds are verified and ready: Scan Items In Room and DERMA-SHIELD.
+              Everything else is being assembled in the lab.
+            </p>
 
             <div class="stats">
               <div class="stat"><div id="statTotal" class="n">—</div><div class="l">Modules</div></div>
@@ -1233,7 +1280,7 @@
     </div>
   </div>
 
-  <!-- Modal -->
+  <!-- Modal (POPUP) -->
   <div id="modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
     <div id="modalCard" class="modalCard">
       <div class="modalInner">
@@ -1241,8 +1288,16 @@
           <span id="modalDot" class="statusDot"></span>
           <span id="modalKickerText">STATUS</span>
         </div>
+
         <h3 class="modalTitle" id="modalTitle">Module</h3>
         <p class="modalBody" id="modalBody">Details</p>
+
+        <!-- NEW: this is where we inject “AI / Landmark / Tech / How to Use” -->
+        <div id="modalHelp" class="modalHelp" style="display:none;">
+          <h4 id="modalHelpTitle">How to Use</h4>
+          <ul id="modalHelpList"></ul>
+        </div>
+
         <div class="modalRow">
           <div class="modalMeta" id="modalMeta">META</div>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -1264,6 +1319,131 @@
       gestureReaction: "https://agentggg.github.io/public_sites/dev/machine_learning/gesture_recognition.html"
     };
 
+    // ------------------------------------------------------------
+    // POPUP HELPERS (the “popup thing”)
+    // ------------------------------------------------------------
+    const $ = (id) => document.getElementById(id);
+    const clamp = (n,min,max) => Math.max(min, Math.min(max, n));
+
+    function setModalHelp({ title, bullets }){
+      const wrap = $("modalHelp");
+      const t = $("modalHelpTitle");
+      const list = $("modalHelpList");
+
+      if (!title && (!bullets || !bullets.length)){
+        wrap.style.display = "none";
+        t.textContent = "";
+        list.innerHTML = "";
+        return;
+      }
+
+      wrap.style.display = "block";
+      t.textContent = title || "How to Use";
+      list.innerHTML = (bullets || []).map((b) => `<li>${b}</li>`).join("");
+    }
+
+    function openModal({ mode, title, body, meta, primaryLabel, primaryAction, helpTitle, helpBullets }){
+      const modal = $("modal");
+      const card  = $("modalCard");
+      const dot   = $("modalDot");
+      const kicker = $("modalKickerText");
+      const btnPrimary = $("modalPrimary");
+
+      $("modalTitle").textContent = title || "Module";
+      $("modalBody").textContent  = body  || "Details unavailable.";
+      $("modalMeta").textContent  = meta  || "";
+
+      // default state
+      card.classList.remove("lab");
+      dot.className = "statusDot";
+      btnPrimary.style.display = "none";
+      btnPrimary.onclick = null;
+
+      // help section
+      setModalHelp({ title: helpTitle, bullets: helpBullets });
+
+      if (mode === "lab"){
+        card.classList.add("lab");
+        dot.classList.add("lab");
+        kicker.textContent = "IN LAB";
+      } else {
+        kicker.textContent = "GOOD TO GO";
+        btnPrimary.style.display = "inline-block";
+        btnPrimary.textContent = primaryLabel || "Enter";
+        btnPrimary.onclick = () => {
+          closeModal();
+          if (typeof primaryAction === "function") primaryAction();
+        };
+      }
+
+      modal.classList.add("on");
+      modal.setAttribute("aria-hidden", "false");
+      if (navigator.vibrate) navigator.vibrate(10);
+    }
+
+    function closeModal(){
+      const modal = $("modal");
+      modal.classList.remove("on");
+      modal.setAttribute("aria-hidden", "true");
+      setModalHelp({ title: "", bullets: [] });
+    }
+
+    // ------------------------------------------------------------
+    // Plain-English explanations (AI / Landmark / Tech)
+    // ------------------------------------------------------------
+    const EXPLAIN = {
+      ai: [
+        "AI here means: the page uses a camera image, then a model finds things in that image (like faces, hands, or objects).",
+        "It does not “think.” It follows patterns it learned during training.",
+        "You will usually see boxes, labels, or results like a list of detected items."
+      ],
+      landmark: [
+        "A landmark is a key point on something in the image (example: eye corners on a face, or knuckles on a hand).",
+        "The model uses landmarks to stay stable, even if you move a little.",
+        "Landmarks help reduce “jitter” and improve tracking."
+      ],
+      tech: [
+        "Camera access: your browser asks permission to use the camera.",
+        "Vision model: runs detection/tracking and returns results (labels + confidence).",
+        "Confidence score: how sure the model is (higher is better)."
+      ],
+      safety: [
+        "Good lighting helps a lot. Avoid very dark rooms.",
+        "Hold the camera steady for 1–2 seconds when scanning.",
+        "If the page asks for camera permission, tap Allow."
+      ]
+    };
+
+    function buildHelpForModule(m){
+      const title = "How to Use (Camera + AI)";
+      const bullets = [];
+
+      bullets.push(...EXPLAIN.ai);
+      bullets.push(...EXPLAIN.landmark);
+      bullets.push(...EXPLAIN.tech);
+
+      // module-specific steps (short + clear)
+      if ((m.id || "").toLowerCase() === "items"){
+        bullets.push("For DISCOVERY: point the camera at the room. Move slowly left to right.");
+        bullets.push("Pause briefly so items can be detected and listed.");
+      } else if ((m.id || "").toLowerCase() === "eyes"){
+        bullets.push("For EAGLE EYE: center a face in the frame. Keep it steady for best match.");
+        bullets.push("If recognition fails, improve lighting or move closer.");
+      } else if ((m.id || "").toLowerCase() === "hands"){
+        bullets.push("For DERMA-SHIELD: place hands in front of the camera. Keep fingers visible.");
+        bullets.push("Avoid fast motion. The model needs a clear frame.");
+      } else {
+        bullets.push("Follow the on-screen prompts on the module page.");
+      }
+
+      bullets.push(...EXPLAIN.safety);
+      return { helpTitle: title, helpBullets: bullets };
+    }
+
+    // ------------------------------------------------------------
+    // Modules (with popups)
+    // NOTE: You had duplicate id: "hands" twice; I renamed the gesture one to "gesture"
+    // ------------------------------------------------------------
     const MODULES = [
       {
         id: "items",
@@ -1301,11 +1481,11 @@
         href: LINKS.eagelsEye,
         popup: {
           title: "EAGLE EYE - PROD",
-          body: "Facial recognition: stabilized, confidence-gated face tracking for accurate real-time identification"
+          body: "Real-time face detection and identification. Uses tracking + confidence to reduce jitter and keep results stable."
         }
       },
       {
-        id: "hands",
+        id: "gesture",
         title: "X-LABS-REACTION",
         domain: "Systems",
         signature: "Reaction Response",
@@ -1313,8 +1493,8 @@
         status: "live",
         href: LINKS.gestureReaction,
         popup: {
-          title: "GESTURE-RESPONSE (In Lab)",
-          body: "Processes validated gesture signals and triggers corresponding system actions. Built for precision control, safety enforcement, and low-latency reaction handling."
+          title: "GESTURE-RESPONSE",
+          body: "Reads gesture signals and triggers actions. Built for low-latency control and safety checks."
         }
       },
       {
@@ -1342,13 +1522,10 @@
         href: null,
         popup: {
           title: "SKYLINE-TRACKER (In Lab)",
-          body: "Facial recognition: stabilized, confidence-gated face tracking for accurate real-time identification"
+          body: "Tracks a target over time and tries to keep the label stable as the camera moves. Still being tuned for smoothness."
         }
       }
     ];
-
-    const $ = (id) => document.getElementById(id);
-    const clamp = (n,min,max) => Math.max(min, Math.min(max, n));
 
     function wireIntersectionObserver(){
       const items = document.querySelectorAll(".io");
@@ -1361,47 +1538,6 @@
         });
       }, { threshold: 0.12 });
       items.forEach(el => io.observe(el));
-    }
-
-    function openModal({ mode, title, body, meta, primaryLabel, primaryAction }){
-      const modal = $("modal");
-      const card  = $("modalCard");
-      const dot   = $("modalDot");
-      const kicker = $("modalKickerText");
-      const btnPrimary = $("modalPrimary");
-
-      $("modalTitle").textContent = title || "Module";
-      $("modalBody").textContent  = body  || "Details unavailable.";
-      $("modalMeta").textContent  = meta  || "";
-
-      card.classList.remove("lab");
-      dot.className = "statusDot";
-      btnPrimary.style.display = "none";
-      btnPrimary.onclick = null;
-
-      if (mode === "lab"){
-        card.classList.add("lab");
-        dot.classList.add("lab");
-        kicker.textContent = "IN LAB";
-      } else {
-        kicker.textContent = "GOOD TO GO";
-        btnPrimary.style.display = "inline-block";
-        btnPrimary.textContent = primaryLabel || "Enter";
-        btnPrimary.onclick = () => {
-          closeModal();
-          if (typeof primaryAction === "function") primaryAction();
-        };
-      }
-
-      modal.classList.add("on");
-      modal.setAttribute("aria-hidden", "false");
-      if (navigator.vibrate) navigator.vibrate(10);
-    }
-
-    function closeModal(){
-      const modal = $("modal");
-      modal.classList.remove("on");
-      modal.setAttribute("aria-hidden", "true");
     }
 
     function buildSpecs(m){
@@ -1446,7 +1582,7 @@
           <div class="p-head">
             <div>
               <div class="kicker" style="margin-bottom:8px;">
-                <span class="dot"></span> ${isLab ? "IN LAB" : "READY BUILD"}
+                <span class="dot ${isLab ? "lab" : ""}"></span> ${isLab ? "IN LAB" : "READY BUILD"}
               </div>
               <h3 class="p-title">${m.title}</h3>
               <div class="p-desc">${m.desc}</div>
@@ -1475,23 +1611,31 @@
           const popupTitle = m.popup?.title || m.title;
           const popupBody  = m.popup?.body  || (isLab ? "This module is currently being worked on." : "This module is ready to launch.");
 
+          const { helpTitle, helpBullets } = buildHelpForModule(m);
+
+          // IN LAB (or missing link) -> popup only
           if (isLab || !m.href){
             openModal({
               mode: "lab",
               title: popupTitle,
               body: popupBody,
-              meta: `STATUS: IN LAB • ${pct}%`
+              meta: `STATUS: IN LAB • ${pct}%`,
+              helpTitle,
+              helpBullets
             });
             return;
           }
 
+          // GOOD TO GO -> popup + Enter button
           openModal({
             mode: "good",
             title: popupTitle,
             body: popupBody,
             meta: "STATUS: GOOD TO GO",
             primaryLabel: "Enter",
-            primaryAction: () => window.location.href = m.href
+            primaryAction: () => window.location.href = m.href,
+            helpTitle,
+            helpBullets
           });
         };
 
@@ -1527,7 +1671,6 @@
 
           enter.classList.add("off");
 
-          // Force top after the boot (prevents “starting at bottom”)
           window.scrollTo(0, 0);
 
           setTimeout(() => {
@@ -1556,7 +1699,6 @@
         p = 100;
         fill.style.width = "100%";
         pct.textContent  = "100%";
-        // the interval will pick this up and run the completion path
       };
 
       $("tapEnter").addEventListener("click", enterNow);
@@ -1576,21 +1718,51 @@
 
       renderCards(MODULES);
 
+      // System Check popup
       $("systemBtn").addEventListener("click", () => {
         openModal({
           mode: "good",
           title: "System Check",
-          body: "Verified builds are armed for launch. In-lab builds are protected and will return a status panel instead of launching.",
+          body: "Verified builds are armed for launch. In-lab builds are protected and will show a status panel instead of launching.",
           meta: `GOOD TO GO: ${goodCount} • IN LAB: ${labCount}`,
           primaryLabel: "Close",
-          primaryAction: () => {}
+          primaryAction: () => {},
+          helpTitle: "Quick Guide",
+          helpBullets: [
+            "Click a module card to see what it does.",
+            "If it is GOOD TO GO, you will see an Enter button.",
+            "If it is IN LAB, it will show progress and notes.",
+            "Camera modules will ask for permission. Tap Allow.",
+            "Use good lighting for best results."
+          ]
         });
       });
 
+      // NEW: How to Use popup
+      $("helpBtn").addEventListener("click", () => {
+        openModal({
+          mode: "good",
+          title: "How to Use Gerard Lab-X",
+          body: "This lab has camera-based AI modules. Each module shows a popup with what it does and simple steps.",
+          meta: "HELP • CAMERA + AI",
+          primaryLabel: "Close",
+          primaryAction: () => {},
+          helpTitle: "Start Here",
+          helpBullets: [
+            "Step 1: Click a module card.",
+            "Step 2: Read the popup. If it’s GOOD TO GO, click Enter.",
+            "Step 3: When asked, allow camera access.",
+            "Step 4: Keep the camera steady and use good lighting.",
+            "Tip: If detection is wrong, move slower and get closer."
+          ]
+        });
+      });
+
+      // Modal close wiring
       $("modalClose").addEventListener("click", closeModal);
       $("modal").addEventListener("click", (e) => { if (e.target === $("modal")) closeModal(); });
 
-      // Keep Escape for desktop users; does not interfere with mobile
+      // Escape closes modal
       window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
 
       $("container").classList.remove("open");
@@ -1598,7 +1770,6 @@
     }
 
     window.addEventListener("load", () => {
-      // Ensure we always land at the top on fresh load
       window.scrollTo(0, 0);
       bootHome();
       setTimeout(startBoot, 40);
