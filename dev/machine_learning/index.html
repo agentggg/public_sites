@@ -993,10 +993,16 @@
       background: rgba(0,0,0,.58);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
+
+      /* allow scrolling when modal content is tall */
+      overflow: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
     }
     .modal.on{ display:grid; }
     .modalCard{
       width: min(580px, 92vw);
+      max-height: calc(100vh - 36px);
       border-radius: 22px;
       background: rgba(14,18,24,.92);
       border: 1px solid rgba(255,255,255,.18);
@@ -1019,7 +1025,13 @@
         radial-gradient(700px 220px at 100% 12%, rgba(234,90,40,.10), transparent 58%);
     }
 
-    .modalInner{ position:relative; padding: 16px; }
+    .modalInner{
+      position:relative;
+      padding: 16px;
+      max-height: calc(100vh - 36px);
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
     .modalKicker{
       display:flex; align-items:center; gap:10px;
       font-family: var(--mono);
