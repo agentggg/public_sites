@@ -1,5 +1,6 @@
 [
   "python_PyTorch-Object-Detection.json",
   "python_Facial-Recognition-Tool.json",
-  "python_Hand-Recog.json"
+  "python_Hand-Recog.json",
+  "python_YOLO_Webcam.json"
 ]
