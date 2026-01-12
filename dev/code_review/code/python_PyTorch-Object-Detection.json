@@ -1,0 +1,115 @@
+import torch # the torch lib, the main lib to use, bounding boxes are tensors, and drawing utilities expect tensors
+
+"""
+torchvision.models.detection contains the ready-made detections models
+fasterrcnn_resnet50_fpn is the object detections
+FasterRCNN_ResNet50_FPN_Weights is the weights used for the detections
+"""
+# from torchvision.models.detection import (
+#     fasterrcnn_resnet50_fpn, 
+#     FasterRCNN_ResNet50_FPN_Weights
+# )
+from torchvision.models.detection import (
+    ssdlite320_mobilenet_v3_large,
+    SSDLite320_MobileNet_V3_Large_Weights
+)
+import cv2 # used to access camera imput and also for camera display
+from PIL import Image # used to create an image object in the format that preprocessing can take it
+from torchvision.utils import draw_bounding_boxes # used to draw boxes, this draws shapes and text unto the image frame
+from torchvision.transforms.functional import to_pil_image # converts a tensor back to image
+
+
+cam = cv2.VideoCapture(0)
+cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
+
+# device = torch.device("cpu") # will use CPU instead of GPU
+device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+
+weights = SSDLite320_MobileNet_V3_Large_Weights.DEFAULT # model trained in COCO
+
+model = ssdlite320_mobilenet_v3_large(weights=weights).to(device) # build the network and loads the trained weights and pushes everything to the CPU
+model.eval() # puts the model in inference mode since we are not training the model
+
+preprocess = weights.transforms()
+
+names = weights.meta["categories"] # label names, and categories
+threshold = 0.4 # confidence level
+
+
+
+while True:
+    """
+    ret, frame = cam.read()     
+        Captures the feed and return the data in raw image format
+    cv2.imshow('Camera', frame)     
+        Display the captured frame
+    The fram result is a PyTorch Tensor [3, H, W] 3 is the color (RGB), H is how many rows and W is how many columns
+    PyTorch uses a channel first design model hence why the 3 is first
+        [3, H, W] = PyTorch standard [H, W, 3] = common in NumPy / OpenCV >< this is raw pixels
+    The model expects a float32, normalized values, and resized according to training rules
+    Press 'q' to exit the loop - Release the capture object
+    frame_rgb       
+        converst the image from BGR to RGB
+    convert to numpy pil
+    weights.transforms()
+         This is predefined preprocessing pipeline that expects a PIL as input
+            PIL is Picture Image Lib = It represents an image as an object
+            PIL returns it as
+                1.	Reads RGB values correctly
+                2.	Converts to a tensor
+                3.	Converts uint8 → float32
+                4.	Normalizes using the same statistics used during training
+                5.	Applies resizing rules
+            PIL is the bridge between RAW camera feed and what PyTorch is expecting
+    
+    """
+    ret, frame = cam.read() 
+    cv2.imshow('Camera', frame) 
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    # 2. Convert NumPy array to PIL Image
+    frame_pil = Image.fromarray(frame_rgb) 
+    proc = preprocess(frame_pil)
+    """
+    torch.no_grad():    tells torch to avoid gradient. It saves time, space, and computation
+    model([proc.to(device)])[0]    expects a list, and moves tensor to CPU for computation and extracts the results
+    pred returns a dictionary that you can query, and each index represents an object
+        pred["boxes"]   # tensor [N, 4]
+        pred["labels"]  # tensor [N]
+        pred["scores"]  # tensor [N]
+    keep    filters out any score that is below the threshold
+    text    prepares labels for drawing
+    Detection is not visualizing
+        Image → numbers
+        numbers + image → boxes on screen
+    """
+    with torch.no_grad(): 
+        pred = model([proc.to(device)])[0] 
+        keep = pred["scores"] >= threshold
+        # keeps high confidence responses and moves data to CPU for drawing
+        boxes = pred["boxes"][keep].cpu()
+        labels = pred["labels"][keep].cpu()
+        scores = pred["scores"][keep].cpu()  
+        texts = [
+            f"{names[int(l)]} {float(s):.2f}"
+            for l, s in zip(labels, scores)
+        ]
+        img_tensor = torch.from_numpy(frame_rgb).permute(2, 0, 1) # converts image to tensor and change the shape [H, W, 3] → [3, H, W]
+        if len(boxes) > 0:
+            drawn = draw_bounding_boxes(img_tensor, boxes, labels=texts, width=3)
+        else:
+            drawn = img_tensor
+        drawn_np = drawn.permute(1, 2, 0).numpy()  # RGB
+        drawn_bgr = cv2.cvtColor(drawn_np, cv2.COLOR_RGB2BGR)
+        cv2.imshow("Detections", drawn_bgr)
+        out_pil = to_pil_image(drawn) # convert back for displaying purposes
+        cv2.imshow("Detections", drawn_bgr)
+    if cv2.waitKey(1) == ord('q'):
+        break
+
+
+
+
+cam.release()
+cv2.destroyAllWindows()

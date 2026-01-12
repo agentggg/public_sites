@@ -1,0 +1,298 @@
+"""
+#install
+python3.11 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install opencv-python numpy face_recognition
+"""
+
+import os
+import cv2
+import numpy as np
+import face_recognition
+
+
+class FacialRecognitionTool():
+    def __init__(self):
+        self.KNOWN_FACES_DIR = "known_faces"  # folder with the known faces
+        self.TOLERANCE = 0.50  # maximum allowed distance; higher means "different person"
+        self.FRAME_SCALE = 0.25  # scale frame to 25% for speed
+        self.CAM_INDEX = 3  # selects the camera: 0 is default, 1 is external
+
+    def ensure_dir(self, path: str):
+        """
+        If the folder exists, do nothing; if not, create it (no crash).
+        Equivalent to: mkdir -p path
+
+        Args:
+            path (str): the folder path to create if missing
+        """
+        os.makedirs(path, exist_ok=True)
+
+    def load_facial_database(self):
+        """
+        Loads the facial entries into memory for faster processing.
+        known_names lines up with the face encodings (index-aligned lists).
+
+        If the folder does not exist, create it and return an empty list.
+        This allows the program to run without errors.
+        If the database is empty, recognition will return "Unknown".
+        One folder is one person.
+
+        We iterate through each enrolled person:
+          - build the full path
+          - skip anything that isn't a folder
+
+        encodings.npy is the file inside each person folder.
+        If it does not exist, we skip that folder.
+        .npy is a fast binary format; it preserves NumPy arrays exactly and loads in one line.
+
+        np.load() returns a 2D NumPy array:
+            shape: (N, 128)
+                N = number of samples collected for that person's face
+                128 = embedding length (face encoding vector)
+            Example:
+                encs = [
+                    [0.12, -0.88, ..., 0.44],
+                    [0.10, -0.90, ..., 0.47],
+                    [0.11, -0.87, ..., 0.46]
+                ]
+
+        Keeping more samples of the same face increases accuracy because faces change
+        with angle and lighting. Nearest match wins.
+
+        Returns:
+            (known_encodings, known_names)
+        """
+        known_encodings = []
+        known_names = []
+
+        if not os.path.isdir(self.KNOWN_FACES_DIR):
+            self.ensure_dir(self.KNOWN_FACES_DIR)
+            return known_encodings, known_names
+
+        try:
+            for name in sorted(os.listdir(self.KNOWN_FACES_DIR)):
+                person_dir = os.path.join(self.KNOWN_FACES_DIR, name)
+                if not os.path.isdir(person_dir):
+                    continue
+
+                enc_path = os.path.join(person_dir, "encodings.npy")
+                if not os.path.exists(enc_path):
+                    continue
+
+                encs = np.load(enc_path)
+                for e in encs:
+                    known_encodings.append(e)
+                    known_names.append(name)
+
+        except Exception as e:
+            print(f"[DB] Error loading database: {e}")
+            return [], []
+
+        print(f"[DB] Loaded {len(known_encodings)} encodings for {len(set(known_names))} people.")
+        return known_encodings, known_names
+
+    def save_encoding(self, name: str, encoding: np.ndarray):
+        """
+        This function takes one face embedding and permanently attaches it to one person.
+
+        Creates a folder with the person's name:
+            known_faces/<name>/
+
+        Creates the folder path if it does not exist.
+        Checks if the embeddings file exists for the person.
+
+        If the person exists:
+            - load an array of shape (N, 128)
+            - vstack adds one more row
+              (ex: if it was (4, 128) it becomes (5, 128))
+
+        If the person does not exist:
+            - create a (1, 128) array:
+                one person
+                one sample
+                ready for future appends
+
+        Never overwrite old embeddings; always append.
+        Preserving previous embeddings allows for face changes and improves accuracy.
+
+        Args:
+            name (str): name of the person
+            encoding (np.ndarray): embedding of the face characteristics
+        """
+        person_dir = os.path.join(self.KNOWN_FACES_DIR, name)
+        self.ensure_dir(person_dir)
+
+        # IMPORTANT: keep this filename consistent with the loader
+        enc_path = os.path.join(person_dir, "encodings.npy")
+
+        if os.path.exists(enc_path):
+            encs = np.load(enc_path)
+            encs = np.vstack([encs, encoding])
+        else:
+            encs = np.array([encoding])
+
+        np.save(enc_path, encs)
+        print(f"[ENROLL] Saved encoding for {name}. Total samples: {encs.shape[0]}")
+
+    def best_match(self, known_encodings, known_names, face_encoding):
+        """
+        This function only does math, no vision.
+
+        If no entries exist, return "Unknown" and a fake large distance for consistency.
+        If you return 0, that would falsely imply a perfect match.
+
+        Takes one face embedding from the camera and compares it against every stored embedding,
+        returning an array of distances.
+
+        Finds the index of the smallest distance, which returns the closest embedding.
+
+        Each value tells: "How different is this face from that stored face?"
+          - smaller is more similar
+          - larger is more different
+
+        Example:
+            dists = [0.62, 0.48, 0.91, 0.53]
+            np.argmin(dists) -> 1
+            idx = 1
+            dist = 0.48
+
+        Compare the returned distance with self.TOLERANCE to enforce the security gate.
+
+        Args:
+            known_encodings: list of enrolled embeddings
+            known_names: list of names aligned to encodings
+            face_encoding: one embedding from the live camera
+
+        Returns:
+            (name, dist)
+        """
+        if not known_encodings:
+            return "Unknown", 999.0
+
+        dists = face_recognition.face_distance(known_encodings, face_encoding)
+        idx = int(np.argmin(dists))
+        dist = float(dists[idx])
+
+        if dist <= self.TOLERANCE:
+            return known_names[idx], dist
+        return "Unknown", dist
+
+
+def main():
+    instantiate = FacialRecognitionTool()
+    known_encodings, known_names = instantiate.load_facial_database()
+
+    cap = cv2.VideoCapture(instantiate.CAM_INDEX)
+    if not cap.isOpened():
+        raise RuntimeError("Could not open camera")
+
+    print("[INFO] Camera started. ESC=quit | E=enroll")
+
+    while True:
+        ok, frame = cap.read()
+        if not ok:
+            break
+
+        frame = cv2.flip(frame, 1)
+
+        small = cv2.resize(
+            frame, (0, 0),
+            fx=instantiate.FRAME_SCALE,
+            fy=instantiate.FRAME_SCALE
+        )
+        rgb_small = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
+
+        locations = face_recognition.face_locations(rgb_small, model="hog")
+        encodings = face_recognition.face_encodings(rgb_small, locations)
+
+        for (top, right, bottom, left), enc in zip(locations, encodings):
+            name, dist = instantiate.best_match(known_encodings, known_names, enc)
+
+            top = int(top / instantiate.FRAME_SCALE)
+            right = int(right / instantiate.FRAME_SCALE)
+            bottom = int(bottom / instantiate.FRAME_SCALE)
+            left = int(left / instantiate.FRAME_SCALE)
+
+            cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+
+            label = f"{name} ({dist:.2f})"
+            cv2.rectangle(frame, (left, bottom - 28), (right, bottom), (0, 255, 0), -1)
+            cv2.putText(
+                frame,
+                label,
+                (left + 6, bottom - 8),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (0, 0, 0),
+                2,
+            )
+
+        cv2.imshow("Face Live Enrollment", frame)
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == 27:  # ESC
+            break
+
+        if key in (ord("e"), ord("E")):
+            if not locations or not encodings:
+                print("[ENROLL] No face detected")
+                continue
+
+            # choose the largest face in the frame (largest bounding box)
+            areas = [(b - t) * (r - l) for (t, r, b, l) in locations]
+            i = int(np.argmax(areas))
+            chosen_enc = encodings[i]
+
+            name = input("Enter name to enroll: ").strip()
+            if name:
+                instantiate.save_encoding(name, chosen_enc)
+                known_encodings, known_names = instantiate.load_facial_database()
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    main()
+
+
+"""
+recognize endpoint
+
+request: 
+Content-Type multipart/form-data
+
+response:
+{
+  "ok": true,
+  "recognized": true,
+  "name": "Stevenson",
+  "distance": 0.42,
+  "timestamp": "2025-12-22T20:15:00-05:00"
+}
+
+if unknown
+{
+  "ok": true,
+  "recognized": false,
+  "name": "Unknown",
+  "distance": 0.78,
+  "timestamp": "2025-12-22T20:15:00-05:00"
+}
+
+enroll endpoint
+
+request:
+Content-Type multipart/form-data
+
+response:
+{
+  "ok": true,
+  "enrolled": true,
+  "name": "Stevenson",
+  "samples_total": 5,
+  "timestamp": "2025-12-22T20:16:02-05:00"
+}
+"""

@@ -1,0 +1,119 @@
+import cv2
+import mediapipe as mp
+
+class HandFacialRecog():
+    def __init__(self):
+        self.RESULT = True
+        self.FRAME = ""
+
+    def zoom(self, img, zoom_ctrl):
+        return cv2.resize(
+            img, 
+            None,
+            fx=zoom_ctrl,
+            fy=zoom_ctrl,
+            interpolation=cv2.INTER_LINEAR
+        )
+
+
+
+    def hand_solution(self):
+        """_summary_
+        in mediapipe solutions is a part of the body that needs to be recognized
+        such as hands, nose, feet, etc
+        It is a s trained Machine Learning model, pre-processing, post-processing, sensible defaults
+        It is the package, and from within that package you have all the tools that you need to execute
+        
+        """
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            raise RuntimeError("Could not open")
+        while True:
+            ok, self.FRAME = cap.read()
+            if not ok:
+                break
+            cv2.imshow("Lesson 1 Capture (Press esc to quit)", self.FRAME)
+
+        mp_hands = mp.solutions.hands
+        # mp_hands.HAND_CONNECTIONS
+
+        """
+        this is the drawing function for the landmark. it is the drawing point
+        the drawing utils unction already understands the landmark requirements
+        which marks parking and drawing points EASIER
+        """
+        mp_draw = mp.solutions.drawing_utils
+
+        """
+        This line does the detection, but does not display yet. It is the start of the machine learning.
+        It detects it, tracking logic is being setup, now there is a working hand detector object
+
+        static_image_mode=False -> tells you how the image will be used, if not image
+        if True then it will treat each self.FRAME as unrelated
+        Detection will run from scratch 
+        
+        max_num_hands=2 is max amount of hands to be located. Not min, but max
+        if you don't do that, the system can try and add look for all the hands on the screen that can be confusing
+
+        model_complexity=1, computation details and accuracy. How much details to use
+            0 → lighter, faster, less accurate
+            1 → balanced (default, recommended)
+            2 → heavier, slower, slightly more accurate
+
+        min_detection_confidence=0.5, confidence level to return accepted value for detection
+        min_tracking_confidence=0.5, confidence level to return accepted value for tracking, the tracker and re-detect
+            Higher value → more stable but may drop tracking
+            Lower value → smoother but may drift
+        """
+        hands = mp_hands.Hands(
+            static_image_mode=False,
+            max_num_hands=2,
+            model_complexity=1,
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5,
+        )
+
+        while True:
+            """
+            reads the self.FRAME
+            flips the self.FRAME
+            covert it ML color code
+            runs the model
+            checks if any hands were detected, if None or empty list then no hands detected
+                if no hands are detected the program doesn't crash, it just gracefully moves on
+                if you try to draw without the hands being sent in the self.FRAME, it will error out
+            the code iterates through each hand found, and each hand has 21 landmarks
+
+            mp_draw.draw_landmarks() helper function to draw the lines, it's a only for visualization for lines and joints
+            """
+
+            ok, self.FRAME = cap.read() 
+            if not ok:
+                break
+            self.FRAME = cv2.flip(self.FRAME, 1)
+            rgb = cv2.cvtColor(self.FRAME, cv2.COLOR_BGR2RGB) 
+            result = hands.process(rgb) 
+            if result.multi_hand_landmarks:
+                for hand_landmarks in result.multi_hand_landmarks:
+                    mp_draw.draw_landmarks(
+                        self.FRAME, #the original picture to draw the lines on
+                        hand_landmarks, #supplies the 21 landmarks for each hand with XYZ value in RGB format
+                        # the ML returns are relative (0.0–1.0), not pixel coordinates
+                        # The drawing utility converts them internally
+                        mp_hands.HAND_CONNECTIONS # predefined index points for hand, finger, joints and etc. hand_landmarks provides the points
+                        # HAND_CONNECTIONS provides the which point to connect together to get the joints, and etc
+                        # inside the class you instantiate HAND_CONNECTIONS which is how landmark connections happen
+                    )
+        cv2.imshow("Lesson 2 - Hands Dots (press q to quit)", self.FRAME)
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            hands.close()
+            cap.release()
+            cv2.destroyAllWindows()
+
+    def main(self):
+        self.hand_solution()
+
+
+if __name__ == "__main__":
+    instantiate = HandFacialRecog()
+    instantiate.hand_solution()
