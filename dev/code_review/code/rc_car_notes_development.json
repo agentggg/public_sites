@@ -1,0 +1,125 @@
+from board import SDA, SCL  # imports the board wiring for the SDA and SCL
+import busio  # python does not speak hardware, this allows you to communicate with hardware
+from adafruit_pca9685 import PCA9685  # lib for the PCA board
+from gpiozero import OutputDevice  # safe way to access GPIO pins
+import time
+
+"""
+OSOYOO Mecanum Car (R15-1) – Pin Mapping Reference
+================================================
+
+This car uses:
+- Raspberry Pi GPIO pins for MOTOR DIRECTION
+- PCA9685 PWM channels for MOTOR SPEED (ENABLE)
+- L298N motor driver logic on the OSOYOO board
+
+-----------------------------------------------
+FRONT RIGHT MOTOR  (BK1 on OSOYOO board)
+-----------------------------------------------
+GPIO23 -> IN1_FRONT  (Direction A)
+GPIO24 -> IN2_FRONT  (Direction B)
+PCA9685 Channel 1 -> ENB_FRONT (Speed / Enable)
+
+-----------------------------------------------
+FRONT LEFT MOTOR   (BK3 on OSOYOO board)
+-----------------------------------------------
+GPIO27 -> IN3_FRONT  (Direction A)
+GPIO22 -> IN4_FRONT  (Direction B)
+PCA9685 Channel 0 -> ENA_FRONT (Speed / Enable)
+
+-----------------------------------------------
+REAR RIGHT MOTOR   (AK1 on OSOYOO board)
+-----------------------------------------------
+GPIO21 -> IN1_REAR   (Direction A)
+GPIO20 -> IN2_REAR   (Direction B)
+PCA9685 Channel 3 -> ENB_REAR  (Speed / Enable)
+
+-----------------------------------------------
+REAR LEFT MOTOR    (AK3 on OSOYOO board)
+-----------------------------------------------
+GPIO16 -> IN3_REAR   (Direction A)
+GPIO12 -> IN4_REAR   (Direction B)
+PCA9685 Channel 2 -> ENA_REAR  (Speed / Enable)
+
+-----------------------------------------------
+IMPORTANT CONCEPTS
+-----------------------------------------------
+- GPIO pins DO NOT provide speed
+  → they only choose direction (forward / backward)
+
+- PCA9685 DOES NOT drive motors directly
+  → it outputs PWM to the L298N enable pins
+
+- Motors WILL NOT SPIN unless:
+  1) One direction pin is HIGH and the other LOW
+  2) The corresponding PCA9685 channel duty_cycle > 0
+  3) Motor power + common GND are connected
+
+-----------------------------------------------
+PWM VALUES (PCA9685)
+-----------------------------------------------
+0       = motor OFF
+32767   = ~50% speed
+65535   = full speed
+
+-----------------------------------------------
+PWM FREQUENCY
+-----------------------------------------------
+DC Motors: 100–1000 Hz (200 Hz is safe)
+Servos:    ~50–60 Hz (NOT for motors)
+
+================================================
+"""
+
+# connect the I2C pins to python to make it usable
+i2c = busio.I2C(SCL, SDA)
+
+# sends an I²C probe, looks for address 0x40, prepares internal state for PWM control.
+# If the chip responds, you have a connection; if not, something is wrong
+pca = PCA9685(i2c)
+
+# Hz = cycles per second. This controls how fast ON/OFF cycles repeat.
+pca.frequency = 200
+
+# turn off: the chip does not stop by default, you have to explicitly tell it to stop
+# because the previous PWM value will run non-stop
+pca.channels[0].duty_cycle = 0
+
+
+# define these BEFORE try so except/finally can safely reference them
+IN1_FRONT = None
+IN2_FRONT = None
+
+try:
+    # this pin is an output pin, the pins default to low
+    IN1_FRONT = OutputDevice(21)
+    IN2_FRONT = OutputDevice(16)
+
+    # Forward, 50% speed
+    IN1_FRONT.on()  # sets the voltage to 3.3v - high
+    # IN2_FRONT.off()
+
+    # inside the chip there is a clock/counter that runs from 0 to 65535 (not ms).
+    # duty_cycle is "how many counts ON out of 65535 per cycle"
+    pca.channels[3].duty_cycle = 65535
+
+    time.sleep(10)
+
+finally:
+    # ALWAYS STOP (even if crash / Ctrl-C)
+    try:
+        pca.channels[0].duty_cycle = 0
+    except Exception:
+        pass
+
+    if IN1_FRONT is not None:
+        IN1_FRONT.off()  # sets the voltage to 0v - low
+    if IN2_FRONT is not None:
+        IN2_FRONT.off()
+
+    try:
+        pca.deinit()  # cleanup releasing the resources. It releases the I2C device handle
+    except Exception:
+        pass
+
+    print("Done (safe stop)")

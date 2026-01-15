@@ -1,0 +1,41 @@
+import time
+from gpiozero import OutputDevice
+from board import SCL, SDA
+import busio
+from adafruit_pca9685 import PCA9685
+
+# I2C -> PCA9685
+i2c = busio.I2C(SCL, SDA)
+pca = PCA9685(i2c)
+pca.frequency = 200
+
+# REAR RIGHT (AK1)
+IN1_REAR_R = OutputDevice(21)
+IN2_REAR_R = OutputDevice(20)
+EN_REAR_R_CH = 3  # PCA channel
+
+# REAR LEFT (AK3)
+IN1_REAR_L = OutputDevice(16)
+IN2_REAR_L = OutputDevice(12)
+EN_REAR_L_CH = 2  # PCA channel
+
+try:
+    # Forward direction (one pin HIGH, the other LOW)
+    IN1_REAR_R.on(); IN2_REAR_R.off()
+    IN1_REAR_L.on(); IN2_REAR_L.off()
+
+    # Speed (enable) — start with full power for testing
+    speed = 65535  # try 32767 for ~50% later
+    pca.channels[EN_REAR_R_CH].duty_cycle = speed
+    pca.channels[EN_REAR_L_CH].duty_cycle = speed
+
+    time.sleep(3)
+
+finally:
+    # Stop PWM + direction
+    pca.channels[EN_REAR_R_CH].duty_cycle = 0
+    pca.channels[EN_REAR_L_CH].duty_cycle = 0
+    IN1_REAR_R.off(); IN2_REAR_R.off()
+    IN1_REAR_L.off(); IN2_REAR_L.off()
+    pca.deinit()
+    print("Rear motors stopped")
