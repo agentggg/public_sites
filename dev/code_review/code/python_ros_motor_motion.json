@@ -1,62 +1,87 @@
+import json
+import threading
+from time import sleep
+
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
 from rclpy.qos import QoSProfile, ReliabilityPolicy
-from time import sleep
+from std_msgs.msg import String
+
 from gpiozero import OutputDevice
 from board import SCL, SDA
 import busio
 from adafruit_pca9685 import PCA9685
-import threading
-import json
 
-class MotorMotions():
-    def __init__(self, DIRECTION_REQUEST, DIRECTION_SPEED):
-        print(f"==>> DIRECTION_SPEED: {DIRECTION_SPEED}")
-        print(f"==>> DIRECTION_REQUEST: {DIRECTION_REQUEST}")
+
+class MotorMotions:
+    """
+    Hardware motor controller (NOT a ROS Node).
+    Receives a ROS logger injected from the Node so logs go to /rosout.
+    """
+    def __init__(self, direction_request: str, direction_speed: int, logger):
+        self.log = logger
+
+        # State
         self.CURRENT_ACTION = "STOP"
         self.CURRENT_MODE = 5
         self.CURRENT_SPEED = int((self.CURRENT_MODE / 9) * 65535)
-        self.DIRECTION_REQUEST = DIRECTION_REQUEST
-        self.DIRECTION_SPEED = DIRECTION_SPEED
 
+        self.DIRECTION_REQUEST = direction_request
+        self.DIRECTION_SPEED = direction_speed
+
+        self._stop_event = threading.Event()
+
+        self.log.info(f"==>> INIT DIRECTION_SPEED: {direction_speed}")
+        self.log.info(f"==>> INIT DIRECTION_REQUEST: {direction_request}")
+        self.log.info(f"==>> INIT CURRENT_MODE: {self.CURRENT_MODE}")
+        self.log.info(f"==>> INIT CURRENT_SPEED: {self.CURRENT_SPEED}")
+
+        # I2C + PCA9685
         self.I2C = busio.I2C(SCL, SDA)
         self.PCA = PCA9685(self.I2C)
         self.PCA.frequency = 200
 
-        # Motor GPIO Pins
+        # Motor GPIO Pins (BCM)
         self.IN1_FRONT_RIGHT_REVERSE = 21
         self.IN2_FRONT_RIGHT_FORWARD = 20
-        self.IN3_FRONT_LEFT_REVERSE = 16
-        self.IN4_FRONT_LEFT_FORWARD = 12
-        self.IN1_REAR_RIGHT_REVERSE = 23
-        self.IN2_REAR_RIGHT_FORWARD = 24
-        self.IN3_REAR_LEFT_REVERSE = 27
-        self.IN4_REAR_LEFT_FORWARD = 22
+        self.IN3_FRONT_LEFT_REVERSE  = 16
+        self.IN4_FRONT_LEFT_FORWARD  = 12
+        self.IN1_REAR_RIGHT_REVERSE  = 23
+        self.IN2_REAR_RIGHT_FORWARD  = 24
+        self.IN3_REAR_LEFT_REVERSE   = 27
+        self.IN4_REAR_LEFT_FORWARD   = 22
 
+        # PCA9685 PWM channels
         self.ENA_FRONT_RIGHT = 2
         self.ENB_FRONT_LEFT  = 3
         self.ENA_REAR_RIGHT  = 0
         self.ENB_REAR_LEFT   = 1
 
+        # gpiozero outputs
+        # NOTE: If you ever still hit GPIO busy, it's because *another process* is holding /dev/gpiochip*
         self.IN1_FRONT_RIGHT_REVERSE_OUTPUT = OutputDevice(self.IN1_FRONT_RIGHT_REVERSE)
         self.IN2_FRONT_RIGHT_FORWARD_OUTPUT = OutputDevice(self.IN2_FRONT_RIGHT_FORWARD)
         self.IN3_FRONT_LEFT_REVERSE_OUTPUT  = OutputDevice(self.IN3_FRONT_LEFT_REVERSE)
         self.IN4_FRONT_LEFT_FORWARD_OUTPUT  = OutputDevice(self.IN4_FRONT_LEFT_FORWARD)
+
         self.IN1_REAR_RIGHT_REVERSE_OUTPUT  = OutputDevice(self.IN1_REAR_RIGHT_REVERSE)
         self.IN2_REAR_RIGHT_FORWARD_OUTPUT  = OutputDevice(self.IN2_REAR_RIGHT_FORWARD)
         self.IN3_REAR_LEFT_REVERSE_OUTPUT   = OutputDevice(self.IN3_REAR_LEFT_REVERSE)
         self.IN4_REAR_LEFT_FORWARD_OUTPUT   = OutputDevice(self.IN4_REAR_LEFT_FORWARD)
 
+    # -------------------- STOP HELPERS --------------------
+
     def hard_stop(self):
-        speed = 0
+        # Stop PWM
         for ch in [self.ENA_FRONT_RIGHT, self.ENB_FRONT_LEFT, self.ENA_REAR_RIGHT, self.ENB_REAR_LEFT]:
-            self.PCA.channels[ch].duty_cycle = speed
+            self.PCA.channels[ch].duty_cycle = 0
+
+        # Turn off pins
         for pin in [
             self.IN1_FRONT_RIGHT_REVERSE_OUTPUT, self.IN2_FRONT_RIGHT_FORWARD_OUTPUT,
-            self.IN3_FRONT_LEFT_REVERSE_OUTPUT, self.IN4_FRONT_LEFT_FORWARD_OUTPUT,
-            self.IN1_REAR_RIGHT_REVERSE_OUTPUT, self.IN2_REAR_RIGHT_FORWARD_OUTPUT,
-            self.IN3_REAR_LEFT_REVERSE_OUTPUT, self.IN4_REAR_LEFT_FORWARD_OUTPUT
+            self.IN3_FRONT_LEFT_REVERSE_OUTPUT,  self.IN4_FRONT_LEFT_FORWARD_OUTPUT,
+            self.IN1_REAR_RIGHT_REVERSE_OUTPUT,  self.IN2_REAR_RIGHT_FORWARD_OUTPUT,
+            self.IN3_REAR_LEFT_REVERSE_OUTPUT,   self.IN4_REAR_LEFT_FORWARD_OUTPUT
         ]:
             pin.off()
 
@@ -68,215 +93,281 @@ class MotorMotions():
             sleep(0.1)
         self.hard_stop()
 
+    # -------------------- MOTIONS --------------------
+
+    def _set_all_pwm(self, duty):
+        for ch in [self.ENA_FRONT_RIGHT, self.ENB_FRONT_LEFT, self.ENA_REAR_RIGHT, self.ENB_REAR_LEFT]:
+            self.PCA.channels[ch].duty_cycle = int(duty)
+
     def forward(self):
         try:
-            print(f"Robot acting in: {self.CURRENT_SPEED}")
+            self.log.info(f"[MOTION] FORWARD speed={self.CURRENT_SPEED}")
             self.slow_stop()
-            for ch in [self.ENA_FRONT_RIGHT, self.ENB_FRONT_LEFT, self.ENA_REAR_RIGHT, self.ENB_REAR_LEFT]:
-                self.PCA.channels[ch].duty_cycle = self.CURRENT_SPEED
+            self._set_all_pwm(self.CURRENT_SPEED)
+
             self.IN2_FRONT_RIGHT_FORWARD_OUTPUT.on()
             self.IN4_FRONT_LEFT_FORWARD_OUTPUT.on()
             self.IN2_REAR_RIGHT_FORWARD_OUTPUT.on()
             self.IN4_REAR_LEFT_FORWARD_OUTPUT.on()
         except Exception as e:
-            print(f"[ERROR] {e}")
+            self.log.error(f"[FORWARD ERROR] {e}")
 
     def reverse(self):
         try:
+            self.log.info(f"[MOTION] REVERSE speed={self.CURRENT_SPEED}")
             self.slow_stop()
-            for ch in [self.ENA_FRONT_RIGHT, self.ENB_FRONT_LEFT, self.ENA_REAR_RIGHT, self.ENB_REAR_LEFT]:
-                self.PCA.channels[ch].duty_cycle = self.CURRENT_SPEED
+            self._set_all_pwm(self.CURRENT_SPEED)
+
             self.IN1_FRONT_RIGHT_REVERSE_OUTPUT.on()
             self.IN3_FRONT_LEFT_REVERSE_OUTPUT.on()
             self.IN1_REAR_RIGHT_REVERSE_OUTPUT.on()
             self.IN3_REAR_LEFT_REVERSE_OUTPUT.on()
         except Exception as e:
-            print(f"[ERROR] {e}")
-
+            self.log.error(f"[REVERSE ERROR] {e}")
 
     def forward_right_turn(self):
-        self.slow_stop()
-        # LIDAR
-        self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = self.CURRENT_SPEED
-        self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = self.CURRENT_SPEED
-        self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = self.CURRENT_SPEED
-        self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = self.CURRENT_SPEED
+        try:
+            self.log.info(f"[MOTION] FORWARD_RIGHT speed={self.CURRENT_SPEED}")
+            self.slow_stop()
+            self._set_all_pwm(self.CURRENT_SPEED)
 
-        # your polarity-flipped forward
-        self.IN2_FRONT_RIGHT_FORWARD_OUTPUT.on()
-        self.IN4_FRONT_LEFT_FORWARD_OUTPUT.on()
-        self.IN2_REAR_RIGHT_FORWARD_OUTPUT.on()
-        self.IN4_REAR_LEFT_FORWARD_OUTPUT.on()
-        sleep(0.1)
+            # forward brief
+            self.IN2_FRONT_RIGHT_FORWARD_OUTPUT.on()
+            self.IN4_FRONT_LEFT_FORWARD_OUTPUT.on()
+            self.IN2_REAR_RIGHT_FORWARD_OUTPUT.on()
+            self.IN4_REAR_LEFT_FORWARD_OUTPUT.on()
+            sleep(0.1)
 
-        left_speed =  15000
-        right_speed = 65535
+            left_speed = 15000
+            right_speed = 65535
 
-        self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = right_speed
-        self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = left_speed
-        self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = right_speed
-        self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = left_speed
-
-        self.IN2_FRONT_RIGHT_FORWARD_OUTPUT.on()
-        self.IN4_FRONT_LEFT_FORWARD_OUTPUT.on()
-        self.IN2_REAR_RIGHT_FORWARD_OUTPUT.on()
-        self.IN4_REAR_LEFT_FORWARD_OUTPUT.on()
+            self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = right_speed
+            self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = left_speed
+            self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = right_speed
+            self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = left_speed
+        except Exception as e:
+            self.log.error(f"[FORWARD_RIGHT ERROR] {e}")
 
     def forward_left_turn(self):
-        self.slow_stop()
-        # LIDAR
-        self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = self.CURRENT_SPEED
-        self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = self.CURRENT_SPEED
-        self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = self.CURRENT_SPEED
-        self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = self.CURRENT_SPEED
+        try:
+            self.log.info(f"[MOTION] FORWARD_LEFT speed={self.CURRENT_SPEED}")
+            self.slow_stop()
+            self._set_all_pwm(self.CURRENT_SPEED)
 
-        # your polarity-flipped forward
-        self.IN2_FRONT_RIGHT_FORWARD_OUTPUT.on()
-        self.IN4_FRONT_LEFT_FORWARD_OUTPUT.on()
-        self.IN2_REAR_RIGHT_FORWARD_OUTPUT.on()
-        self.IN4_REAR_LEFT_FORWARD_OUTPUT.on()
-        sleep(0.1)
+            # forward brief
+            self.IN2_FRONT_RIGHT_FORWARD_OUTPUT.on()
+            self.IN4_FRONT_LEFT_FORWARD_OUTPUT.on()
+            self.IN2_REAR_RIGHT_FORWARD_OUTPUT.on()
+            self.IN4_REAR_LEFT_FORWARD_OUTPUT.on()
+            sleep(0.1)
 
-        left_speed =  65535
-        right_speed = 15000
+            left_speed = 65535
+            right_speed = 15000
 
-        self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = right_speed
-        self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = left_speed
-        self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = right_speed
-        self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = left_speed
-
-        self.IN2_FRONT_RIGHT_FORWARD_OUTPUT.on()
-        self.IN4_FRONT_LEFT_FORWARD_OUTPUT.on()
-        self.IN2_REAR_RIGHT_FORWARD_OUTPUT.on()
-        self.IN4_REAR_LEFT_FORWARD_OUTPUT.on()
+            self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = right_speed
+            self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = left_speed
+            self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = right_speed
+            self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = left_speed
+        except Exception as e:
+            self.log.error(f"[FORWARD_LEFT ERROR] {e}")
 
     def reverse_right_turn(self):
-        self.slow_stop()
-        # LIDAR
-        self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = self.CURRENT_SPEED
-        self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = self.CURRENT_SPEED
-        self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = self.CURRENT_SPEED
-        self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = self.CURRENT_SPEED
+        try:
+            self.log.info(f"[MOTION] REVERSE_RIGHT speed={self.CURRENT_SPEED}")
+            self.slow_stop()
+            self._set_all_pwm(self.CURRENT_SPEED)
 
-        # your polarity-flipped forward
-        self.IN1_FRONT_RIGHT_REVERSE_OUTPUT.on()
-        self.IN3_FRONT_LEFT_REVERSE_OUTPUT.on()
-        self.IN1_REAR_RIGHT_REVERSE_OUTPUT.on()
-        self.IN3_REAR_LEFT_REVERSE_OUTPUT.on()
-        sleep(0.1)
+            self.IN1_FRONT_RIGHT_REVERSE_OUTPUT.on()
+            self.IN3_FRONT_LEFT_REVERSE_OUTPUT.on()
+            self.IN1_REAR_RIGHT_REVERSE_OUTPUT.on()
+            self.IN3_REAR_LEFT_REVERSE_OUTPUT.on()
+            sleep(0.1)
 
-        left_speed =  15000
-        right_speed = 65535
+            left_speed = 15000
+            right_speed = 65535
 
-        self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = right_speed
-        self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = left_speed
-        self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = right_speed
-        self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = left_speed
+            self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = right_speed
+            self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = left_speed
+            self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = right_speed
+            self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = left_speed
+        except Exception as e:
+            self.log.error(f"[REVERSE_RIGHT ERROR] {e}")
 
-        self.IN1_FRONT_RIGHT_REVERSE_OUTPUT.on()
-        self.IN3_FRONT_LEFT_REVERSE_OUTPUT.on()
-        self.IN1_REAR_RIGHT_REVERSE_OUTPUT.on()
-        self.IN3_REAR_LEFT_REVERSE_OUTPUT.on()
+    def reverse_left_turn(self):
+        try:
+            self.log.info(f"[MOTION] REVERSE_LEFT speed={self.CURRENT_SPEED}")
+            self.slow_stop()
+            self._set_all_pwm(self.CURRENT_SPEED)
 
-    def reverse_left_turn(self, sleep_time=3):
-        self.slow_stop()
-        # LIDAR
-        self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = self.CURRENT_SPEED
-        self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = self.CURRENT_SPEED
-        self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = self.CURRENT_SPEED
-        self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = self.CURRENT_SPEED
+            self.IN1_FRONT_RIGHT_REVERSE_OUTPUT.on()
+            self.IN3_FRONT_LEFT_REVERSE_OUTPUT.on()
+            self.IN1_REAR_RIGHT_REVERSE_OUTPUT.on()
+            self.IN3_REAR_LEFT_REVERSE_OUTPUT.on()
+            sleep(0.1)
 
-        # your polarity-flipped forward
-        self.IN1_FRONT_RIGHT_REVERSE_OUTPUT.on()
-        self.IN3_FRONT_LEFT_REVERSE_OUTPUT.on()
-        self.IN1_REAR_RIGHT_REVERSE_OUTPUT.on()
-        self.IN3_REAR_LEFT_REVERSE_OUTPUT.on()
-        sleep(0.1)
+            left_speed = 65535
+            right_speed = 15000
 
-        left_speed =  65535 
-        right_speed = 15000
+            self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = right_speed
+            self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = left_speed
+            self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = right_speed
+            self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = left_speed
+        except Exception as e:
+            self.log.error(f"[REVERSE_LEFT ERROR] {e}")
 
-        self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = right_speed
-        self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = left_speed
-        self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = right_speed
-        self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = left_speed
+    # -------------------- LOOP + CLEANUP --------------------
 
-        self.IN1_FRONT_RIGHT_REVERSE_OUTPUT.on()
-        self.IN3_FRONT_LEFT_REVERSE_OUTPUT.on()
-        self.IN1_REAR_RIGHT_REVERSE_OUTPUT.on()
-        self.IN3_REAR_LEFT_REVERSE_OUTPUT.on()
-    
-    def main(self):
-        print("==> [MAIN LOOP RUNNING]")
+    def request_stop(self):
+        self._stop_event.set()
+
+    def cleanup(self):
+        self.log.info("[CLEANUP] Releasing motors + GPIO + PCA9685")
+        try:
+            self.hard_stop()
+        except Exception:
+            pass
+
+        for dev in [
+            getattr(self, "IN1_FRONT_RIGHT_REVERSE_OUTPUT", None),
+            getattr(self, "IN2_FRONT_RIGHT_FORWARD_OUTPUT", None),
+            getattr(self, "IN3_FRONT_LEFT_REVERSE_OUTPUT", None),
+            getattr(self, "IN4_FRONT_LEFT_FORWARD_OUTPUT", None),
+            getattr(self, "IN1_REAR_RIGHT_REVERSE_OUTPUT", None),
+            getattr(self, "IN2_REAR_RIGHT_FORWARD_OUTPUT", None),
+            getattr(self, "IN3_REAR_LEFT_REVERSE_OUTPUT", None),
+            getattr(self, "IN4_REAR_LEFT_FORWARD_OUTPUT", None),
+        ]:
+            if dev is None:
+                continue
+            try:
+                dev.close()
+            except Exception:
+                pass
+
+        try:
+            self.PCA.deinit()
+        except Exception:
+            pass
+
+    def main_loop(self):
+        self.log.info("==> [MOTOR MAIN LOOP RUNNING]")
         last_cmd = None
         last_speed = None
 
-        while True:
+        while rclpy.ok() and not self._stop_event.is_set():
             # Normalize case
             cmd = str(self.DIRECTION_REQUEST).upper()
-            speed = int(self.DIRECTION_SPEED)
+            try:
+                speed = int(self.DIRECTION_SPEED)
+            except Exception:
+                speed = 0
 
-            # Check for valid speed range
+            # Update speed mode if valid (1..9)
             if 1 <= speed <= 9:
                 self.CURRENT_MODE = speed
                 self.CURRENT_SPEED = int((speed / 9) * 65535)
 
-            # Only react if there's a change
+            # React on change
             if cmd != last_cmd or speed != last_speed:
-                print(f"[EXECUTING] cmd={cmd}, speed={speed}")
+                self.log.info(f"[EXECUTING] cmd={cmd}, speed={speed}")
                 last_cmd = cmd
                 last_speed = speed
 
                 if cmd == "FORWARD":
                     self.CURRENT_ACTION = "FORWARD"
                     self.forward()
-
                 elif cmd == "REVERSE":
                     self.CURRENT_ACTION = "REVERSE"
                     self.reverse()
-
                 elif cmd == "RIGHT":
                     self.CURRENT_ACTION = "FORWARD_RIGHT"
                     self.forward_right_turn()
-
                 elif cmd == "LEFT":
                     self.CURRENT_ACTION = "FORWARD_LEFT"
                     self.forward_left_turn()
-
                 elif cmd == "STOP":
                     self.CURRENT_ACTION = "STOP"
                     self.slow_stop()
-
                 elif cmd == "QUIT":
                     self.slow_stop()
-                    print("==> Shutting down loop.")
+                    self.log.info("==> Shutting down motor loop.")
                     break
+                else:
+                    self.log.warning(f"[UNKNOWN CMD] {cmd} -> STOP")
+                    self.slow_stop()
 
             sleep(0.1)
 
-class MotorSubscriber(Node): 
+
+class MotorSubscriber(Node):
     def __init__(self):
-        super().__init__('MotorSubscriber')  
-        self.motion = MotorMotions("STOP", 0)
-        threading.Thread(target=self.motion.main, daemon=True).start()
+        super().__init__('motor_control_sub')
+
+        self.motion = None
+        self._motion_thread = None
+
         self.subscriber = self.create_subscription(
             String,
             '/motor_control',
             self.listener_callback,
-            QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE))
+            QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)
+        )
 
-    def listener_callback(self, msg):
-        print(f"[CALLBACK TRIGGERED] Raw msg: {msg.data}")  # ADD THIS
-        data = json.loads(msg.data)
-        self.motion.DIRECTION_REQUEST = data.get("cmd")
-        self.motion.DIRECTION_SPEED = data.get("speed")
+        self.get_logger().info("[READY] Subscribed to /motor_control (hardware init pending)")
+
+        # Try hardware init in background (keeps node alive even if GPIO busy)
+        threading.Thread(target=self._init_hardware_loop, daemon=True).start()
+
+    def _init_hardware_loop(self):
+        while rclpy.ok() and self.motion is None:
+            try:
+                self.get_logger().info("[HW INIT] Attempting to claim GPIO + PCA9685...")
+                self.motion = MotorMotions("STOP", 0, self.get_logger())
+
+                self._motion_thread = threading.Thread(target=self.motion.main_loop, daemon=True)
+                self._motion_thread.start()
+
+                self.get_logger().info("[HW INIT] SUCCESS ✅ Motors ready.")
+                break
+
+            except Exception as e:
+                self.get_logger().error(f"[HW INIT] FAILED: {e} (retrying in 2s)")
+                sleep(2)
+
+    def listener_callback(self, msg: String):
+        self.get_logger().info(f"[CALLBACK] Raw msg: {msg.data}")
+
+        if self.motion is None:
+            self.get_logger().warning("[CALLBACK] Hardware not ready yet (GPIO busy). Ignoring command.")
+            return
+
+        try:
+            data = json.loads(msg.data)
+        except Exception as e:
+            self.get_logger().error(f"[BAD JSON] {e} :: {msg.data}")
+            return
+
+        self.motion.DIRECTION_REQUEST = str(data.get("cmd", "STOP"))
+        try:
+            self.motion.DIRECTION_SPEED = int(data.get("speed", 0))
+        except Exception:
+            self.motion.DIRECTION_SPEED = 0
 
 def main(args=None):
     rclpy.init(args=args)
     node = MotorSubscriber()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        try:
+            node.destroy_node()
+        except Exception:
+            pass
+        rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()
