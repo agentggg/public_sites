@@ -1,0 +1,169 @@
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+from rclpy.qos import QoSProfile, ReliabilityPolicy
+from time import sleep
+from gpiozero import OutputDevice
+from board import SCL, SDA
+import busio
+from adafruit_pca9685 import PCA9685
+import threading
+import json
+
+class MotorMotions():
+    def __init__(self, DIRECTION_REQUEST, DIRECTION_SPEED):
+        print(f"==>> DIRECTION_SPEED: {DIRECTION_SPEED}")
+        print(f"==>> DIRECTION_REQUEST: {DIRECTION_REQUEST}")
+        self.CURRENT_ACTION = "STOP"
+        self.CURRENT_MODE = 5
+        self.CURRENT_SPEED = int((self.CURRENT_MODE / 9) * 65535)
+        self.DIRECTION_REQUEST = DIRECTION_REQUEST
+        self.DIRECTION_SPEED = DIRECTION_SPEED
+
+        self.I2C = busio.I2C(SCL, SDA)
+        self.PCA = PCA9685(self.I2C)
+        self.PCA.frequency = 200
+
+        # Motor GPIO Pins
+        self.IN1_FRONT_RIGHT_REVERSE = 21
+        self.IN2_FRONT_RIGHT_FORWARD = 20
+        self.IN3_FRONT_LEFT_REVERSE = 16
+        self.IN4_FRONT_LEFT_FORWARD = 12
+        self.IN1_REAR_RIGHT_REVERSE = 23
+        self.IN2_REAR_RIGHT_FORWARD = 24
+        self.IN3_REAR_LEFT_REVERSE = 27
+        self.IN4_REAR_LEFT_FORWARD = 22
+
+        self.ENA_FRONT_RIGHT = 2
+        self.ENB_FRONT_LEFT  = 3
+        self.ENA_REAR_RIGHT  = 0
+        self.ENB_REAR_LEFT   = 1
+
+        self.IN1_FRONT_RIGHT_REVERSE_OUTPUT = OutputDevice(self.IN1_FRONT_RIGHT_REVERSE)
+        self.IN2_FRONT_RIGHT_FORWARD_OUTPUT = OutputDevice(self.IN2_FRONT_RIGHT_FORWARD)
+        self.IN3_FRONT_LEFT_REVERSE_OUTPUT  = OutputDevice(self.IN3_FRONT_LEFT_REVERSE)
+        self.IN4_FRONT_LEFT_FORWARD_OUTPUT  = OutputDevice(self.IN4_FRONT_LEFT_FORWARD)
+        self.IN1_REAR_RIGHT_REVERSE_OUTPUT  = OutputDevice(self.IN1_REAR_RIGHT_REVERSE)
+        self.IN2_REAR_RIGHT_FORWARD_OUTPUT  = OutputDevice(self.IN2_REAR_RIGHT_FORWARD)
+        self.IN3_REAR_LEFT_REVERSE_OUTPUT   = OutputDevice(self.IN3_REAR_LEFT_REVERSE)
+        self.IN4_REAR_LEFT_FORWARD_OUTPUT   = OutputDevice(self.IN4_REAR_LEFT_FORWARD)
+
+    def hard_stop(self):
+        speed = 0
+        for ch in [self.ENA_FRONT_RIGHT, self.ENB_FRONT_LEFT, self.ENA_REAR_RIGHT, self.ENB_REAR_LEFT]:
+            self.PCA.channels[ch].duty_cycle = speed
+        for pin in [
+            self.IN1_FRONT_RIGHT_REVERSE_OUTPUT, self.IN2_FRONT_RIGHT_FORWARD_OUTPUT,
+            self.IN3_FRONT_LEFT_REVERSE_OUTPUT, self.IN4_FRONT_LEFT_FORWARD_OUTPUT,
+            self.IN1_REAR_RIGHT_REVERSE_OUTPUT, self.IN2_REAR_RIGHT_FORWARD_OUTPUT,
+            self.IN3_REAR_LEFT_REVERSE_OUTPUT, self.IN4_REAR_LEFT_FORWARD_OUTPUT
+        ]:
+            pin.off()
+
+    def slow_stop(self, speed_control=26214):
+        speed = round(speed_control / 3)
+        for _ in range(3):
+            for ch in [self.ENA_FRONT_RIGHT, self.ENB_FRONT_LEFT, self.ENA_REAR_RIGHT, self.ENB_REAR_LEFT]:
+                self.PCA.channels[ch].duty_cycle = speed
+            sleep(0.1)
+        self.hard_stop()
+
+    def forward(self):
+        try:
+            print(f"Robot acting in: {self.CURRENT_SPEED}")
+            self.slow_stop()
+            for ch in [self.ENA_FRONT_RIGHT, self.ENB_FRONT_LEFT, self.ENA_REAR_RIGHT, self.ENB_REAR_LEFT]:
+                self.PCA.channels[ch].duty_cycle = self.CURRENT_SPEED
+            self.IN2_FRONT_RIGHT_FORWARD_OUTPUT.on()
+            self.IN4_FRONT_LEFT_FORWARD_OUTPUT.on()
+            self.IN2_REAR_RIGHT_FORWARD_OUTPUT.on()
+            self.IN4_REAR_LEFT_FORWARD_OUTPUT.on()
+        except Exception as e:
+            print(f"[ERROR] {e}")
+
+    def reverse(self):
+        try:
+            self.slow_stop()
+            for ch in [self.ENA_FRONT_RIGHT, self.ENB_FRONT_LEFT, self.ENA_REAR_RIGHT, self.ENB_REAR_LEFT]:
+                self.PCA.channels[ch].duty_cycle = self.CURRENT_SPEED
+            self.IN1_FRONT_RIGHT_REVERSE_OUTPUT.on()
+            self.IN3_FRONT_LEFT_REVERSE_OUTPUT.on()
+            self.IN1_REAR_RIGHT_REVERSE_OUTPUT.on()
+            self.IN3_REAR_LEFT_REVERSE_OUTPUT.on()
+        except Exception as e:
+            print(f"[ERROR] {e}")
+
+    def main(self):
+        print("==> [MAIN LOOP RUNNING]")
+        last_cmd = None
+        last_speed = None
+
+        while True:
+            # Normalize case
+            cmd = str(self.DIRECTION_REQUEST).upper()
+            speed = int(self.DIRECTION_SPEED)
+
+            # Check for valid speed range
+            if 1 <= speed <= 9:
+                self.CURRENT_MODE = speed
+                self.CURRENT_SPEED = int((speed / 9) * 65535)
+
+            # Only react if there's a change
+            if cmd != last_cmd or speed != last_speed:
+                print(f"[EXECUTING] cmd={cmd}, speed={speed}")
+                last_cmd = cmd
+                last_speed = speed
+
+                if cmd == "FORWARD":
+                    self.CURRENT_ACTION = "FORWARD"
+                    self.forward()
+
+                elif cmd == "REVERSE":
+                    self.CURRENT_ACTION = "REVERSE"
+                    self.reverse()
+
+                elif action == "RIGHT":
+                    self.CURRENT_ACTION = "FORWARD_RIGHT"
+                    self.forward_right_turn()
+
+                elif action == "LEFT":
+                    self.CURRENT_ACTION = "FORWARD_LEFT"
+                    self.forward_left_turn()
+                    
+                elif cmd == "STOP":
+                    self.CURRENT_ACTION = "STOP"
+                    self.slow_stop()
+
+                elif cmd == "QUIT":
+                    self.slow_stop()
+                    print("==> Shutting down loop.")
+                    break
+
+            sleep(0.1)
+
+class MotorSubscriber(Node): 
+    def __init__(self):
+        super().__init__('MotorSubscriber')  
+        self.motion = MotorMotions("STOP", 0)
+        threading.Thread(target=self.motion.main, daemon=True).start()
+        self.subscriber = self.create_subscription(
+            String,
+            '/motor_control',
+            self.listener_callback,
+            QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE))
+
+    def listener_callback(self, msg):
+        print(f"[CALLBACK TRIGGERED] Raw msg: {msg.data}")  # ADD THIS
+        data = json.loads(msg.data)
+        self.motion.DIRECTION_REQUEST = data.get("cmd")
+        self.motion.DIRECTION_SPEED = data.get("speed")
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = MotorSubscriber()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
