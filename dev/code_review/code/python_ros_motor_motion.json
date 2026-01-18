@@ -93,6 +93,119 @@ class MotorMotions():
         except Exception as e:
             print(f"[ERROR] {e}")
 
+
+    def forward_right_turn(self):
+        self.slow_stop()
+        # LIDAR
+        self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = self.CURRENT_SPEED
+        self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = self.CURRENT_SPEED
+        self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = self.CURRENT_SPEED
+        self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = self.CURRENT_SPEED
+
+        # your polarity-flipped forward
+        self.IN2_FRONT_RIGHT_FORWARD_OUTPUT.on()
+        self.IN4_FRONT_LEFT_FORWARD_OUTPUT.on()
+        self.IN2_REAR_RIGHT_FORWARD_OUTPUT.on()
+        self.IN4_REAR_LEFT_FORWARD_OUTPUT.on()
+        sleep(0.1)
+
+        left_speed =  15000
+        right_speed = 65535
+
+        self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = right_speed
+        self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = left_speed
+        self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = right_speed
+        self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = left_speed
+
+        self.IN2_FRONT_RIGHT_FORWARD_OUTPUT.on()
+        self.IN4_FRONT_LEFT_FORWARD_OUTPUT.on()
+        self.IN2_REAR_RIGHT_FORWARD_OUTPUT.on()
+        self.IN4_REAR_LEFT_FORWARD_OUTPUT.on()
+
+    def forward_left_turn(self):
+        self.slow_stop()
+        # LIDAR
+        self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = self.CURRENT_SPEED
+        self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = self.CURRENT_SPEED
+        self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = self.CURRENT_SPEED
+        self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = self.CURRENT_SPEED
+
+        # your polarity-flipped forward
+        self.IN2_FRONT_RIGHT_FORWARD_OUTPUT.on()
+        self.IN4_FRONT_LEFT_FORWARD_OUTPUT.on()
+        self.IN2_REAR_RIGHT_FORWARD_OUTPUT.on()
+        self.IN4_REAR_LEFT_FORWARD_OUTPUT.on()
+        sleep(0.1)
+
+        left_speed =  65535
+        right_speed = 15000
+
+        self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = right_speed
+        self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = left_speed
+        self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = right_speed
+        self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = left_speed
+
+        self.IN2_FRONT_RIGHT_FORWARD_OUTPUT.on()
+        self.IN4_FRONT_LEFT_FORWARD_OUTPUT.on()
+        self.IN2_REAR_RIGHT_FORWARD_OUTPUT.on()
+        self.IN4_REAR_LEFT_FORWARD_OUTPUT.on()
+
+    def reverse_right_turn(self):
+        self.slow_stop()
+        # LIDAR
+        self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = self.CURRENT_SPEED
+        self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = self.CURRENT_SPEED
+        self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = self.CURRENT_SPEED
+        self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = self.CURRENT_SPEED
+
+        # your polarity-flipped forward
+        self.IN1_FRONT_RIGHT_REVERSE_OUTPUT.on()
+        self.IN3_FRONT_LEFT_REVERSE_OUTPUT.on()
+        self.IN1_REAR_RIGHT_REVERSE_OUTPUT.on()
+        self.IN3_REAR_LEFT_REVERSE_OUTPUT.on()
+        sleep(0.1)
+
+        left_speed =  15000
+        right_speed = 65535
+
+        self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = right_speed
+        self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = left_speed
+        self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = right_speed
+        self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = left_speed
+
+        self.IN1_FRONT_RIGHT_REVERSE_OUTPUT.on()
+        self.IN3_FRONT_LEFT_REVERSE_OUTPUT.on()
+        self.IN1_REAR_RIGHT_REVERSE_OUTPUT.on()
+        self.IN3_REAR_LEFT_REVERSE_OUTPUT.on()
+
+    def reverse_left_turn(self, sleep_time=3):
+        self.slow_stop()
+        # LIDAR
+        self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = self.CURRENT_SPEED
+        self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = self.CURRENT_SPEED
+        self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = self.CURRENT_SPEED
+        self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = self.CURRENT_SPEED
+
+        # your polarity-flipped forward
+        self.IN1_FRONT_RIGHT_REVERSE_OUTPUT.on()
+        self.IN3_FRONT_LEFT_REVERSE_OUTPUT.on()
+        self.IN1_REAR_RIGHT_REVERSE_OUTPUT.on()
+        self.IN3_REAR_LEFT_REVERSE_OUTPUT.on()
+        sleep(0.1)
+
+        left_speed =  65535 
+        right_speed = 15000
+
+        self.PCA.channels[self.ENA_FRONT_RIGHT].duty_cycle = right_speed
+        self.PCA.channels[self.ENB_FRONT_LEFT].duty_cycle  = left_speed
+        self.PCA.channels[self.ENA_REAR_RIGHT].duty_cycle  = right_speed
+        self.PCA.channels[self.ENB_REAR_LEFT].duty_cycle   = left_speed
+
+        self.IN1_FRONT_RIGHT_REVERSE_OUTPUT.on()
+        self.IN3_FRONT_LEFT_REVERSE_OUTPUT.on()
+        self.IN1_REAR_RIGHT_REVERSE_OUTPUT.on()
+        self.IN3_REAR_LEFT_REVERSE_OUTPUT.on()
+    
     def main(self):
         print("==> [MAIN LOOP RUNNING]")
         last_cmd = None
@@ -122,14 +235,14 @@ class MotorMotions():
                     self.CURRENT_ACTION = "REVERSE"
                     self.reverse()
 
-                elif action == "RIGHT":
+                elif cmd == "RIGHT":
                     self.CURRENT_ACTION = "FORWARD_RIGHT"
                     self.forward_right_turn()
 
-                elif action == "LEFT":
+                elif cmd == "LEFT":
                     self.CURRENT_ACTION = "FORWARD_LEFT"
                     self.forward_left_turn()
-                    
+
                 elif cmd == "STOP":
                     self.CURRENT_ACTION = "STOP"
                     self.slow_stop()
