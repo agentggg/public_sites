@@ -1,0 +1,1623 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Notes → Learning Cards</title>
+
+  <style>
+    :root{
+      --radius: 18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.22);
+      --ring: 0 0 0 3px rgba(234,90,40,.25);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      --accent:#ea5a28;
+      --ok:#36d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --info:#60a5fa;
+    }
+
+    [data-theme="light"]{
+      --bg: #f7f8fb;
+      --panel: rgba(255,255,255,.86);
+      --panelBorder: rgba(15,23,42,.10);
+      --text:#0b1220;
+      --muted:#52627a;
+      --cardGrad1: rgba(255,255,255,.92);
+      --cardGrad2: rgba(255,255,255,.78);
+      --chipBg: rgba(15,23,42,.05);
+      --chipBorder: rgba(15,23,42,.10);
+      --codeBg: rgba(15,23,42,.05);
+      --codeBorder: rgba(15,23,42,.10);
+      --dangerBg: rgba(244,63,94,.10);
+      --okBg: rgba(34,197,94,.10);
+      --infoBg: rgba(59,130,246,.10);
+      --toastBg: rgba(255,255,255,.92);
+    }
+
+    [data-theme="dark"]{
+      --bg:#0b0f17;
+      --panel: rgba(255,255,255,.04);
+      --panelBorder: rgba(255,255,255,.10);
+      --text:#e6eefc;
+      --muted:#9fb3d1;
+      --cardGrad1: rgba(255,255,255,.06);
+      --cardGrad2: rgba(255,255,255,.03);
+      --chipBg: rgba(255,255,255,.06);
+      --chipBorder: rgba(255,255,255,.10);
+      --codeBg: rgba(0,0,0,.25);
+      --codeBorder: rgba(255,255,255,.10);
+      --dangerBg: rgba(244,63,94,.12);
+      --okBg: rgba(34,197,94,.12);
+      --infoBg: rgba(59,130,246,.12);
+      --toastBg: rgba(20,24,34,.92);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 700px at 70% -10%, rgba(234,90,40,.12), transparent 55%),
+        radial-gradient(900px 600px at 10% 10%, rgba(80,160,255,.10), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+    }
+
+    .wrap{ max-width: 1120px; margin: 0 auto; padding: 18px 14px 34px; }
+
+    header{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      align-items:flex-start;
+      justify-content:space-between;
+      padding: 10px 6px 14px;
+    }
+    h1{ margin:0; font-size: 18px; font-weight: 950; letter-spacing:.2px; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:12px; padding: 6px 10px; border-radius:999px;
+      background: var(--chipBg);
+      color: var(--muted);
+      border: 1px solid var(--chipBorder);
+    }
+
+    .topRight{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    .toggle{
+      border: 1px solid var(--panelBorder);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 900;
+      cursor:pointer;
+      box-shadow: 0 10px 24px rgba(0,0,0,.10);
+      backdrop-filter: blur(10px);
+    }
+
+    .controls{
+      width:100%;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      margin-top: 6px;
+    }
+    @media (min-width: 900px){
+      .controls{ grid-template-columns: 1.2fr 1fr .6fr .6fr; align-items:end; }
+    }
+    label{ font-size: 12px; color: var(--muted); margin-bottom: 6px; display:block; }
+
+    input, select{
+      width:100%;
+      border-radius: 12px;
+      border: 1px solid var(--panelBorder);
+      background: var(--panel);
+      color: var(--text);
+      padding: 12px 12px;
+      outline: none;
+      transition: .15s ease;
+      backdrop-filter: blur(10px);
+    }
+    input:focus, select:focus{ box-shadow: var(--ring); border-color: rgba(234,90,40,.45); }
+
+    button{
+      border:0;
+      border-radius: 12px;
+      padding: 12px 12px;
+      font-weight: 950;
+      color: #10131a;
+      background: linear-gradient(135deg, #ff7a45, var(--accent));
+      box-shadow: 0 12px 30px rgba(234,90,40,.22);
+      cursor:pointer;
+      width:100%;
+    }
+    button.secondary{
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--panelBorder);
+      box-shadow: 0 10px 24px rgba(0,0,0,.10);
+      font-weight:900;
+      backdrop-filter: blur(10px);
+    }
+    button.ghost{
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--panelBorder);
+      box-shadow: none;
+      font-weight: 900;
+      backdrop-filter: blur(10px);
+    }
+    button.small{ padding: 10px 10px; border-radius: 12px; }
+    button.pillBtn{ border-radius: 999px; padding: 10px 12px; }
+
+    .status{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: var(--panel);
+      border: 1px solid var(--panelBorder);
+      color: var(--muted);
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-size: 12px;
+      backdrop-filter: blur(10px);
+    }
+    .status strong{ color: var(--text); font-weight:950; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-top: 16px;
+    }
+    @media (min-width: 980px){
+      .grid{ grid-template-columns: .8fr 1.4fr .8fr; align-items: start; }
+    }
+
+    .panel{
+      background: var(--panel);
+      border: 1px solid var(--panelBorder);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(12px);
+    }
+
+    .deckTop{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom: 10px;
+    }
+    .meta{ display:flex; flex-direction:column; gap:3px; }
+    .meta .big{ font-weight: 950; letter-spacing:.2px; font-size: 14px; }
+    .meta .small{ font-size: 12px; color: var(--muted); }
+
+    .progress{
+      height: 10px;
+      width: 180px;
+      max-width: 42vw;
+      background: var(--chipBg);
+      border: 1px solid var(--chipBorder);
+      border-radius: 999px;
+      overflow:hidden;
+    }
+    .progress > div{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(234,90,40,.95), rgba(80,160,255,.35));
+      transition: width .2s ease;
+    }
+
+    .card{
+      position: relative;
+      min-height: 380px;
+      border-radius: calc(var(--radius) + 4px);
+      background: linear-gradient(180deg, var(--cardGrad1), var(--cardGrad2));
+      border: 1px solid var(--panelBorder);
+      box-shadow: 0 18px 50px rgba(0,0,0,.18);
+      overflow:hidden;
+      user-select:none;
+      touch-action: pan-y;
+    }
+    .cardInner{
+      padding: 16px 16px 14px;
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+      height:100%;
+    }
+    .tagRow{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .tag{
+      font-size: 11px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(234,90,40,.12);
+      border: 1px solid rgba(234,90,40,.22);
+      color: rgba(234,90,40,.95);
+      font-weight: 900;
+    }
+    .tag.gray{
+      background: var(--chipBg);
+      border: 1px solid var(--chipBorder);
+      color: var(--muted);
+      font-weight: 900;
+    }
+    .tag.ok{
+      background: var(--okBg);
+      border: 1px solid rgba(34,197,94,.25);
+      color: var(--ok);
+    }
+    .tag.info{
+      background: var(--infoBg);
+      border: 1px solid rgba(59,130,246,.25);
+      color: var(--info);
+    }
+    .tag.bad{
+      background: var(--dangerBg);
+      border: 1px solid rgba(244,63,94,.25);
+      color: var(--bad);
+    }
+
+    .title{
+      font-size: 16px;
+      font-weight: 1000;
+      letter-spacing: .2px;
+      line-height: 1.25;
+    }
+
+    .body{
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+
+    .bullets{
+      margin: 0;
+      padding-left: 18px;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    .bullets li{ margin: 6px 0; }
+
+    .code{
+      font-family: var(--mono);
+      font-size: 12px;
+      background: var(--codeBg);
+      border: 1px solid var(--codeBorder);
+      border-radius: 14px;
+      padding: 10px;
+      overflow:auto;
+      max-height: 240px;
+      white-space: pre;
+    }
+
+    .hint{
+      font-size: 12px;
+      color: var(--muted);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .nav{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top: 12px;
+    }
+
+    /* left panel */
+    .tocHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .tocHead h2{
+      margin:0;
+      font-size: 14px;
+      font-weight: 950;
+      letter-spacing:.2px;
+    }
+    .tocList{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-height: 530px;
+      overflow:auto;
+      padding-right: 6px;
+    }
+    .tocItem{
+      border: 1px solid var(--panelBorder);
+      background: var(--panel);
+      border-radius: 14px;
+      padding: 10px 10px;
+      cursor:pointer;
+      transition:.12s ease;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .tocItem:hover{ box-shadow: 0 10px 22px rgba(0,0,0,.10); transform: translateY(-1px); }
+    .tocItem .t{
+      font-weight: 950;
+      font-size: 12px;
+      line-height:1.25;
+    }
+    .tocItem .s{
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+      line-height:1.25;
+    }
+    .tocItem .r{
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--chipBg);
+      border: 1px solid var(--chipBorder);
+      padding: 6px 8px;
+      border-radius: 999px;
+      white-space:nowrap;
+      font-weight: 900;
+    }
+    .tocItem.active{
+      border-color: rgba(234,90,40,.35);
+      box-shadow: var(--ring);
+    }
+
+    /* right panel */
+    .side h2{ margin: 0 0 10px; font-size: 14px; letter-spacing: .2px; font-weight: 950; }
+    .mini{ font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+    .tabs{
+      margin-top: 10px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .tab{
+      border: 1px solid var(--panelBorder);
+      background: var(--panel);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 950;
+      cursor:pointer;
+      color: var(--text);
+      backdrop-filter: blur(10px);
+      transition: .12s ease;
+    }
+    .tab.active{
+      border-color: rgba(234,90,40,.35);
+      box-shadow: var(--ring);
+    }
+
+    .kv{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .stat{
+      border: 1px solid var(--panelBorder);
+      background: var(--panel);
+      border-radius: 14px;
+      padding: 10px;
+      backdrop-filter: blur(10px);
+    }
+    .stat .k{ font-size: 11px; color: var(--muted); }
+    .stat .v{ font-size: 14px; font-weight: 1000; margin-top: 4px; }
+
+    .row{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
+    .row button{ flex:1; min-width: 170px; }
+
+    .jsonBox{
+      margin-top: 10px;
+      background: var(--codeBg);
+      border: 1px solid var(--codeBorder);
+      border-radius: 14px;
+      padding: 10px;
+      font-family: var(--mono);
+      font-size: 11px;
+      max-height: 280px;
+      overflow:auto;
+      white-space: pre;
+    }
+
+    .toast{
+      position: fixed;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--toastBg);
+      border: 1px solid var(--panelBorder);
+      border-radius: 999px;
+      padding: 10px 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+      font-size: 12px;
+      font-weight: 950;
+      display:none;
+      z-index: 9999;
+      backdrop-filter: blur(12px);
+    }
+
+    .kbd{
+      font-family: var(--mono);
+      font-size: 11px;
+      background: var(--chipBg);
+      border: 1px solid var(--chipBorder);
+      padding: 2px 6px;
+      border-radius: 8px;
+      color: var(--muted);
+      font-weight: 900;
+      white-space:nowrap;
+    }
+
+    .divider{
+      height: 1px;
+      width: 100%;
+      background: var(--panelBorder);
+      margin: 10px 0;
+    }
+
+    .inlineRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .switch{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .chipBtn{
+      border: 1px solid var(--panelBorder);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 10px;
+      font-weight: 950;
+      cursor:pointer;
+      backdrop-filter: blur(10px);
+    }
+    .chipBtn.active{
+      border-color: rgba(234,90,40,.35);
+      box-shadow: var(--ring);
+    }
+
+    .reveal{
+      border: 1px solid rgba(234,90,40,.35);
+      background: rgba(234,90,40,.10);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 10px;
+      font-weight: 950;
+      cursor:pointer;
+      text-align:center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap" id="appRoot">
+    <header>
+      <div>
+        <h1>Notes → Learning Cards <span class="pill">ONLY reads from /notes</span></h1>
+        <div class="pill">Progress • Search • Filters • Quiz Mode • TOC • Bookmarks • Learned ✅</div>
+      </div>
+
+      <div class="topRight">
+        <button class="toggle" id="themeBtn">🌞 Bright</button>
+        <button class="toggle" id="resetBtn" title="Clear progress for this note">Reset Progress</button>
+      </div>
+    </header>
+
+    <div class="controls">
+      <div>
+        <label>Select a note from /notes</label>
+        <select id="notesSelect">
+          <option value="">— Loading notes… —</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Search cards (title/body/bullets/code)</label>
+        <input id="searchInput" type="text" placeholder="e.g., kernel, ROI, grayscale…" />
+      </div>
+
+      <div>
+        <label>Max cards</label>
+        <input id="maxCards" type="number" min="5" max="300" value="120" />
+      </div>
+
+      <div>
+        <label>&nbsp;</label>
+        <button id="buildBtn">Generate Learning Cards</button>
+      </div>
+    </div>
+
+    <div class="status">
+      <div>Status: <strong id="statusText">Booting…</strong></div>
+      <div class="inlineRow">
+        <span class="pill">Swipe • <span class="kbd">←</span>/<span class="kbd">→</span> • <span class="kbd">Space</span> next • <span class="kbd">B</span> bookmark • <span class="kbd">L</span> learned</span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: TOC -->
+      <div class="panel">
+        <div class="tocHead">
+          <h2>Table of Contents</h2>
+          <span class="pill" id="tocMeta">0 sections</span>
+        </div>
+        <div class="mini">Tap a section to jump. Shows learned/bookmark stats per section.</div>
+        <div class="divider"></div>
+        <div class="tocList" id="tocList"></div>
+      </div>
+
+      <!-- CENTER: CARD -->
+      <div class="panel">
+        <div class="deckTop">
+          <div class="meta">
+            <div class="big" id="deckTitle">No deck loaded</div>
+            <div class="small" id="deckSub">Pick a note, generate.</div>
+          </div>
+          <div class="progress"><div id="bar"></div></div>
+        </div>
+
+        <div class="inlineRow" style="justify-content:space-between; margin-bottom:10px;">
+          <div class="inlineRow">
+            <button class="chipBtn active" id="modeLearn">Learn</button>
+            <button class="chipBtn" id="modeQuiz">Quiz</button>
+            <button class="chipBtn" id="modeReview">Review</button>
+          </div>
+
+          <div class="inlineRow">
+            <button class="chipBtn" id="filterAll">All</button>
+            <button class="chipBtn" id="filterUnlearned">Unlearned</button>
+            <button class="chipBtn" id="filterLearned">Learned</button>
+            <button class="chipBtn" id="filterBookmarked">Bookmarked</button>
+          </div>
+        </div>
+
+        <div class="card" id="card">
+          <div class="cardInner">
+            <div class="tagRow">
+              <span class="tag gray" id="topicTag">Topic</span>
+              <span class="tag gray" id="typeTag">lesson</span>
+              <span class="tag gray" id="langTag">Language</span>
+              <span class="tag info" id="stateTag">—</span>
+            </div>
+
+            <div class="title" id="cardTitle">Learning Cards</div>
+
+            <div id="quizCover" style="display:none;">
+              <div class="mini">Quiz mode: think first, then reveal.</div>
+              <div class="reveal" id="revealBtn">Reveal Answer</div>
+            </div>
+
+            <div class="body" id="cardBody">
+This app loads ONLY from /notes.
+It persists your progress per note in localStorage.
+            </div>
+
+            <ul class="bullets" id="cardBullets" style="display:none;"></ul>
+            <div class="code" id="cardCode" style="display:none;"></div>
+
+            <div class="hint">
+              <span id="idx">0 / 0</span>
+              <span class="inlineRow">
+                <button class="pillBtn secondary small" id="bookmarkBtn">⭐ Bookmark</button>
+                <button class="pillBtn secondary small" id="learnedBtn">✅ Learned</button>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav">
+          <button class="secondary" id="prevBtn">◀ Prev</button>
+          <button class="secondary" id="nextBtn">Next ▶</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: STATS + EXPORT + SETTINGS -->
+      <div class="panel side">
+        <h2>Deck Controls</h2>
+        <div class="mini">
+          Filters + modes affect what you see, but the JSON export always includes the full deck.
+        </div>
+
+        <div class="tabs" id="quickActions">
+          <div class="tab" id="jumpFirst">⏮ First</div>
+          <div class="tab" id="jumpLast">⏭ Last</div>
+          <div class="tab" id="jumpRandom">🎲 Random</div>
+          <div class="tab" id="dueReview">🧠 Due</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>Stats</h2>
+        <div class="kv">
+          <div class="stat"><div class="k">Total</div><div class="v" id="statTotal">0</div></div>
+          <div class="stat"><div class="k">Learned</div><div class="v" id="statLearned">0</div></div>
+          <div class="stat"><div class="k">Bookmarked</div><div class="v" id="statBookmarked">0</div></div>
+          <div class="stat"><div class="k">Est. Time</div><div class="v" id="statTime">0m</div></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>Spaced Review (local)</h2>
+        <div class="mini">Grade this card after you reveal it in Quiz mode:</div>
+        <div class="row">
+          <button class="ghost small" id="gradeAgain">Again</button>
+          <button class="ghost small" id="gradeHard">Hard</button>
+          <button class="ghost small" id="gradeEasy">Easy</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>Export JSON</h2>
+        <div class="mini">
+          Fields: <code style="font-family:var(--mono)">course, language, type, title, summary, highlights, example_code</code>
+        </div>
+        <div class="row">
+          <button class="secondary" id="copyBtn">Copy JSON</button>
+          <button class="secondary" id="downloadBtn">Download JSON</button>
+        </div>
+        <div class="jsonBox" id="jsonPreview">[]</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    // =============================
+    // UTIL
+    // =============================
+    function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+    function nowMs(){ return Date.now(); }
+    function toast(msg){
+      const t = $("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      clearTimeout(toast._tm);
+      toast._tm = setTimeout(() => t.style.display = "none", 1400);
+    }
+
+    // =============================
+    // THEME
+    // =============================
+    function setTheme(theme){
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("learning_theme", theme);
+      $("themeBtn").textContent = theme === "dark" ? "🌙 Dark" : "🌞 Bright";
+    }
+    (function initTheme(){
+      const saved = localStorage.getItem("learning_theme");
+      setTheme(saved || "light");
+      $("themeBtn").addEventListener("click", () => {
+        const cur = document.documentElement.getAttribute("data-theme") || "light";
+        setTheme(cur === "light" ? "dark" : "light");
+      });
+    })();
+
+    // =============================
+    // STATUS
+    // =============================
+    function setStatus(msg, kind="info"){
+      $("statusText").textContent = msg;
+      $("statusText").style.color =
+        kind==="ok" ? "var(--ok)" :
+        kind==="warn" ? "var(--warn)" :
+        kind==="bad" ? "var(--bad)" :
+        kind==="info" ? "var(--info)" :
+        "var(--text)";
+    }
+
+    // =============================
+    // STORAGE KEYS (per note)
+    // =============================
+    function noteKey(noteFile){ return `learningcards_v2::${noteFile}`; }
+    function loadState(noteFile){
+      try{
+        const raw = localStorage.getItem(noteKey(noteFile));
+        return raw ? JSON.parse(raw) : null;
+      }catch{ return null; }
+    }
+    function saveState(noteFile, state){
+      try{ localStorage.setItem(noteKey(noteFile), JSON.stringify(state)); }catch{}
+    }
+    function clearState(noteFile){
+      try{ localStorage.removeItem(noteKey(noteFile)); }catch{}
+    }
+
+    // =============================
+    // FILENAME PARSER
+    // title_language_readme.md
+    // =============================
+    function parseNotesFilename(filename){
+      const lower = filename.toLowerCase();
+      if (!lower.endsWith("_readme.md")) return null;
+      const base = filename.slice(0, -"_readme.md".length);
+      const parts = base.split("_").filter(Boolean);
+      if (parts.length < 2) return null;
+      const language = parts[parts.length - 1];
+      const title = parts.slice(0, -1).join(" ");
+      return { title: title.trim(), language: language.trim() };
+    }
+
+    // =============================
+    // LOAD ONLY FROM /notes
+    // =============================
+    async function loadManifest(){
+      const url = "./notes/manifest.json";
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok){
+        throw new Error(`Missing /notes/manifest.json (${res.status}). Create it to list your .md files.`);
+      }
+      const data = await res.json();
+      if (!data || !Array.isArray(data.files)){
+        throw new Error('manifest.json must look like: { "files": ["A_English_readme.md", ...] }');
+      }
+      return data.files;
+    }
+
+    async function fetchNoteMd(filename){
+      const safe = filename.replace(/^\//, "").replace(/\.\.(\/|\\)/g, "");
+      const res = await fetch("./notes/" + safe, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Failed to load ./notes/${safe} (${res.status})`);
+      return await res.text();
+    }
+
+    // =============================
+    // MARKDOWN NORMALIZATION
+    // =============================
+    function normalizeBulletHeadings(md){
+      return md.replace(/^\s*-\s*(#{1,6})\s+/gm, "$1 ");
+    }
+    function normalizeNumberedHeadings(md){
+      return md.replace(/^\s*\d+\.\s*(#{1,6})\s+/gm, "$1 ");
+    }
+
+    // =============================
+    // MARKDOWN HELPERS
+    // =============================
+    function normalize(md){ return md.replace(/\r\n/g, "\n").trim(); }
+
+    function extractCodeBlocks(md){
+      const codes = [];
+      const text = md.replace(/```[\s\S]*?```/g, (m) => {
+        const code = m.replace(/```(\w+)?\n?/, "").replace(/```$/, "").trim();
+        if (code) codes.push(code);
+        return "\n";
+      });
+      return { textWithoutCode: text, codes };
+    }
+
+    function stripLinksImages(md){
+      return md
+        .replace(/!\[.*?\]\(.*?\)/g, "")
+        .replace(/\[(.*?)\]\((.*?)\)/g, "$1")
+        .replace(/^\s{0,3}>\s?/gm, "")
+        .replace(/`([^`]+)`/g, "$1")
+        .trim();
+    }
+
+    function splitSections(md){
+      const lines = md.split("\n");
+      const sections = [];
+      let current = { heading: "Overview", level: 1, body: [] };
+      const headingRe = /^(#{1,6})\s+(.+?)\s*$/;
+
+      for (const line of lines){
+        const m = line.match(headingRe);
+        if (m){
+          sections.push({ heading: current.heading, level: current.level, body: current.body.join("\n").trim() });
+          current = { heading: m[2].trim(), level: m[1].length, body: [] };
+        }else{
+          current.body.push(line);
+        }
+      }
+      sections.push({ heading: current.heading, level: current.level, body: current.body.join("\n").trim() });
+
+      return sections
+        .map(s => ({...s, body: (s.body || "").trim()}))
+        .filter(s => s.heading && s.body);
+    }
+
+    function extractBulletLines(text){
+      const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+      return lines.filter(l => /^[-*]\s+/.test(l)).map(l => l.replace(/^[-*]\s+/, ""));
+    }
+
+    function stripBulletPrefixes(text){
+      return text.split("\n").map(l => l.replace(/^\s*[-*]\s+/, "")).join("\n").trim();
+    }
+
+    function splitIntoParagraphChunks(text, maxChars=420){
+      const blocks = text
+        .split(/\n\s*\n/g)
+        .map(b => b.trim())
+        .filter(Boolean);
+
+      const chunks = [];
+      for (const b of blocks){
+        if (b.length <= maxChars){
+          chunks.push(b);
+        }else{
+          let i = 0;
+          while (i < b.length){
+            chunks.push(b.slice(i, i + maxChars));
+            i += maxChars;
+          }
+        }
+      }
+      return chunks;
+    }
+
+    function cardSearchBlob(card){
+      const b = [
+        card.title || "",
+        card.summary || "",
+        (card.highlights || []).join(" "),
+        card.example_code || ""
+      ].join(" ").toLowerCase();
+      return b;
+    }
+
+    // =============================
+    // BUILD LEARNING CARDS (chunky)
+    // Adds fields:
+    // - id
+    // - section
+    // - order_in_section
+    // - created_at
+    // =============================
+    function buildLearningCards(md, {course, language, maxCards=120}){
+      const raw = normalize(md);
+      const { textWithoutCode, codes } = extractCodeBlocks(raw);
+
+      let clean = stripLinksImages(textWithoutCode);
+      clean = normalizeBulletHeadings(clean);
+      clean = normalizeNumberedHeadings(clean);
+
+      const sections = splitSections(clean);
+      const cards = [];
+
+      function pushCard(card){
+        if (cards.length < maxCards) cards.push(card);
+      }
+
+      let globalId = 1;
+
+      for (const s of sections){
+        if (cards.length >= maxCards) break;
+
+        const sectionTitle = s.heading;
+        const body = (s.body || "").trim();
+
+        const bullets = extractBulletLines(body);
+        const bodyNoBullets = stripBulletPrefixes(body);
+        const paragraphs = splitIntoParagraphChunks(bodyNoBullets, 420);
+
+        // Lesson card: first chunk
+        const lessonSummary = paragraphs.length ? paragraphs[0] : body.slice(0, 420);
+
+        pushCard({
+          id: String(globalId++),
+          created_at: new Date().toISOString(),
+          course, language,
+          section: sectionTitle,
+          order_in_section: 0,
+          type: "lesson",
+          title: sectionTitle,
+          summary: lessonSummary,
+          highlights: bullets.slice(0, 6),
+          example_code: ""
+        });
+
+        // Bullet micro-cards
+        for (let i = 0; i < bullets.length && cards.length < maxCards; i++){
+          pushCard({
+            id: String(globalId++),
+            created_at: new Date().toISOString(),
+            course, language,
+            section: sectionTitle,
+            order_in_section: i + 1,
+            type: "bullet",
+            title: `${sectionTitle} • Key Point ${i+1}`,
+            summary: bullets[i],
+            highlights: [],
+            example_code: ""
+          });
+        }
+
+        // Additional paragraph chunks
+        for (let i = 1; i < paragraphs.length && cards.length < maxCards; i++){
+          pushCard({
+            id: String(globalId++),
+            created_at: new Date().toISOString(),
+            course, language,
+            section: sectionTitle,
+            order_in_section: 100 + i,
+            type: "reference",
+            title: `${sectionTitle} • Detail ${i}`,
+            summary: paragraphs[i],
+            highlights: [],
+            example_code: ""
+          });
+        }
+
+        // One example per section if exists
+        if (codes.length && cards.length < maxCards){
+          pushCard({
+            id: String(globalId++),
+            created_at: new Date().toISOString(),
+            course, language,
+            section: sectionTitle,
+            order_in_section: 999,
+            type: "example",
+            title: `${sectionTitle} • Example`,
+            summary: "Example code from this note:",
+            highlights: [],
+            example_code: codes.shift()
+          });
+        }
+      }
+
+      // Remaining code snippets
+      while (codes.length && cards.length < maxCards){
+        pushCard({
+          id: String(globalId++),
+          created_at: new Date().toISOString(),
+          course, language,
+          section: "Extras",
+          order_in_section: 9999,
+          type: "example",
+          title: `Extra Example ${cards.length + 1}`,
+          summary: "Additional code snippet:",
+          highlights: [],
+          example_code: codes.shift()
+        });
+      }
+
+      return cards;
+    }
+
+    // =============================
+    // STUDY ENGINE (state + filtering)
+    // =============================
+    let fullDeck = [];         // full generated deck
+    let visibleDeck = [];      // deck after filters/search/mode
+    let cursor = 0;
+
+    let currentNoteFile = "";
+    let currentCourse = "";
+    let currentLanguage = "";
+
+    // mode: learn | quiz | review
+    let mode = "learn";
+    // filter: all | unlearned | learned | bookmarked
+    let filter = "all";
+    let searchQ = "";
+
+    // per-note state store:
+    // {
+    //   cursor: number,
+    //   learned: { [id]: true },
+    //   bookmarked: { [id]: true },
+    //   srs: { [id]: { due:number, interval:number } } // simple spaced repetition
+    // }
+    let noteState = null;
+
+    function ensureNoteState(){
+      if (!noteState){
+        noteState = { cursor: 0, learned: {}, bookmarked: {}, srs: {} };
+      }
+      noteState.learned ||= {};
+      noteState.bookmarked ||= {};
+      noteState.srs ||= {};
+      noteState.cursor ||= 0;
+    }
+
+    function isLearned(id){ return !!noteState.learned[id]; }
+    function isBookmarked(id){ return !!noteState.bookmarked[id]; }
+
+    function saveNoteState(){
+      if (!currentNoteFile) return;
+      noteState.cursor = cursor;
+      saveState(currentNoteFile, noteState);
+    }
+
+    function sectionIndexMap(deck){
+      // section -> { firstIndex, total, learned, bookmarked }
+      const map = new Map();
+      deck.forEach((c, i) => {
+        const k = c.section || c.title || "Untitled";
+        if (!map.has(k)){
+          map.set(k, { section: k, firstIndex: i, total: 0, learned: 0, bookmarked: 0 });
+        }
+        const m = map.get(k);
+        m.total++;
+        if (noteState.learned[c.id]) m.learned++;
+        if (noteState.bookmarked[c.id]) m.bookmarked++;
+      });
+      return Array.from(map.values());
+    }
+
+    function applyView(){
+      // build visibleDeck based on mode+filter+search
+      let d = fullDeck.slice();
+
+      // review mode -> only bullet cards (fast)
+      if (mode === "review"){
+        d = d.filter(c => c.type === "bullet");
+      }
+
+      // filter
+      if (filter === "learned") d = d.filter(c => isLearned(c.id));
+      if (filter === "unlearned") d = d.filter(c => !isLearned(c.id));
+      if (filter === "bookmarked") d = d.filter(c => isBookmarked(c.id));
+
+      // search
+      const q = (searchQ || "").trim().toLowerCase();
+      if (q){
+        d = d.filter(c => cardSearchBlob(c).includes(q));
+      }
+
+      visibleDeck = d;
+
+      // clamp cursor
+      cursor = clamp(cursor, 0, Math.max(0, visibleDeck.length - 1));
+      saveNoteState();
+
+      renderAll();
+    }
+
+    // =============================
+    // RENDER
+    // =============================
+    function renderTOC(){
+      const toc = $("tocList");
+      toc.innerHTML = "";
+
+      const sections = sectionIndexMap(fullDeck);
+      $("tocMeta").textContent = `${sections.length} sections`;
+
+      // active section based on current visible card
+      const curCard = visibleDeck[cursor];
+      const activeSection = curCard?.section;
+
+      sections.forEach(sec => {
+        const div = document.createElement("div");
+        div.className = "tocItem" + (sec.section === activeSection ? " active" : "");
+        const left = document.createElement("div");
+        const t = document.createElement("div");
+        t.className = "t";
+        t.textContent = sec.section;
+        const s = document.createElement("div");
+        s.className = "s";
+        s.textContent = `${sec.learned}/${sec.total} learned • ${sec.bookmarked} ⭐`;
+        left.appendChild(t);
+        left.appendChild(s);
+
+        const right = document.createElement("div");
+        right.className = "r";
+        right.textContent = `${sec.total}`;
+
+        div.appendChild(left);
+        div.appendChild(right);
+
+        div.addEventListener("click", () => {
+          // jump to first card in that section within visibleDeck
+          // if section is filtered out, jump in fullDeck then re-find in visibleDeck
+          const firstInFull = sec.firstIndex;
+          const targetId = fullDeck[firstInFull]?.id;
+          const idxVisible = visibleDeck.findIndex(c => c.id === targetId);
+          if (idxVisible >= 0){
+            cursor = idxVisible;
+          }else{
+            // fallback: find first visible card in that section
+            const alt = visibleDeck.findIndex(c => c.section === sec.section);
+            if (alt >= 0) cursor = alt;
+          }
+          saveNoteState();
+          renderAll();
+        });
+
+        toc.appendChild(div);
+      });
+    }
+
+    function renderStats(){
+      const total = fullDeck.length;
+      const learned = Object.keys(noteState.learned).length;
+      const bookmarked = Object.keys(noteState.bookmarked).length;
+
+      // time estimate: 20 sec per card baseline
+      const mins = Math.max(1, Math.round((visibleDeck.length * 20) / 60));
+
+      $("statTotal").textContent = String(total);
+      $("statLearned").textContent = String(learned);
+      $("statBookmarked").textContent = String(bookmarked);
+      $("statTime").textContent = `${mins}m`;
+    }
+
+    function setChipActive(id, active){
+      const el = $(id);
+      if (!el) return;
+      el.classList.toggle("active", !!active);
+    }
+
+    function renderModeFilterChips(){
+      setChipActive("modeLearn", mode === "learn");
+      setChipActive("modeQuiz", mode === "quiz");
+      setChipActive("modeReview", mode === "review");
+
+      setChipActive("filterAll", filter === "all");
+      setChipActive("filterUnlearned", filter === "unlearned");
+      setChipActive("filterLearned", filter === "learned");
+      setChipActive("filterBookmarked", filter === "bookmarked");
+    }
+
+    function renderCard(){
+      if (!visibleDeck.length){
+        $("deckTitle").textContent = currentCourse ? currentCourse : "No deck loaded";
+        $("deckSub").textContent = "No cards match current mode/filter/search.";
+        $("idx").textContent = "0 / 0";
+        $("bar").style.width = "0%";
+        $("topicTag").textContent = "—";
+        $("typeTag").textContent = "—";
+        $("langTag").textContent = currentLanguage || "—";
+        $("stateTag").textContent = "Empty";
+        $("stateTag").className = "tag bad";
+        $("cardTitle").textContent = "No results";
+        $("cardBody").textContent = "Try clearing filters/search or switching mode.";
+        $("cardBullets").style.display = "none";
+        $("cardCode").style.display = "none";
+        $("quizCover").style.display = "none";
+        $("jsonPreview").textContent = JSON.stringify(fullDeck, null, 2);
+        return;
+      }
+
+      const c = visibleDeck[cursor];
+
+      $("deckTitle").textContent = c.course || "Deck";
+      $("deckSub").textContent =
+        `${visibleDeck.length}/${fullDeck.length} showing • ${c.language || "unknown"} • mode=${mode} • filter=${filter}`;
+
+      $("idx").textContent = `${cursor + 1} / ${visibleDeck.length}`;
+      $("bar").style.width = `${((cursor + 1) / visibleDeck.length) * 100}%`;
+
+      $("topicTag").textContent = c.section || c.title || "Topic";
+      $("typeTag").textContent = c.type || "lesson";
+      $("langTag").textContent = c.language || "Language";
+
+      const learned = isLearned(c.id);
+      const bookmarked = isBookmarked(c.id);
+      if (learned && bookmarked){
+        $("stateTag").textContent = "Learned • ⭐";
+        $("stateTag").className = "tag ok";
+      } else if (learned){
+        $("stateTag").textContent = "Learned";
+        $("stateTag").className = "tag ok";
+      } else if (bookmarked){
+        $("stateTag").textContent = "Bookmarked";
+        $("stateTag").className = "tag info";
+      } else {
+        $("stateTag").textContent = "Unlearned";
+        $("stateTag").className = "tag bad";
+      }
+
+      $("bookmarkBtn").textContent = bookmarked ? "⭐ Bookmarked" : "⭐ Bookmark";
+      $("learnedBtn").textContent = learned ? "✅ Learned" : "✅ Mark Learned";
+
+      $("cardTitle").textContent = c.title || "";
+
+      // quiz mode: hide body until reveal
+      const quiz = (mode === "quiz");
+      $("quizCover").style.display = quiz ? "block" : "none";
+
+      // default: revealed in learn/review; in quiz: hidden until reveal flag
+      const revealed = quiz ? !!c._revealed : true;
+
+      // Body
+      $("cardBody").style.display = revealed ? "block" : "none";
+      $("cardBody").textContent = c.summary || "";
+
+      // Bullets
+      const ul = $("cardBullets");
+      ul.innerHTML = "";
+      if (revealed && Array.isArray(c.highlights) && c.highlights.length){
+        ul.style.display = "block";
+        for (const h of c.highlights){
+          const li = document.createElement("li");
+          li.textContent = h;
+          ul.appendChild(li);
+        }
+      }else{
+        ul.style.display = "none";
+      }
+
+      // Code
+      const code = $("cardCode");
+      if (revealed && c.example_code && c.example_code.trim()){
+        code.style.display = "block";
+        code.textContent = c.example_code.trim();
+      }else{
+        code.style.display = "none";
+        code.textContent = "";
+      }
+
+      $("jsonPreview").textContent = JSON.stringify(fullDeck, null, 2);
+    }
+
+    function renderAll(){
+      renderModeFilterChips();
+      renderTOC();
+      renderStats();
+      renderCard();
+    }
+
+    // =============================
+    // NAV
+    // =============================
+    function prev(){
+      if (!visibleDeck.length) return;
+      cursor = clamp(cursor - 1, 0, visibleDeck.length - 1);
+      saveNoteState();
+      renderAll();
+    }
+    function next(){
+      if (!visibleDeck.length) return;
+      cursor = clamp(cursor + 1, 0, visibleDeck.length - 1);
+      saveNoteState();
+      renderAll();
+    }
+
+    // =============================
+    // INTERACTION (bookmark/learned)
+    // =============================
+    function toggleBookmark(){
+      if (!visibleDeck.length) return;
+      const id = visibleDeck[cursor].id;
+      if (noteState.bookmarked[id]) delete noteState.bookmarked[id];
+      else noteState.bookmarked[id] = true;
+      saveNoteState();
+      toast(noteState.bookmarked[id] ? "Bookmarked ⭐" : "Removed bookmark");
+      renderAll();
+    }
+
+    function toggleLearned(){
+      if (!visibleDeck.length) return;
+      const id = visibleDeck[cursor].id;
+      if (noteState.learned[id]) delete noteState.learned[id];
+      else noteState.learned[id] = true;
+      saveNoteState();
+      toast(noteState.learned[id] ? "Marked learned ✅" : "Unmarked learned");
+      renderAll();
+    }
+
+    function clearReveals(){
+      // only affects quiz mode; reset reveal flags in visibleDeck and fullDeck
+      fullDeck.forEach(c => delete c._revealed);
+      visibleDeck.forEach(c => delete c._revealed);
+    }
+
+    function revealCurrent(){
+      if (!visibleDeck.length) return;
+      const id = visibleDeck[cursor].id;
+      const a = fullDeck.find(x => x.id === id);
+      if (a) a._revealed = true;
+      visibleDeck[cursor]._revealed = true;
+      toast("Revealed 👀");
+      renderAll();
+    }
+
+    // =============================
+    // SIMPLE SRS (spaced repetition)
+    // Per card: interval days; due timestamp
+    // Again: 0.04d (~1h), Hard: 1d, Easy: 3d then doubles
+    // =============================
+    function getSrs(id){
+      return noteState.srs[id] || null;
+    }
+    function setSrs(id, s){
+      noteState.srs[id] = s;
+      saveNoteState();
+    }
+    function gradeCard(kind){
+      if (!visibleDeck.length) return;
+      const c = visibleDeck[cursor];
+      const id = c.id;
+
+      const current = getSrs(id) || { interval: 1, due: nowMs() };
+      let intervalDays = current.interval || 1;
+
+      if (kind === "again"){
+        intervalDays = 0.04; // ~1 hour
+      } else if (kind === "hard"){
+        intervalDays = Math.max(1, Math.round(intervalDays * 0.75));
+      } else if (kind === "easy"){
+        intervalDays = Math.min(60, Math.round(intervalDays * 2));
+        // mark learned if easy in quiz mode (optional feel-good)
+        noteState.learned[id] = true;
+      }
+
+      const due = nowMs() + intervalDays * 24 * 60 * 60 * 1000;
+      setSrs(id, { interval: intervalDays, due });
+
+      toast(`Scheduled: ${kind.toUpperCase()} • ${intervalDays}d`);
+      renderAll();
+    }
+
+    function dueCardsIds(){
+      const t = nowMs();
+      const due = [];
+      for (const [id, v] of Object.entries(noteState.srs)){
+        if (v && typeof v.due === "number" && v.due <= t) due.push(id);
+      }
+      return due;
+    }
+
+    function jumpToDue(){
+      const due = dueCardsIds();
+      if (!due.length){
+        toast("No due cards 🎉");
+        return;
+      }
+      // jump to first due card in visibleDeck if possible
+      const idx = visibleDeck.findIndex(c => due.includes(c.id));
+      if (idx >= 0){
+        cursor = idx;
+        saveNoteState();
+        toast("Jumped to due card 🧠");
+        renderAll();
+      } else {
+        toast("Due cards exist, but current filter hides them.");
+      }
+    }
+
+    // =============================
+    // SEARCH / FILTER / MODE
+    // =============================
+    function setMode(m){
+      mode = m;
+      clearReveals();
+      applyView();
+      toast(`Mode: ${m}`);
+    }
+    function setFilter(f){
+      filter = f;
+      applyView();
+      toast(`Filter: ${f}`);
+    }
+
+    // =============================
+    // EXPORT
+    // =============================
+    function exportDeckJson(){
+      // export full deck (not filtered)
+      return JSON.stringify(fullDeck, null, 2);
+    }
+
+    // =============================
+    // SWIPE
+    // =============================
+    (function attachSwipe(){
+      const card = $("card");
+      let x0 = null;
+      card.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; }, {passive:true});
+      card.addEventListener("touchend", (e) => {
+        if (x0 === null) return;
+        const x1 = e.changedTouches[0].clientX;
+        const dx = x1 - x0;
+        x0 = null;
+        if (Math.abs(dx) < 45) return;
+        if (dx > 0) prev(); else next();
+      }, {passive:true});
+    })();
+
+    // =============================
+    // HOTKEYS
+    // =============================
+    document.addEventListener("keydown", (e) => {
+      const k = e.key;
+      if (k === "ArrowLeft") prev();
+      if (k === "ArrowRight") next();
+      if (k === " ") { e.preventDefault(); next(); }
+      if (k.toLowerCase() === "b") toggleBookmark();
+      if (k.toLowerCase() === "l") toggleLearned();
+      if (k.toLowerCase() === "r" && mode === "quiz") revealCurrent();
+    });
+
+    // =============================
+    // UI WIRING
+    // =============================
+    $("prevBtn").addEventListener("click", prev);
+    $("nextBtn").addEventListener("click", next);
+    $("bookmarkBtn").addEventListener("click", toggleBookmark);
+    $("learnedBtn").addEventListener("click", toggleLearned);
+    $("revealBtn").addEventListener("click", revealCurrent);
+
+    $("modeLearn").addEventListener("click", () => setMode("learn"));
+    $("modeQuiz").addEventListener("click", () => setMode("quiz"));
+    $("modeReview").addEventListener("click", () => setMode("review"));
+
+    $("filterAll").addEventListener("click", () => setFilter("all"));
+    $("filterUnlearned").addEventListener("click", () => setFilter("unlearned"));
+    $("filterLearned").addEventListener("click", () => setFilter("learned"));
+    $("filterBookmarked").addEventListener("click", () => setFilter("bookmarked"));
+
+    $("searchInput").addEventListener("input", (e) => {
+      searchQ = e.target.value || "";
+      applyView();
+    });
+
+    $("copyBtn").addEventListener("click", async () => {
+      try{
+        await navigator.clipboard.writeText(exportDeckJson());
+        setStatus("Copied JSON ✅", "ok");
+        toast("Copied JSON ✅");
+      }catch{
+        setStatus("Clipboard blocked by browser.", "warn");
+        toast("Clipboard blocked");
+      }
+    });
+
+    $("downloadBtn").addEventListener("click", () => {
+      const name = (fullDeck[0]?.course || "learning_cards").replace(/[^\w\-]+/g,"_");
+      const blob = new Blob([exportDeckJson()], {type:"application/json"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${name}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      setStatus("Downloaded JSON ✅", "ok");
+      toast("Downloaded JSON ✅");
+    });
+
+    $("gradeAgain").addEventListener("click", () => gradeCard("again"));
+    $("gradeHard").addEventListener("click", () => gradeCard("hard"));
+    $("gradeEasy").addEventListener("click", () => gradeCard("easy"));
+
+    $("jumpFirst").addEventListener("click", () => { cursor = 0; saveNoteState(); renderAll(); toast("First"); });
+    $("jumpLast").addEventListener("click", () => { cursor = Math.max(0, visibleDeck.length - 1); saveNoteState(); renderAll(); toast("Last"); });
+    $("jumpRandom").addEventListener("click", () => {
+      if (!visibleDeck.length) return;
+      cursor = Math.floor(Math.random() * visibleDeck.length);
+      saveNoteState();
+      renderAll();
+      toast("Random 🎲");
+    });
+    $("dueReview").addEventListener("click", jumpToDue);
+
+    $("resetBtn").addEventListener("click", () => {
+      if (!currentNoteFile){
+        toast("Pick a note first.");
+        return;
+      }
+      clearState(currentNoteFile);
+      noteState = { cursor: 0, learned: {}, bookmarked: {}, srs: {} };
+      cursor = 0;
+      toast("Progress reset 🧼");
+      applyView();
+    });
+
+    // =============================
+    // BOOT + GENERATE
+    // =============================
+    async function boot(){
+      setStatus("Loading /notes/manifest.json…", "warn");
+      try{
+        const files = await loadManifest();
+
+        const sel = $("notesSelect");
+        sel.innerHTML = "";
+
+        const first = document.createElement("option");
+        first.value = "";
+        first.textContent = files.length ? "— Select a note —" : "— No files listed in manifest.json —";
+        sel.appendChild(first);
+
+        for (const fn of files){
+          const meta = parseNotesFilename(fn);
+          const label = meta ? `${meta.title} (${meta.language})` : fn;
+
+          const opt = document.createElement("option");
+          opt.value = fn;
+          opt.dataset.course = meta?.title || fn;
+          opt.dataset.language = meta?.language || "unknown";
+          opt.textContent = label;
+          sel.appendChild(opt);
+        }
+
+        setStatus(`Loaded ${files.length} note(s) ✅`, "ok");
+      }catch(err){
+        console.error(err);
+        setStatus(err.message || "Failed to boot.", "bad");
+      }
+
+      // default empty render
+      fullDeck = [];
+      visibleDeck = [];
+      cursor = 0;
+      noteState = { cursor: 0, learned: {}, bookmarked: {}, srs: {} };
+      renderAll();
+    }
+
+    async function generateDeck(){
+      const sel = $("notesSelect");
+      const filename = sel.value;
+      if (!filename){
+        setStatus("Select a note first.", "warn");
+        toast("Select a note first.");
+        return;
+      }
+
+      currentNoteFile = filename;
+      currentCourse = sel.options[sel.selectedIndex].dataset.course || filename;
+      currentLanguage = sel.options[sel.selectedIndex].dataset.language || "unknown";
+
+      const maxCards = Math.max(5, Math.min(300, parseInt($("maxCards").value || "120", 10)));
+
+      setStatus(`Loading ./notes/${filename}…`, "warn");
+      try{
+        const md = await fetchNoteMd(filename);
+
+        // build full deck
+        fullDeck = buildLearningCards(md, { course: currentCourse, language: currentLanguage, maxCards });
+
+        // load saved state for this note
+        noteState = loadState(filename) || { cursor: 0, learned: {}, bookmarked: {}, srs: {} };
+        ensureNoteState();
+
+        // restore cursor by saved cursor against visible after filters applied
+        cursor = clamp(noteState.cursor || 0, 0, Math.max(0, fullDeck.length - 1));
+
+        // reset view controls on new deck (but keep theme)
+        mode = "learn";
+        filter = "all";
+        searchQ = $("searchInput").value || "";
+
+        // visible deck then try restore cursor by id
+        visibleDeck = fullDeck.slice();
+        applyView();
+
+        // if saved cursor pointed to a filtered-out card, clamp already handled
+        setStatus(`Generated ${fullDeck.length} cards ✅ (saved progress loaded)`, "ok");
+        toast("Deck ready ✅");
+      }catch(err){
+        console.error(err);
+        setStatus(err.message || "Failed to generate.", "bad");
+        toast("Failed to generate");
+      }
+    }
+
+    $("buildBtn").addEventListener("click", generateDeck);
+
+    boot();
+  </script>
+</body>
+</html>
