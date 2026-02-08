@@ -9,58 +9,55 @@ import yfinance as yf
 import pandas as pd
 from datetime import date, timedelta, time
 import sys
+import os
 
-raw_tickets = [
-    "sp500_5m_2026-02-07.csv", 
-    "gold_5m_2026-02-07.csv", 
-    "nasdaq100_5m_2026-02-07.csv",
-    "silver_5m_2026-02-07.csv",
-    "GC=F_5m_2026-02-07.csv"
-    ]
-    
-clean_tickets = [
-    "sp500_clean.csv", 
-    "gold_clean.csv", 
-    "nasdaq100_clean.csv",
-    "silver_clean.csv",
-    "GC=F_clean.csv"
-    ]
-
-def clean_csv(path):
-    # parse_dates identifies the UTC offset automatically
-    df = pd.read_csv(path, parse_dates=["Datetime"])
-    df = df.sort_values("Datetime")
-    df = df.drop_duplicates("Datetime")
-
-    df = df.set_index("Datetime")
-    # 14:30 UTC is 09:30 EST (New York Open)
-    # 21:00 UTC is 16:00 EST (New York Close)
-    df = df.between_time("14:30", "21:00") 
-    return df.reset_index()
-
-
-for eachTiker in raw_tickets:
-    df = clean_csv(f"data/raw_data/{eachTiker}")
-    df.to_csv(f"data/clean_data/{eachTiker.split("_",1)[0]}_clean.csv", index=False)
 
 class CSVFeed(bt.feeds.GenericCSVData):
     params = (
-        ("dtformat", "%Y-%m-%d %H:%M:%S%z"), 
-        ("datetime", 0),
-        ("open", 5),    # Open is the 6th column (index 5)
-        ("high", 3),    # High is the 4th column (index 3)
-        ("low", 4),     # Low is the 5th column (index 4)
-        ("close", 2),    # Close is the 3rd column (index 2)
-        ("volume", 6),   # Volume is the 7th column (index 6)
+        ("dtformat", "%Y-%m-%d %H:%M:%S"),  # Datetime format in your CSV
+        ("datetime", 2),         # "Datetime" column is at index 2
+        ("open", 3),
+        ("high", 4),
+        ("low", 5),
+        ("close", 6),
+        ("volume", 7),
         ("openinterest", -1),
-        ("timeframe", bt.TimeFrame.Minutes),
-        ("compression", 5)
+        ("timeframe", bt.TimeFrame.Minutes),  # 1-minute candles
+        ("compression", 1),
     )
 cerebro = bt.Cerebro()
 
-for each_clean in clean_tickets:
-    data = CSVFeed(dataname=f"data/clean_data/{each_clean}")
-    cerebro.adddata(data)
+
+data_folder = "data/raw_data"
+data_files = [f for f in os.listdir(data_folder) if f.endswith(".csv")]
+# Clean and write output
+os.makedirs(data_folder, exist_ok=True)
+clean_tickets = []
+
+
+for file in os.listdir(data_folder):
+    if file.endswith(".csv"):
+        path = os.path.join(data_folder, file)
+
+        # 🧹 Strip quotes from "Datetime" column if needed
+        try:
+            df = pd.read_csv(path)
+            if "Datetime" in df.columns:
+                df["Datetime"] = df["Datetime"].astype(str).str.replace('"', '', regex=False)
+                df.to_csv(path, index=False)
+        except Exception as e:
+            print(f"⚠️ Could not clean quotes in {file}: {e}")
+            continue
+
+        # 📊 Load into Backtrader
+        data = CSVFeed(dataname=path)
+        cerebro.adddata(data, name=file.split("_")[0])
+
+
+for filename in data_files:
+    data_path = os.path.join(data_folder, filename)
+    data = CSVFeed(dataname=data_path)
+    cerebro.adddata(data, name=filename.split("_")[0])
 
 
 class SanityStrategy(bt.Strategy):
@@ -107,6 +104,7 @@ class SanityStrategy(bt.Strategy):
             date(2026, 12, 25), # Christmas Day
         }
         self.target_date = date(2026, 1, 2)
+        
     def bar_direction(self, data):
         now = data.close[0]
         prev = data.close[-1]
@@ -135,7 +133,6 @@ class SanityStrategy(bt.Strategy):
             # print(f"REVERSAL at bar {len(self.data)} - time {self.datas[0].datetime.datetime(0)}")            
             self.total_reversals += 1
 
-    # def 
     def orb_marking(self, data):    
         ticker = data._name
         current_datetime = data.datetime.datetime(0)

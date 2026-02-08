@@ -1,39 +1,59 @@
-import yfinance as yf
-import pandas as pd
-from datetime import datetime
+import os
+import time
+import requests
+from datetime import datetime, timedelta
 
-def fetch_5m(symbol, days=30):
-    """
-    Yahoo allows ~30–60 days of 5m data
-    """
-    df = yf.download(
-        tickers=symbol,
-        interval="5m",
-        period=f"{days}d",
-        auto_adjust=False,
-        progress=False
-    )
+API_KEY = ''
+INTERVAL = '1m'         # 1-minute data
+CHUNK_DAYS = 120        # EODHD 1m API limit
+YEARS_BACK = 10
+BASE_URL = 'https://eodhd.com/api/intraday'
 
-    if df.empty:
-        raise ValueError(f"No data returned for {symbol}")
+# All CSVs will go into this one folder
+output_folder = os.path.join('data', 'raw_data')
+os.makedirs(output_folder, exist_ok=True)
 
-    df.dropna(inplace=True)
-    df.reset_index(inplace=True)
-    df["symbol"] = symbol
-    return df
+# List of tickers (Gold, Nasdaq, S&P500, Dow Jones, Silver, Forex majors)
+symbols = [
+    'GLD.US', 'IXIC.INDX', 'SPX.INDX', 'DJI.INDX', 'SLV.US',
+    'EURUSD.FOREX', 'GBPUSD.FOREX', 'USDJPY.FOREX',
+    'USDCHF.FOREX', 'USDCAD.FOREX', 'AUDUSD.FOREX', 'NZDUSD.FOREX'
+]
 
+# Date range
+end_date = datetime.utcnow()
+start_date = end_date - timedelta(days=365 * YEARS_BACK)
 
-symbols = {
-    "GC=F": "GC=F",
-    "SLV": "silver",
-    "QQQ": "nasdaq100",
-    "SPY": "sp500"
-}
+# Loop through symbols
+for symbol in symbols:
+    print(f"🔁 Downloading 1-minute data for {symbol} from {start_date.date()} to {end_date.date()}")
+    chunk_start = start_date
 
-for ticker, name in symbols.items():
-    df = fetch_5m(ticker, days=30)
+    while chunk_start < end_date:
+        chunk_end = min(chunk_start + timedelta(days=CHUNK_DAYS), end_date)
 
-    filename = f"data/raw_data/{name}_5m_{datetime.now().date()}.csv"
-    df.to_csv(filename, index=False)
+        from_unix = int(chunk_start.timestamp())
+        to_unix = int(chunk_end.timestamp())
 
-    print(f"Saved {ticker} → {filename} ({len(df)} rows)")
+        url = (
+            f'{BASE_URL}/{symbol}'
+            f'?interval={INTERVAL}&from={from_unix}&to={to_unix}&fmt=csv&api_token={API_KEY}'
+        )
+
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+
+            filename = f'{symbol.replace(".", "_")}_1m_{chunk_start.date()}_to_{chunk_end.date()}.csv'
+            filepath = os.path.join(output_folder, filename)
+
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(response.text)
+
+            print(f"✅ Saved {filename}")
+        except Exception as e:
+            print(f"❌ Failed for {symbol} | {chunk_start.date()} → {chunk_end.date()} | {e}")
+
+        # Move to next chunk
+        chunk_start = chunk_end
+        time.sleep(1.2)  # Respect rate limits
