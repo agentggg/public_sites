@@ -8,5 +8,7 @@
   "python_rc_car_notes_development.json",
   "python_eagles_eye.json",
   "python_ros_motor_motion.json",
-  "python_multiple_launch_file.json"
+  "python_multiple_launch_file.json",
+  "python_RoboQuaint_AI_History.json",
+  "python_RoboQuaint_AI_Main.json"
 ]

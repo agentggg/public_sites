@@ -1,0 +1,39 @@
+import yfinance as yf
+import pandas as pd
+from datetime import datetime
+
+def fetch_5m(symbol, days=30):
+    """
+    Yahoo allows ~30–60 days of 5m data
+    """
+    df = yf.download(
+        tickers=symbol,
+        interval="5m",
+        period=f"{days}d",
+        auto_adjust=False,
+        progress=False
+    )
+
+    if df.empty:
+        raise ValueError(f"No data returned for {symbol}")
+
+    df.dropna(inplace=True)
+    df.reset_index(inplace=True)
+    df["symbol"] = symbol
+    return df
+
+
+symbols = {
+    "GC=F": "GC=F",
+    "SLV": "silver",
+    "QQQ": "nasdaq100",
+    "SPY": "sp500"
+}
+
+for ticker, name in symbols.items():
+    df = fetch_5m(ticker, days=30)
+
+    filename = f"data/raw_data/{name}_5m_{datetime.now().date()}.csv"
+    df.to_csv(filename, index=False)
+
+    print(f"Saved {ticker} → {filename} ({len(df)} rows)")
