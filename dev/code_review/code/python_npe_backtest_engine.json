@@ -1,0 +1,75 @@
+import backtrader as bt
+import pandas as pd
+from orb_sharp_entry import ORBSharpEntryStrategy
+import reporting_notification
+# from send_notification_report import email_backtest_report
+
+class BacktestWrapperStrategy(bt.Strategy):
+    params = (('config', None),)
+
+    def __init__(self):
+        self.strategy_instances = {}
+        for data in self.datas:
+            # Dynamically instance the logic based on the config name
+            self.strategy_instances[data._name] = ORBSharpEntryStrategy()
+
+    def next(self):
+        current_date = self.data.datetime.date(0).isoformat()
+        
+        # --- DYNAMIC FILTERS FROM FLASK REQUEST ---
+        # 1. Check Custom Blackout Dates
+        if current_date in self.p.config.get('custom_blackout_dates', []):
+            return 
+        # 2. Check Recurring Skip Day (Monday=1, etc)
+        if str(self.data.datetime.date(0).weekday() + 1) == self.p.config.get('recurring_skip_index'):
+            return
+
+        for i, data in enumerate(self.datas):
+            if len(data) > 0:
+                self.strategy_instances[data._name].run_strategy(data)
+
+    def stop(self):
+        all_trades = []
+        for ticker_name, strategy_instance in self.strategy_instances.items():
+            for trade in strategy_instance.final_result:
+                trade['Ticker'] = ticker_name
+                all_trades.append(trade)
+
+        if not all_trades: return
+
+        # Reporting
+        stats = reporting_notification.calculate_trade_stats(all_trades)
+        chart = reporting_notification.chart_equity_curve(all_trades, filename="temp_dash.png")
+        pdf = reporting_notification.generate_pdf_report(all_trades, stats, chart, "Strategy_Report.pdf")
+        # daily_pdfs = reporting_notification.generate_daily_reports("data/clean_data/NDX_clean.csv")
+        # USE FLASK CONFIG EMAIL
+        recipient = self.p.config['user']['email']
+        # email_backtest_report(stats, pdf, recipient=recipient)
+
+def run_neuro_engine(filtered_df, config):
+    cerebro = bt.Cerebro()
+    
+    data = bt.feeds.PandasData(
+        dataname=filtered_df,
+        datetime='Datetime',
+        open='Open', high='High', low='Low', close='Close', volume='Volume'
+    )
+
+    cerebro.adddata(data, name=config['ticker'].split('_')[0])
+    # Add strategy and keep the reference to it
+    cerebro.addstrategy(BacktestWrapperStrategy, config=config)
+    
+    # 1. Capture the results of the run
+    strategies = cerebro.run(maxcpus=1)
+    first_strat = strategies[0]
+    
+    # 2. Extract the trades from the strategy instance
+    all_trades = []
+    for ticker_name, strategy_instance in first_strat.strategy_instances.items():
+        for trade in strategy_instance.final_result:
+            trade['Ticker'] = ticker_name
+            all_trades.append(trade)
+            
+    # 3. CRITICAL: Return the trades so app.py can see them
+    return all_trades
+

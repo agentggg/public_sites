@@ -1,0 +1,78 @@
+import json
+import os
+from registry import STRATEGY_REGISTRY  # Import your external registry
+
+def get_strategy_config():
+    print("="*60)
+    print("🚀 NEUROPRICE EDGE: STRATEGY CONFIGURATOR")
+    print("="*60)
+
+    # 1. Ask for Strategy Name
+    strat_input = input("Enter Strategy Name: ").strip()
+    
+    # Find strategy in external registry
+    strat_details = next((s for s in STRATEGY_REGISTRY if s['strategyName'].lower() == strat_input.lower()), None)
+
+    if not strat_details:
+        print(f"\n❌ Error: '{strat_input}' is not in the official registry.")
+        return
+
+    # 2. Check if the Python file actually exists
+    # Converts "ORB Sharp Entry" -> "orb_sharp_entry.py"
+    file_name = strat_details['strategyName'].lower().replace(" ", "_").replace("–", "").replace("-", "_") + ".py"
+    is_available = os.path.exists(file_name)
+
+    if is_available:
+        print(f"\n✅ SYSTEM STATUS: Strategy Available")
+        print(f"📖 Description: {strat_details['description']}")
+        print(f"🌟 Key Features: {', '.join(strat_details.get('keyFeatures', ['Standard Execution']))}")
+    else:
+        print(f"\n⚠️ SYSTEM STATUS: Not Yet Available")
+        print(f"Logic for '{strat_details['strategyName']}' is currently in development.")
+        print("We will gather your test parameters for the build queue.")
+
+    # 3. Market Selection (Restricted to registry options)
+    allowed_markets = strat_details['market']
+    print(f"\n--- Supported Markets for this Strategy ---")
+    for i, m in enumerate(allowed_markets, 1):
+        print(f"{i}. {m}")
+    
+    market_choice = ""
+    while market_choice not in [m.lower() for m in allowed_markets]:
+        market_choice = input("\nChoose Market from the list above: ").strip().lower()
+        if market_choice not in [m.lower() for m in allowed_markets]:
+            print(f"❌ '{market_choice}' is not valid for this strategy.")
+
+    # 4. Standard Backtest Questions
+    config = {
+        "strategy_name": strat_details['strategyName'],
+        "market": market_choice,
+        "is_ready": is_available,
+        "parameters": {
+            "balance": float(input("Starting Balance ($): ") or 10000),
+            "risk_percent": float(input("Risk % Per Trade: ") or 1.0),
+            "rr_ratio": float(input("Target Risk:Reward Ratio: ") or 2.0)
+        }
+    }
+
+    # 5. Gather extra data if strategy is not yet coded
+    if not is_available:
+        print("\n📝 CUSTOM BUILD REQUEST")
+        config["build_specs"] = {
+            "entry_trigger": input("Describe the entry condition (e.g. FVG + RSI): "),
+            "exit_trigger": input("Describe the exit condition: "),
+            "extra_notes": input("Any specific logic/filters? ")
+        }
+
+    # 6. Save to JSON
+    json_filename = f"configs/{strat_details['strategyName'].replace(' ', '_')}.json"
+    os.makedirs("configs", exist_ok=True)
+    with open(json_filename, 'w') as f:
+        json.dump(config, f, indent=4)
+
+    print(f"\n✅ Configuration saved to {json_filename}")
+    if not is_available:
+        print("Our dev team will use this JSON to build the logic file.")
+
+if __name__ == "__main__":
+    get_strategy_config()

@@ -1,0 +1,171 @@
+# reporting_notification.py
+
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')  # MUST be before importing pyplot
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from fpdf import FPDF
+import os
+
+def calculate_trade_stats(trades_list):
+    if not trades_list: return {"Status": "No trades"}
+    df = pd.DataFrame(trades_list)
+    
+    total_pnl = df['PnL'].sum()
+    wins = df[df['result'] == 'win']
+    losses = df[df['result'] == 'lose']
+    
+    # Advanced Metrics
+    df['cum_pnl'] = df['PnL'].cumsum()
+    df['rolling_max'] = df['cum_pnl'].cummax()
+    df['drawdown'] = df['cum_pnl'] - df['rolling_max']
+    max_drawdown = df['drawdown'].min()
+    
+    stats = {
+        "Total Trades": len(df),
+        "Total Wins": len(wins),      # Added count
+        "Total Losses": len(losses),  # Added count
+        "Net Profit ($)": round(total_pnl, 2),
+        "Win Rate": f"{(len(wins)/len(df))*100:.2f}%",
+        "Max Drawdown ($)": round(max_drawdown, 2),
+        "Profit Factor": round(abs(wins['PnL'].sum() / losses['PnL'].sum()), 2) if not losses.empty else "Inf",
+        "Avg Win": round(wins['PnL'].mean(), 2) if not wins.empty else 0,
+        "Avg Loss": round(losses['PnL'].mean(), 2) if not losses.empty else 0,
+        "Expectancy": round(total_pnl / len(df), 2)
+    }
+
+    return stats
+
+def chart_equity_curve(trades_list, filename="dashboard.png"):
+    """
+    Creates a 3-panel professional dashboard: Equity, Drawdown, and Trade Distribution.
+    """
+    if not trades_list: return None
+    df = pd.DataFrame(trades_list)
+    df['datetime'] = pd.to_datetime(df['date'] + ' ' + df['exit_time'])
+    df = df.sort_values('datetime')
+    df['cum_pnl'] = df['PnL'].cumsum()
+    df['drawdown'] = df['cum_pnl'] - df['cum_pnl'].cummax()
+
+    # Setup a Multi-Plot Figure
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 16), gridspec_kw={'height_ratios': [3, 1, 1]})
+    plt.subplots_adjust(hspace=0.4)
+
+    # 1. MAIN EQUITY CURVE
+    ax1.plot(df['datetime'], df['cum_pnl'], color='#2962FF', linewidth=2, label="Equity")
+    ax1.fill_between(df['datetime'], df['cum_pnl'], alpha=0.1, color='#2962FF')
+    ax1.set_title("Cumulative Equity ($)", fontsize=14, fontweight='bold')
+    ax1.grid(True, alpha=0.3)
+
+    # 2. DRAWDOWN CHART
+    ax2.fill_between(df['datetime'], 0, df['drawdown'], color='#FF5252', alpha=0.3)
+    ax2.plot(df['datetime'], df['drawdown'], color='#FF5252', linewidth=1)
+    ax2.set_title("Underwater Drawdown ($)", fontsize=12)
+    ax2.grid(True, alpha=0.3)
+
+    # 3. INDIVIDUAL TRADE PnL BARS
+    colors = ['#4CAF50' if x >= 0 else '#FF5252' for x in df['PnL']]
+    ax3.bar(range(len(df)), df['PnL'], color=colors)
+    ax3.set_title("Individual Trade Performance", fontsize=12)
+    ax3.axhline(0, color='black', linewidth=0.8)
+
+    plt.savefig(filename, dpi=150, bbox_inches='tight')
+    plt.close()
+    return filename
+
+def generate_pdf_report(trades_list, stats, chart_filename, output_pdf_filename="full_report.pdf"):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 20)
+    pdf.cell(200, 15, "Strategy Backtest Report", ln=True, align="C")
+    pdf.ln(5)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(200, 10, "Executive Summary", ln=True)
+    pdf.set_font("Arial", "", 11)
+    col_width = 90
+    for i, (key, val) in enumerate(stats.items()):
+        pdf.cell(col_width, 8, f"{key}: {val}", border=1)
+        if i % 2 != 0: pdf.ln(8)
+    if chart_filename and os.path.exists(chart_filename):
+        pdf.ln(10)
+        pdf.image(chart_filename, x=10, y=pdf.get_y(), w=190)
+    pdf.output(output_pdf_filename)
+    return output_pdf_filename
+
+def generate_consolidated_daily_report(df_or_path, output_path="reports/daily/Daily_Performance_Summary.pdf"):
+    """
+    Creates ONE PDF with all days combined: 
+    Page 1: Multi-day Chart, Page 2: Summary Table.
+    """
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    
+    # Handle both file paths or direct DataFrames
+    df = pd.read_csv(df_or_path, parse_dates=["Datetime"]) if isinstance(df_or_path, str) else df_or_path.copy()
+    
+    df['Date'] = df['Datetime'].dt.date
+    daily_stats = df.groupby('Date').agg({
+        'Open': 'first',
+        'High': 'max',
+        'Low': 'min',
+        'Close': 'last',
+        'Volume': 'sum'
+    }).reset_index()
+
+    with PdfPages(output_path) as pdf:
+        # PAGE 1: Line Chart of Daily Closes
+        plt.figure(figsize=(10, 6))
+        plt.plot(daily_stats['Date'], daily_stats['Close'], marker='o', color='#2962FF', linewidth=2)
+        plt.title("Daily Market Trend (Consolidated)", fontsize=14, fontweight='bold')
+        plt.xlabel("Date")
+        plt.ylabel("Closing Price")
+        plt.grid(True, alpha=0.3)
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        pdf.savefig()
+        plt.close()
+
+        # PAGE 2: Data Table
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.axis('tight')
+        ax.axis('off')
+        
+        # Format dates for table display
+        table_df = daily_stats.copy()
+        table_df['Date'] = table_df['Date'].apply(lambda x: x.strftime('%Y-%m-%d'))
+        
+        table = ax.table(
+            cellText=table_df.values, 
+            colLabels=table_df.columns, 
+            cellLoc='center', 
+            loc='center'
+        )
+        table.auto_set_font_size(False)
+        table.set_fontsize(10)
+        table.scale(1.2, 1.2)
+        plt.title("Detailed Daily Metrics", fontsize=14, pad=20)
+        pdf.savefig()
+        plt.close()
+
+    return output_path
+
+def get_daily_metrics_json(df):
+    """
+    Groups the filtered dataframe by day and returns a list 
+    of dictionaries that the frontend can plot easily.
+    """
+    temp_df = df.copy()
+    temp_df['Date'] = temp_df['Datetime'].dt.date
+    
+    daily = temp_df.groupby('Date').agg({
+        'Open': 'first',
+        'High': 'max',
+        'Low': 'min',
+        'Close': 'last',
+        'Volume': 'sum'
+    }).reset_index()
+    
+    # Convert dates to strings for JSON compatibility
+    daily['Date'] = daily['Date'].astype(str)
+    
+    return daily.to_dict(orient='records')

@@ -1,0 +1,63 @@
+import os
+import time
+import requests
+from datetime import datetime, timedelta
+
+API_KEY = os.getenv("API_KEY")
+INTERVAL = '1m'         # 1-minute data
+CHUNK_DAYS = 120        # EODHD 1m API limit
+YEARS_BACK = 2
+BASE_URL = os.getenv("BASE_URL")
+
+# All CSVs will go into this one folder
+output_folder = os.path.join('data', 'raw_data')
+os.makedirs(output_folder, exist_ok=True)
+
+# List of tickers (Gold, Nasdaq, S&P500, Dow Jones, Silver, Forex majors)
+symbols = [
+    'XAUUSD.FOREX', # Actual Spot Gold (Price in USD)
+    'XAGUSD.FOREX', # Actual Spot Silver (Price in USD)
+    'NDX.INDX',      # Nasdaq 100 Index (The actual "NAS")
+    'GSPC.INDX',     # S&P 500 Index (Standard "SPX")
+    'DJI.INDX',      # Dow Jones Industrial Average (Actual "US30")
+    # Forex Majors (Keep as is)
+    'EURUSD.FOREX', 'GBPUSD.FOREX', 'USDJPY.FOREX'
+]
+
+# Date range
+end_date = datetime.utcnow()
+start_date = end_date - timedelta(days=365 * YEARS_BACK)
+
+# Loop through symbols
+for symbol in symbols:
+    print(f"🔁 Downloading 1-minute data for {symbol} from {start_date.date()} to {end_date.date()}")
+    chunk_start = start_date
+
+    while chunk_start < end_date:
+        chunk_end = min(chunk_start + timedelta(days=CHUNK_DAYS), end_date)
+
+        from_unix = int(chunk_start.timestamp())
+        to_unix = int(chunk_end.timestamp())
+
+        url = (
+            f'{BASE_URL}/{symbol}'
+            f'?interval={INTERVAL}&from={from_unix}&to={to_unix}&fmt=csv&api_token={API_KEY}'
+        )
+
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+
+            filename = f'{symbol.replace(".", "_")}_1m_{chunk_start.date()}_to_{chunk_end.date()}.csv'
+            filepath = os.path.join(output_folder, filename)
+
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(response.text)
+
+            print(f"✅ Saved {filename}")
+        except Exception as e:
+            print(f"❌ Failed for {symbol} | {chunk_start.date()} → {chunk_end.date()} | {e}")
+
+        # Move to next chunk
+        chunk_start = chunk_end
+        time.sleep(1.2)  # Respect rate limits

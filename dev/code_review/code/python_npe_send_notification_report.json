@@ -1,0 +1,54 @@
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+import os
+from dotenv import load_dotenv
+    
+def email_backtest_report(stats, pdf_path, recipient="agentofgod75@gmail.com"):
+    gmail_user = os.getenv("GMAIL_USER")
+    gmail_password = os.getenv("GMAIL_PASS")
+    # 1. Setup the Container
+    msg = MIMEMultipart()
+    recipient="agentofgod75@gmail.com"
+    msg['Subject'] = f"📊 Backtest Report: {stats['Win Rate']} Win Rate"
+    msg['From'] = 'trading_bot@local.com'
+    msg['To'] = recipient
+
+    # 2. Create the Email Body (Text Summary)
+    body = f"""
+    Backtest Analysis Complete.     
+    
+    Executive Summary:
+    -----------------
+    Total Trades: {stats['Total Trades']}
+    Net Profit: ${stats['Net Profit ($)']}
+    Win Rate: {stats['Win Rate']}
+    Max Drawdown: ${stats['Max Drawdown ($)']}
+    Profit Factor: {stats['Profit Factor']}
+    
+    Please find the full PDF report with equity curves attached.
+    """
+    msg.attach(MIMEText(body, 'plain'))
+
+    # 3. Attach the PDF Report
+    if os.path.exists(pdf_path):
+        with open(pdf_path, "rb") as f:
+            attachment = MIMEApplication(f.read(), _subtype="pdf")
+            attachment.add_header('Content-Disposition', 'attachment', filename=os.path.basename(pdf_path))
+            msg.attach(attachment)
+
+    # 4. Send via Local Server
+    try:
+        # Connect to Gmail's real servers
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(gmail_user, gmail_password)
+            server.send_message(msg)
+        print(f"✅ Real email sent successfully to {recipient}!")
+    except Exception as e:
+        print(f"❌ Failed to send email: {e}")
+
+# --- INTEGRATION EXAMPLE ---
+# stats = calculate_trade_stats(my_trades)
+# pdf_file = generate_pdf_report(my_trades, stats, "dashboard.png")
+# email_backtest_report(stats, pdf_file)

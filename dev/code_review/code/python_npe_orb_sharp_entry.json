@@ -1,0 +1,120 @@
+# orb_sharp_entry.py
+
+from datetime import time
+
+class ORBSharpEntryStrategy():
+    """
+    Encapsulates the Opening Range Breakout strategy logic.
+    This class is designed to be used externally, not within Backtrader's bt.Strategy structure.
+    """
+    def __init__(self):
+        self.orb_high_marked = None
+        self.orb_low_marked = None
+        self.measure_risk = True
+        self.last_date_seen = None
+        self.last_trade_date = None
+        self.entry_price = None
+        self.stop_loss = None
+        self.risk_amount = None
+        self.take_profit = None
+        self.entry_time_mark = None
+        self.final_result = [] # List to store results
+        self.holidays = [] 
+
+    def set_trade_parameters(self, side, entry_price, high_level, low_level, entry_time):
+        """Reusable function to calculate SL, TP, and Risk."""
+        self.entry_price = entry_price
+        self.entry_time_mark = entry_time
+        self.measure_risk = False
+        
+        if side == "long":
+            self.stop_loss = low_level
+            self.risk_amount = self.entry_price - self.stop_loss
+            self.take_profit = self.entry_price + (self.risk_amount * 1.5)
+        elif side == "short":
+            self.stop_loss = high_level
+            self.risk_amount = self.stop_loss - self.entry_price
+            self.take_profit = self.entry_price - (self.risk_amount * 1.5)
+
+    def manage_exit_logic(self, current_data_candle, current_date, current_time):
+        """
+        Monitors for Win/Loss using the candle's HIGH/LOW for realistic execution,
+        and records the specific 'Trigger Time' and levels.
+        """
+        is_long = self.take_profit > self.entry_price
+        
+        # Check if the SL or TP was touched within the candle H/L range
+        if is_long:
+            sl_hit = current_data_candle.low[0] <= self.stop_loss
+            tp_hit = current_data_candle.high[0] >= self.take_profit
+        else:
+            sl_hit = current_data_candle.high[0] >= self.stop_loss
+            tp_hit = current_data_candle.low[0] <= self.take_profit
+
+        if tp_hit:
+            res = "win"
+            pnl = (self.risk_amount * 1.5)
+        elif sl_hit:
+            res = "lose"
+            pnl = -self.risk_amount
+        else:
+            return # No exit this bar yet
+
+        self.final_result.append({
+            "result": res, "date": str(current_date), "entry_price": round(self.entry_price, 2),
+            "entry_time": str(self.entry_time_mark), "exit_time": str(current_time),
+            "stop_loss": round(self.stop_loss, 2), "take_profit": round(self.take_profit, 2),
+            "PnL": round(pnl, 2)
+        })
+        self.last_trade_date = current_date
+        self.measure_risk = True
+
+    def run_strategy(self, data):
+        """The main logic function to be called per candle."""
+        current_datetime = data.datetime.datetime(0)
+        current_date = current_datetime.date()
+        current_time = current_datetime.time()
+        start_time, end_time = time(14, 30), time(14, 35)
+        if current_date.isoformat() == "2026-02-03" and current_time == time(14, 38):
+            print(f"DEBUG Feb 3: Close={data.close[0]}, ORB_Low={self.orb_low_marked}, Risk_Active={self.measure_risk}")
+
+        if current_date != self.last_date_seen:
+            self.orb_high_marked = self.orb_low_marked = None
+            self.measure_risk = True
+            self.last_date_seen = current_date
+
+        if current_date in self.holidays or self.last_trade_date == current_date:
+            return
+
+        # Build Range
+        if start_time <= current_time <= end_time:
+            if self.orb_high_marked is None:
+                self.orb_high_marked, self.orb_low_marked = data.high[0], data.low[0]
+            else:
+                self.orb_high_marked = max(self.orb_high_marked, data.high[0])
+                self.orb_low_marked = min(self.orb_low_marked, data.low[0])
+            return 
+
+        # Trade Management: Pass the full data object here for H/L checks
+        if current_time > end_time and self.orb_high_marked is not None:
+            if self.measure_risk:
+                if data.close[0] > self.orb_high_marked:
+                    print(f"==>> current_time: {current_date}")
+                    try:
+                        self.set_trade_parameters("long", data.close[0], self.orb_high_marked, self.orb_low_marked, current_time)
+                        print(f"==>> SUCCESSFUL ENTRY: {current_date}")
+                    except Exception as e:
+                        print(f"==>> e: {e}")
+
+                elif data.close[0] < self.orb_low_marked:
+                    print(f"TRIGGERED SHORT: {current_date} at {current_time}")
+                    try:
+                        self.set_trade_parameters("short", data.close[0], self.orb_high_marked, self.orb_low_marked, current_time)
+                        print(f"==>> SUCCESSFUL ENTRY: {current_date}")
+                    except Exception as e:
+                        # THIS WILL FINALLY TELL US WHY FEB 3 IS FAILING
+                        print(f"==>> SHORT ENTRY ERROR on {current_date}: {e}")
+
+            else:
+                # Pass the entire data candle object to the new exit logic
+                self.manage_exit_logic(data, current_date, current_time)

@@ -10,5 +10,11 @@
   "python_ros_motor_motion.json",
   "python_multiple_launch_file.json",
   "python_RoboQuaint_AI_History.json",
-  "python_RoboQuaint_AI_Main.json"
+  "python_npe_backtest_engine.json",
+  "python_npe_create_strategy_json.json",
+  "python_npe_clean_data_json.json",
+  "python_npe_full_history_json.json",
+  "python_npe_orb_sharp_entry.json",
+  "python_npe_reporting_notification.json",
+  "python_npe_send_notification_report.json",
 ]

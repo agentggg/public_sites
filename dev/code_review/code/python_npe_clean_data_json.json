@@ -1,0 +1,58 @@
+import pandas as pd
+import os
+
+def clean_csv(path):
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            header = f.readline().strip().split(',')
+
+        if len(header) < 8:
+            print(f"⚠️ Skipping {path}: header malformed")
+            return None
+
+        if "Datetime" not in header:
+            print(f"⚠️ Skipping {path}: 'Datetime' column missing")
+            return None
+
+        df = pd.read_csv(path, parse_dates=["Datetime"])
+
+        if df.empty or len(df.columns) < 7:
+            print(f"⚠️ Skipping {path}: not enough columns or empty")
+            return None
+
+        if "Value" in df.columns and len(df.columns) == 1:
+            print(f"⚠️ Skipping {path}: only 'Value' column present")
+            return None
+
+        df = df.sort_values("Datetime").drop_duplicates("Datetime")
+        return df
+
+    except Exception as e:
+        print(f"❌ Error reading {path}: {e}")
+        return None
+
+def clean_all_csvs(raw_folder="data/raw_data", clean_folder="data/clean_data"):
+    os.makedirs(clean_folder, exist_ok=True)
+
+    raw_files = [f for f in os.listdir(raw_folder) if f.endswith(".csv")]
+    clean_files = []
+
+    # Updated loop inside clean_all_csvs
+    for raw_file in raw_files:
+        full_path = os.path.join(raw_folder, raw_file)
+        df = clean_csv(full_path)
+        
+        if df is not None:
+            clean_name = raw_file.split("_", 1)[0] + "_clean.csv"
+            target_path = os.path.join(clean_folder, clean_name)
+            
+            # Write header ONLY if the file doesn't exist OR is totally empty
+            write_header = not os.path.exists(target_path) or os.path.getsize(target_path) == 0
+            
+            df.to_csv(target_path, index=False, mode='a', header=write_header)
+            clean_files.append(clean_name)
+
+
+    return clean_files
+
+clean_tickets = clean_all_csvs("data/raw_data", "data/clean_data")
