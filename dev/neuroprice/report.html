@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NeuroPrice Edge | Backtest Report</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    body { background: #0f172a; }
+    .glass {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+      backdrop-filter: blur(10px);
+    }
+    .chip {
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    /* Heatmap helpers */
+    .hm-day {
+      width: 14px; height: 14px; border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.06);
+    }
+    .hm-row { display: flex; gap: 6px; align-items: center; }
+    .hm-label { width: 56px; font-size: 11px; color: rgba(148,163,184,0.9); font-family: ui-monospace; }
+    .hm-month { font-size: 11px; color: rgba(203,213,225,0.9); font-weight: 800; margin: 10px 0 6px; }
+    .hm-legend { display:flex; gap:8px; align-items:center; margin-top: 10px; }
+  </style>
+</head>
+
+<body class="text-slate-100">
+  <div class="max-w-7xl mx-auto p-6">
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+      <div>
+        <div class="text-sm text-slate-400 mono">NeuroPrice Edge — Report Engine</div>
+        <h1 class="text-3xl font-extrabold tracking-tight">Backtest Report</h1>
+        <div id="subtitle" class="text-slate-300 mt-1"></div>
+      </div>
+      <div class="flex gap-2">
+        <button id="btnBack" class="px-4 py-2 rounded-xl glass font-bold hover:bg-white/10 transition">← Back</button>
+        <button id="btnExport" class="px-4 py-2 rounded-xl bg-indigo-600 font-bold hover:bg-indigo-700 transition">Export JSON</button>
+        <button id="btnClear" class="px-4 py-2 rounded-xl glass font-bold hover:bg-white/10 transition">Clear</button>
+      </div>
+    </div>
+
+    <!-- Missing -->
+    <div id="missing" class="hidden p-5 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-200">
+      <div class="font-extrabold text-lg">No report data found.</div>
+      <div class="text-sm text-red-200/80 mt-1">
+        Run a backtest from the configurator first (index.html), then you’ll land here with charts.
+      </div>
+    </div>
+
+    <!-- Chips -->
+    <div id="chips" class="hidden flex flex-wrap gap-2 mb-6"></div>
+
+    <!-- KPIs -->
+    <div id="kpis" class="hidden grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6"></div>
+
+    <!-- Charts grid -->
+    <div id="charts" class="hidden grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+
+      <div class="glass rounded-2xl p-4">
+        <div class="font-extrabold mb-2">Equity Curve (Cumulative PnL)</div>
+        <canvas id="chartEquity" height="120"></canvas>
+      </div>
+
+      <div class="glass rounded-2xl p-4">
+        <div class="font-extrabold mb-2">Equity Drawdown</div>
+        <canvas id="chartDrawdown" height="120"></canvas>
+      </div>
+
+      <div class="glass rounded-2xl p-4">
+        <div class="font-extrabold mb-2">Rolling Sharpe (Daily)</div>
+        <div class="text-xs text-slate-400 mono mb-2">Window: <span id="sharpeWindowLabel">20</span> days</div>
+        <input id="sharpeWindow" type="range" min="5" max="60" value="20" class="w-full">
+        <canvas id="chartSharpe" height="120"></canvas>
+      </div>
+
+      <div class="glass rounded-2xl p-4">
+        <div class="font-extrabold mb-2">Daily Close</div>
+        <canvas id="chartClose" height="120"></canvas>
+      </div>
+
+      <div class="glass rounded-2xl p-4">
+        <div class="font-extrabold mb-2">Daily Volume</div>
+        <canvas id="chartVolume" height="120"></canvas>
+      </div>
+
+      <div class="glass rounded-2xl p-4">
+        <div class="font-extrabold mb-2">Trade PnL Distribution</div>
+        <canvas id="chartPnL" height="120"></canvas>
+      </div>
+
+      <div class="glass rounded-2xl p-4 xl:col-span-3">
+        <div class="font-extrabold mb-2">Equity Curve (Trade Markers + Details)</div>
+        <div class="text-xs text-slate-400 mono mb-2">Hover markers to inspect each trade. Includes PnL + R-multiple.</div>
+        <canvas id="chartEquityMarkers" height="90"></canvas>
+      </div>
+
+      <div class="glass rounded-2xl p-4 xl:col-span-3">
+        <div class="font-extrabold mb-2">R-Multiple per Trade</div>
+        <div class="text-xs text-slate-400 mono mb-2">
+          Risk source: <span id="riskSourceLabel">stop distance</span>
+        </div>
+        <canvas id="chartRMultiple" height="90"></canvas>
+      </div>
+
+    </div>
+
+    <!-- NEW: Analytics grid -->
+    <div id="analytics" class="hidden grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6">
+
+      <div class="glass rounded-2xl p-4 overflow-hidden">
+        <div class="font-extrabold mb-2">Trade Expectancy by Weekday</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="overflow-auto max-h-[260px]">
+            <table class="w-full text-sm">
+              <thead class="text-slate-300 sticky top-0 bg-slate-900/40 backdrop-blur">
+                <tr>
+                  <th class="text-left p-2">Weekday</th>
+                  <th class="text-right p-2">Trades</th>
+                  <th class="text-right p-2">Win%</th>
+                  <th class="text-right p-2">Expectancy</th>
+                  <th class="text-right p-2">Net</th>
+                </tr>
+              </thead>
+              <tbody id="weekdayBody" class="text-slate-100"></tbody>
+            </table>
+          </div>
+          <div>
+            <canvas id="chartWeekday" height="160"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass rounded-2xl p-4">
+        <div class="font-extrabold mb-2">Win/Loss Streaks</div>
+        <div id="streakStats" class="grid grid-cols-2 gap-3 mb-4"></div>
+        <canvas id="chartStreaks" height="160"></canvas>
+      </div>
+
+      <div class="glass rounded-2xl p-4">
+        <div class="font-extrabold mb-2">Return Distribution (Histogram)</div>
+        <div id="moments" class="text-xs text-slate-400 mono mb-3"></div>
+        <canvas id="chartHist" height="160"></canvas>
+      </div>
+
+      <div class="glass rounded-2xl p-4">
+        <div class="font-extrabold mb-2">Return Summary</div>
+        <div id="returnStats" class="grid grid-cols-2 gap-3"></div>
+      </div>
+
+    </div>
+
+    <!-- Tables -->
+    <div id="tables" class="hidden grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div class="glass rounded-2xl p-4 overflow-hidden">
+        <div class="font-extrabold mb-2">Trades</div>
+        <div class="overflow-auto max-h-[420px]">
+          <table class="w-full text-sm">
+            <thead class="text-slate-300 sticky top-0 bg-slate-900/40 backdrop-blur">
+              <tr>
+                <th class="text-left p-2">Date</th>
+                <th class="text-left p-2">Ticker</th>
+                <th class="text-left p-2">Entry</th>
+                <th class="text-left p-2">Exit</th>
+                <th class="text-left p-2">Result</th>
+                <th class="text-right p-2">PnL</th>
+              </tr>
+            </thead>
+            <tbody id="tradesBody" class="text-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="glass rounded-2xl p-4 overflow-hidden">
+        <div class="font-extrabold mb-2">Daily Performance</div>
+        <div class="overflow-auto max-h-[420px]">
+          <table class="w-full text-sm">
+            <thead class="text-slate-300 sticky top-0 bg-slate-900/40 backdrop-blur">
+              <tr>
+                <th class="text-left p-2">Date</th>
+                <th class="text-right p-2">Open</th>
+                <th class="text-right p-2">High</th>
+                <th class="text-right p-2">Low</th>
+                <th class="text-right p-2">Close</th>
+                <th class="text-right p-2">Volume</th>
+                <th class="text-right p-2">Day %</th>
+              </tr>
+            </thead>
+            <tbody id="dailyBody" class="text-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Extras -->
+    <div id="extras" class="hidden grid grid-cols-1 xl:grid-cols-2 gap-4 mt-6">
+      <div class="glass rounded-2xl p-4">
+        <div class="font-extrabold mb-2">Calendar Heatmap (Daily Returns)</div>
+        <div class="text-xs text-slate-400 mb-4">Green = positive day, Red = negative day. Intensity = magnitude.</div>
+        <div id="heatmap" class="grid gap-2"></div>
+      </div>
+
+      <div class="glass rounded-2xl p-4">
+        <div class="font-extrabold mb-2">Trade Duration Analytics</div>
+        <div id="durationStats" class="grid grid-cols-2 gap-3 mb-4"></div>
+        <canvas id="chartDuration" height="140"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    // keep chart instances
+    const CHARTS = {};
+    function destroyChart(id) {
+      if (CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; }
+    }
+
+    function fmt(n, d = 2) {
+      if (n === null || n === undefined || Number.isNaN(n)) return "—";
+      return Number(n).toLocaleString(undefined, { maximumFractionDigits: d, minimumFractionDigits: d });
+    }
+    function pct(n, d=2){
+      if (n === null || n === undefined || Number.isNaN(n)) return "—";
+      return (Number(n) * 100).toFixed(d) + "%";
+    }
+    function safeArr(x){ return Array.isArray(x) ? x : []; }
+
+    function mean(arr) {
+      if (!arr.length) return 0;
+      return arr.reduce((a,b)=>a+b,0) / arr.length;
+    }
+    function stdev(arr) {
+      if (arr.length < 2) return 0;
+      const m = mean(arr);
+      const v = mean(arr.map(x => (x - m) ** 2));
+      return Math.sqrt(v);
+    }
+    function computeDrawdown(equity) {
+      let peak = -Infinity, maxDD = 0;
+      for (const v of equity) {
+        if (v > peak) peak = v;
+        const dd = v - peak;
+        if (dd < maxDD) maxDD = dd;
+      }
+      return maxDD;
+    }
+    function equityDrawdownSeries(equity) {
+      let peak = -Infinity;
+      return equity.map(v => {
+        if (v > peak) peak = v;
+        return v - peak;
+      });
+    }
+
+    function buildKPI(title, value, hint="") {
+      return `
+        <div class="glass rounded-2xl p-4">
+          <div class="text-xs text-slate-400 uppercase tracking-widest font-bold">${title}</div>
+          <div class="text-2xl font-extrabold mt-2">${value}</div>
+          <div class="text-xs text-slate-400 mt-2">${hint}</div>
+        </div>
+      `;
+    }
+    function buildMini(title, value, hint="") {
+      return `
+        <div class="glass rounded-xl p-3">
+          <div class="text-xs text-slate-400 uppercase font-bold">${title}</div>
+          <div class="text-xl font-extrabold mt-1 mono">${value}</div>
+          <div class="text-xs text-slate-400 mt-1">${hint}</div>
+        </div>
+      `;
+    }
+    function buildChip(text) { return `<div class="chip">${text}</div>`; }
+
+    function exportJSON(payload) {
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `neuroprice_report_${new Date().toISOString().slice(0,19).replaceAll(":","-")}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    // Time + duration
+    function parseHHMMSS(t) {
+      if (!t || typeof t !== "string") return null;
+      const parts = t.split(":").map(Number);
+      if (parts.length < 2) return null;
+      const h = parts[0], m = parts[1], s = parts[2] ?? 0;
+      if (![h,m,s].every(Number.isFinite)) return null;
+      return h * 3600 + m * 60 + s;
+    }
+    function durationMinutes(entryTime, exitTime) {
+      const a = parseHHMMSS(entryTime);
+      const b = parseHHMMSS(exitTime);
+      if (a === null || b === null) return null;
+      let diff = b - a;
+      if (diff < 0) diff += 24 * 3600;
+      return diff / 60;
+    }
+
+    // Rolling Sharpe
+    function rollingSharpe(returns, windowSize) {
+      const out = new Array(returns.length).fill(null);
+      for (let i = 0; i < returns.length; i++) {
+        if (i + 1 < windowSize) continue;
+        const slice = returns.slice(i + 1 - windowSize, i + 1);
+        const m = mean(slice);
+        const sd = stdev(slice);
+        out[i] = sd === 0 ? null : (m / sd) * Math.sqrt(252);
+      }
+      return out;
+    }
+
+    // Heatmap
+    function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+    function heatColor(ret, maxAbs) {
+      if (!Number.isFinite(ret) || maxAbs === 0) return "rgba(255,255,255,0.06)";
+      const t = clamp(Math.abs(ret) / maxAbs, 0, 1);
+      const base = ret >= 0 ? [34,197,94] : [244,63,94];
+      const alpha = 0.15 + 0.55 * t;
+      return `rgba(${base[0]},${base[1]},${base[2]},${alpha})`;
+    }
+
+    // R multiple
+    function rMultipleFromStops(trades) {
+      return trades.map(t => {
+        const pnl = Number(t.PnL);
+        const entry = Number(t.entry_price);
+        const stop = Number(t.stop_loss);
+        if (![pnl, entry, stop].every(Number.isFinite)) return null;
+        const risk = Math.abs(entry - stop);
+        if (risk === 0) return null;
+        return pnl / risk;
+      });
+    }
+
+    // Weekday helpers
+    const WD = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    function weekdayOf(dateStr){
+      const d = new Date(dateStr + "T00:00:00");
+      return WD[d.getDay()];
+    }
+
+    // Streaks: returns array of runs like {type:'W'|'L', len:n}
+    function computeStreakRuns(trades) {
+      const runs = [];
+      let curType = null;
+      let curLen = 0;
+
+      for (const t of trades) {
+        const pnl = Number(t.PnL) || 0;
+        const type = pnl >= 0 ? "W" : "L";
+        if (curType === null) { curType = type; curLen = 1; continue; }
+        if (type === curType) curLen++;
+        else { runs.push({type: curType, len: curLen}); curType = type; curLen = 1; }
+      }
+      if (curType !== null) runs.push({type: curType, len: curLen});
+      return runs;
+    }
+
+    // Moments for skew/kurtosis (excess)
+    function skewKurtosis(x){
+      const n = x.length;
+      if (n < 3) return {skew: null, kurt: null};
+      const m = mean(x);
+      const s = stdev(x);
+      if (s === 0) return {skew: 0, kurt: -3};
+      const m3 = mean(x.map(v => (v - m) ** 3));
+      const m4 = mean(x.map(v => (v - m) ** 4));
+      const skew = m3 / (s ** 3);
+      const kurt = (m4 / (s ** 4)) - 3; // excess kurtosis
+      return {skew, kurt};
+    }
+
+    // Histogram bins
+    function quantile(sorted, q){
+      const pos = (sorted.length - 1) * q;
+      const base = Math.floor(pos);
+      const rest = pos - base;
+      if (sorted[base+1] === undefined) return sorted[base];
+      return sorted[base] + rest * (sorted[base+1] - sorted[base]);
+    }
+    function histogram(data){
+      const x = data.filter(Number.isFinite).slice().sort((a,b)=>a-b);
+      const n = x.length;
+      if (!n) return {labels:[], counts:[]};
+
+      const min = x[0], max = x[n-1];
+      if (min === max) return {labels:[`${(min*100).toFixed(2)}%`], counts:[n]};
+
+      // IQR rule
+      const q1 = quantile(x, 0.25);
+      const q3 = quantile(x, 0.75);
+      const iqr = q3 - q1;
+
+      let binWidth = (iqr > 0) ? (2 * iqr * Math.pow(n, -1/3)) : ((max-min)/10);
+      if (!Number.isFinite(binWidth) || binWidth <= 0) binWidth = (max - min) / 10;
+
+      let bins = Math.round((max - min) / binWidth);
+      bins = Math.max(5, Math.min(40, bins));
+
+      const counts = new Array(bins).fill(0);
+      const edges = [];
+      for (let i=0;i<=bins;i++){
+        edges.push(min + (i*(max-min)/bins));
+      }
+
+      for (const v of x){
+        let idx = Math.floor(((v - min) / (max - min)) * bins);
+        if (idx === bins) idx = bins - 1;
+        counts[idx]++;
+      }
+
+      const labels = counts.map((_, i) => {
+        const a = edges[i], b = edges[i+1];
+        return `${(a*100).toFixed(2)}% to ${(b*100).toFixed(2)}%`;
+      });
+
+      return {labels, counts};
+    }
+
+    // ---- Main render ----
+    function render(payload) {
+      const req = payload?.request || {};
+      const res = payload?.response || {};
+      const daily = safeArr(res.daily_performance).slice().sort((a,b) => (a.Date||"").localeCompare(b.Date||""));
+      const trades = safeArr(res.trades).slice().sort((a,b) => (a.date||"").localeCompare(b.date||""));
+
+      // Subtitle
+      const range = (req.start_date && req.end_date) ? `${req.start_date} → ${req.end_date}` : "—";
+      $("subtitle").innerHTML = `
+        <span class="text-slate-300">Strategy: </span><span class="font-bold">${req.strategy || "—"}</span>
+        <span class="text-slate-500"> • </span>
+        <span class="text-slate-300">Market: </span><span class="font-bold">${req.market || "—"}</span>
+        <span class="text-slate-500"> • </span>
+        <span class="text-slate-300">Ticker: </span><span class="font-bold">${req.ticker || "—"}</span>
+        <span class="text-slate-500"> • </span>
+        <span class="text-slate-300">Range: </span><span class="font-bold">${range}</span>
+      `;
+
+      // Chips
+      const chips = [];
+      if (payload.status) chips.push(buildChip(`Status: ${payload.status}`));
+      if (req.user?.first_name || req.user?.last_name) chips.push(buildChip(`User: ${req.user.first_name || ""} ${req.user.last_name || ""}`.trim()));
+      if (req.user?.email) chips.push(buildChip(`Email: ${req.user.email}`));
+      if (req.recurring_skip_index) chips.push(buildChip(`SkipIndex: ${req.recurring_skip_index}`));
+      if (Array.isArray(req.custom_blackout_dates) && req.custom_blackout_dates.length) chips.push(buildChip(`Blackouts: ${req.custom_blackout_dates.length}`));
+      $("chips").innerHTML = chips.join("");
+
+      // Daily arrays
+      const dates = daily.map(d => d.Date);
+
+      const closesFull = daily.map(d => Number(d.Close));
+      const volsFull = daily.map(d => Number(d.Volume));
+
+      // Daily returns aligned to daily[1..]
+      const dayReturns = [];
+      const retDates = [];
+      for (let i = 1; i < daily.length; i++) {
+        const prev = Number(daily[i-1].Close);
+        const cur  = Number(daily[i].Close);
+        if (Number.isFinite(prev) && Number.isFinite(cur) && prev !== 0) {
+          dayReturns.push((cur - prev) / prev);
+          retDates.push(daily[i].Date);
+        }
+      }
+
+      // Trade metrics
+      const pnls = trades.map(t => Number(t.PnL)).filter(Number.isFinite);
+      const wins = pnls.filter(x => x > 0);
+      const losses = pnls.filter(x => x < 0);
+
+      let cum = 0;
+      const equityDates = trades.map(t => t.date);
+      const equity = trades.map(t => {
+        cum += Number(t.PnL) || 0;
+        return cum;
+      });
+
+      const netProfit = pnls.reduce((a,b)=>a+b,0);
+      const avgWin = wins.length ? mean(wins) : 0;
+      const avgLoss = losses.length ? mean(losses) : 0;
+      const winRate = pnls.length ? (wins.length / pnls.length) : 0;
+      const profitFactor = (losses.length && wins.length)
+        ? (wins.reduce((a,b)=>a+b,0) / Math.abs(losses.reduce((a,b)=>a+b,0)))
+        : (wins.length ? Infinity : 0);
+
+      const maxDD = computeDrawdown(equity);
+      const expectancy = pnls.length ? mean(pnls) : 0;
+
+      const avgDailyReturn = dayReturns.length ? mean(dayReturns) : 0;
+      const dailyVol = dayReturns.length ? stdev(dayReturns) : 0;
+
+      // KPIs
+      const kpisHTML = [];
+      kpisHTML.push(buildKPI("Net Profit", `$${fmt(netProfit, 2)}`, "Sum of all trade PnL"));
+      kpisHTML.push(buildKPI("Win Rate", `${(winRate*100).toFixed(2)}%`, `${wins.length} wins / ${pnls.length} trades`));
+      kpisHTML.push(buildKPI("Profit Factor", (profitFactor === Infinity ? "∞" : fmt(profitFactor, 2)), "Gross wins ÷ gross losses"));
+      kpisHTML.push(buildKPI("Max Drawdown", `$${fmt(maxDD, 2)}`, "Worst peak-to-trough equity drop"));
+      kpisHTML.push(buildKPI("Expectancy", `$${fmt(expectancy, 2)}`, "Average PnL per trade"));
+      kpisHTML.push(buildKPI("Avg Win", `$${fmt(avgWin, 2)}`, "Mean PnL of winning trades"));
+      kpisHTML.push(buildKPI("Avg Loss", `$${fmt(avgLoss, 2)}`, "Mean PnL of losing trades"));
+      kpisHTML.push(buildKPI("Daily Avg Return", pct(avgDailyReturn, 2), `Daily σ: ${pct(dailyVol, 2)}`));
+      $("kpis").innerHTML = kpisHTML.join("");
+
+      // Tables
+      $("tradesBody").innerHTML = trades.map(t => {
+        const isWin = String(t.result || "").toLowerCase() === "win" || Number(t.PnL) > 0;
+        const pnlClass = isWin ? "text-emerald-300" : "text-rose-300";
+        return `
+          <tr class="border-t border-white/10">
+            <td class="p-2 mono text-slate-200">${t.date || "—"}</td>
+            <td class="p-2">${t.Ticker || "—"}</td>
+            <td class="p-2 mono text-slate-300">${t.entry_time || "—"} @ ${fmt(t.entry_price, 2)}</td>
+            <td class="p-2 mono text-slate-300">${t.exit_time || "—"}</td>
+            <td class="p-2 ${isWin ? "text-emerald-200" : "text-rose-200"} font-bold">${t.result || (isWin ? "win" : "lose")}</td>
+            <td class="p-2 text-right mono font-extrabold ${pnlClass}">$${fmt(t.PnL, 2)}</td>
+          </tr>
+        `;
+      }).join("");
+
+      $("dailyBody").innerHTML = daily.map((d, idx) => {
+        let dayPct = "—";
+        if (idx > 0) {
+          const prev = Number(daily[idx-1].Close);
+          const cur = Number(d.Close);
+          if (Number.isFinite(prev) && Number.isFinite(cur) && prev !== 0) {
+            const r = (cur - prev) / prev;
+            dayPct = (r*100).toFixed(2) + "%";
+          }
+        }
+        return `
+          <tr class="border-t border-white/10">
+            <td class="p-2 mono text-slate-200">${d.Date || "—"}</td>
+            <td class="p-2 text-right mono text-slate-300">${fmt(d.Open, 2)}</td>
+            <td class="p-2 text-right mono text-slate-300">${fmt(d.High, 2)}</td>
+            <td class="p-2 text-right mono text-slate-300">${fmt(d.Low, 2)}</td>
+            <td class="p-2 text-right mono font-bold text-slate-100">${fmt(d.Close, 2)}</td>
+            <td class="p-2 text-right mono text-slate-300">${Number(d.Volume ?? 0).toLocaleString()}</td>
+            <td class="p-2 text-right mono ${String(dayPct).includes("-") ? "text-rose-300" : "text-emerald-300"} font-bold">${dayPct}</td>
+          </tr>
+        `;
+      }).join("");
+
+      // Destroy charts
+      [
+        "chartEquity","chartDrawdown","chartSharpe","chartClose","chartVolume","chartPnL",
+        "chartRMultiple","chartDuration","chartWeekday","chartStreaks","chartHist","chartEquityMarkers"
+      ].forEach(destroyChart);
+
+      const commonScales = {
+        x: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,0.12)" } },
+        y: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,0.12)" } }
+      };
+
+      // Equity curve
+      CHARTS.chartEquity = new Chart($("chartEquity"), {
+        type: "line",
+        data: { labels: equityDates, datasets: [{ label: "Cumulative PnL ($)", data: equity, tension: 0.25, borderWidth: 2, pointRadius: 3 }] },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { labels: { color: "#cbd5e1" } },
+            tooltip: { callbacks: { label: (ctx) => ` $${fmt(ctx.raw, 2)}` } }
+          },
+          scales: commonScales
+        }
+      });
+
+      // Drawdown
+      const ddSeries = equityDrawdownSeries(equity);
+      CHARTS.chartDrawdown = new Chart($("chartDrawdown"), {
+        type: "line",
+        data: { labels: equityDates, datasets: [{ label: "Drawdown ($)", data: ddSeries, tension: 0.25, borderWidth: 2, pointRadius: 2 }] },
+        options: { responsive: true, plugins: { legend: { labels: { color: "#cbd5e1" } } }, scales: commonScales }
+      });
+
+      // Rolling Sharpe (daily)
+      let sharpeWindow = Number($("sharpeWindow")?.value || 20);
+      $("sharpeWindowLabel").textContent = sharpeWindow;
+
+      const buildSharpeSeries = (w) => rollingSharpe(dayReturns, w);
+      CHARTS.chartSharpe = new Chart($("chartSharpe"), {
+        type: "line",
+        data: { labels: retDates, datasets: [{ label: "Sharpe", data: buildSharpeSeries(sharpeWindow), tension: 0.25, borderWidth: 2, pointRadius: 2, spanGaps: true }] },
+        options: { responsive: true, plugins: { legend: { labels: { color: "#cbd5e1" } } }, scales: commonScales }
+      });
+
+      const slider = $("sharpeWindow");
+      if (slider) {
+        slider.oninput = () => {
+          sharpeWindow = Number(slider.value);
+          $("sharpeWindowLabel").textContent = sharpeWindow;
+          CHARTS.chartSharpe.data.datasets[0].data = buildSharpeSeries(sharpeWindow);
+          CHARTS.chartSharpe.update();
+        };
+      }
+
+      // Daily close
+      CHARTS.chartClose = new Chart($("chartClose"), {
+        type: "line",
+        data: { labels: dates, datasets: [{ label: "Close", data: closesFull, tension: 0.25, borderWidth: 2, pointRadius: 2 }] },
+        options: { responsive: true, plugins: { legend: { labels: { color: "#cbd5e1" } } }, scales: commonScales }
+      });
+
+      // Volume
+      CHARTS.chartVolume = new Chart($("chartVolume"), {
+        type: "bar",
+        data: { labels: dates, datasets: [{ label: "Volume", data: volsFull, borderWidth: 0 }] },
+        options: { responsive: true, plugins: { legend: { labels: { color: "#cbd5e1" } } }, scales: commonScales }
+      });
+
+      // PnL distribution
+      CHARTS.chartPnL = new Chart($("chartPnL"), {
+        type: "bar",
+        data: { labels: trades.map((t,i)=>`${t.date || "—"} #${i+1}`), datasets: [{ label: "PnL ($)", data: pnls, borderWidth: 0 }] },
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: "#cbd5e1" } } },
+          scales: commonScales
+        }
+      });
+
+      // R-Multiple
+      const rMult = rMultipleFromStops(trades);
+      CHARTS.chartRMultiple = new Chart($("chartRMultiple"), {
+        type: "bar",
+        data: { labels: trades.map((t,i)=>`${t.date || "—"} #${i+1}`), datasets: [{ label: "R Multiple (PnL / Risk)", data: rMult, borderWidth: 0 }] },
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: "#cbd5e1" } } },
+          scales: commonScales
+        }
+      });
+
+      // Equity curve with markers + rich tooltips
+      // Build points where x is trade index label, y is equity, attach trade meta
+      const markerLabels = trades.map((t,i)=> `${t.date || "—"} #${i+1}`);
+      const markerData = trades.map((t,i)=> ({
+        x: markerLabels[i],
+        y: equity[i],
+        trade: t,
+        r: rMult[i]
+      }));
+
+      CHARTS.chartEquityMarkers = new Chart($("chartEquityMarkers"), {
+        type: "line",
+        data: {
+          labels: markerLabels,
+          datasets: [{
+            label: "Equity ($)",
+            data: markerData,
+            parsing: { xAxisKey: "x", yAxisKey: "y" },
+            tension: 0.25,
+            borderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { labels: { color: "#cbd5e1" } },
+            tooltip: {
+              callbacks: {
+                title: (items) => items?.[0]?.raw?.x || "",
+                label: (ctx) => {
+                  const raw = ctx.raw || {};
+                  const t = raw.trade || {};
+                  const r = raw.r;
+                  const pnl = Number(t.PnL);
+                  const side = (Number(t.take_profit) > Number(t.entry_price)) ? "Long-ish" : "Short-ish";
+                  return [
+                    `Equity: $${fmt(raw.y,2)}`,
+                    `PnL: $${fmt(pnl,2)} (${(pnl>=0)?"Win":"Loss"})`,
+                    `R: ${Number.isFinite(r)? fmt(r,2)+"R":"—"}`,
+                    `Entry: ${t.entry_time || "—"} @ ${fmt(t.entry_price,2)}`,
+                    `Exit: ${t.exit_time || "—"}`,
+                    `Stop: ${fmt(t.stop_loss,2)} • TP: ${fmt(t.take_profit,2)}`,
+                    `Side: ${side}`
+                  ];
+                }
+              }
+            }
+          },
+          scales: commonScales
+        }
+      });
+
+      // -------------------------------
+      // NEW 1) Expectancy by weekday
+      // -------------------------------
+      const weekdayMap = {}; // {Mon:{trades,n,wins,net,expectancy}}
+      for (const t of trades) {
+        const wd = weekdayOf(t.date);
+        weekdayMap[wd] = weekdayMap[wd] || {trades:0,wins:0,net:0,pnls:[]};
+        const pnl = Number(t.PnL) || 0;
+        weekdayMap[wd].trades++;
+        weekdayMap[wd].net += pnl;
+        weekdayMap[wd].pnls.push(pnl);
+        if (pnl >= 0) weekdayMap[wd].wins++;
+      }
+
+      const order = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+      const weekdayRows = order
+        .filter(w => weekdayMap[w])
+        .map(w => {
+          const x = weekdayMap[w];
+          const winp = x.trades ? (x.wins/x.trades) : 0;
+          const exp = x.trades ? mean(x.pnls) : 0;
+          return {wd:w, trades:x.trades, winp, exp, net:x.net};
+        });
+
+      $("weekdayBody").innerHTML = weekdayRows.map(r => `
+        <tr class="border-t border-white/10">
+          <td class="p-2 font-extrabold">${r.wd}</td>
+          <td class="p-2 text-right mono">${r.trades}</td>
+          <td class="p-2 text-right mono">${(r.winp*100).toFixed(1)}%</td>
+          <td class="p-2 text-right mono ${r.exp>=0 ? "text-emerald-200":"text-rose-200"} font-bold">$${fmt(r.exp,2)}</td>
+          <td class="p-2 text-right mono ${r.net>=0 ? "text-emerald-300":"text-rose-300"} font-extrabold">$${fmt(r.net,2)}</td>
+        </tr>
+      `).join("");
+
+      CHARTS.chartWeekday = new Chart($("chartWeekday"), {
+        type: "bar",
+        data: {
+          labels: weekdayRows.map(r => r.wd),
+          datasets: [{
+            label: "Expectancy ($/trade)",
+            data: weekdayRows.map(r => r.exp),
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: "#cbd5e1" } } },
+          scales: commonScales
+        }
+      });
+
+      // -------------------------------
+      // NEW 2) Win/Loss streak chart
+      // -------------------------------
+      const runs = computeStreakRuns(trades);
+      const winRuns = runs.filter(r=>r.type==="W").map(r=>r.len);
+      const lossRuns = runs.filter(r=>r.type==="L").map(r=>r.len);
+
+      const bestWinStreak = winRuns.length ? Math.max(...winRuns) : 0;
+      const worstLossStreak = lossRuns.length ? Math.max(...lossRuns) : 0;
+      const avgWinStreak = winRuns.length ? mean(winRuns) : 0;
+      const avgLossStreak = lossRuns.length ? mean(lossRuns) : 0;
+
+      $("streakStats").innerHTML = [
+        buildMini("Best Win Streak", `${bestWinStreak}`, "max consecutive wins"),
+        buildMini("Worst Loss Streak", `${worstLossStreak}`, "max consecutive losses"),
+        buildMini("Avg Win Streak", `${fmt(avgWinStreak,1)}`, "avg win run length"),
+        buildMini("Avg Loss Streak", `${fmt(avgLossStreak,1)}`, "avg loss run length")
+      ].join("");
+
+      // Run length bars, signed: wins positive, losses negative
+      const streakValues = runs.map(r => r.type==="W" ? r.len : -r.len);
+      const streakLabels = runs.map((r,i)=> `${r.type}${i+1}`);
+
+      CHARTS.chartStreaks = new Chart($("chartStreaks"), {
+        type: "bar",
+        data: {
+          labels: streakLabels,
+          datasets: [{
+            label: "Streak length (W positive / L negative)",
+            data: streakValues,
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { labels: { color: "#cbd5e1" } },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const v = ctx.raw;
+                  const t = v >= 0 ? "Win" : "Loss";
+                  return `${t} streak: ${Math.abs(v)} trades`;
+                }
+              }
+            }
+          },
+          scales: commonScales
+        }
+      });
+
+      // -------------------------------
+      // NEW 3) Return histogram + skew/kurtosis
+      // -------------------------------
+      const {labels: hLabels, counts: hCounts} = histogram(dayReturns);
+
+      const moments = skewKurtosis(dayReturns);
+      $("moments").innerHTML = `Skew: <span class="text-slate-200">${moments.skew===null?"—":fmt(moments.skew,3)}</span> • Excess Kurtosis: <span class="text-slate-200">${moments.kurt===null?"—":fmt(moments.kurt,3)}</span>`;
+
+      CHARTS.chartHist = new Chart($("chartHist"), {
+        type: "bar",
+        data: {
+          labels: hLabels,
+          datasets: [{
+            label: "Days in bin",
+            data: hCounts,
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: "#cbd5e1" } } },
+          scales: {
+            x: { ticks: { color: "#94a3b8", maxRotation: 60, minRotation: 60 }, grid: { color: "rgba(148,163,184,0.12)" } },
+            y: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,0.12)" } }
+          }
+        }
+      });
+
+      // Return summary cards
+      const minR = dayReturns.length ? Math.min(...dayReturns) : 0;
+      const maxR = dayReturns.length ? Math.max(...dayReturns) : 0;
+      const medR = (() => {
+        if (!dayReturns.length) return 0;
+        const s = dayReturns.slice().sort((a,b)=>a-b);
+        const mid = Math.floor(s.length/2);
+        return s.length % 2 ? s[mid] : (s[mid-1] + s[mid]) / 2;
+      })();
+
+      $("returnStats").innerHTML = [
+        buildMini("Avg Daily", pct(avgDailyReturn,2), "mean daily return"),
+        buildMini("Daily Vol", pct(dailyVol,2), "std dev of daily returns"),
+        buildMini("Median Daily", pct(medR,2), "median return"),
+        buildMini("Min / Max", `${pct(minR,2)} / ${pct(maxR,2)}`, "range")
+      ].join("");
+
+      // -------------------------------
+      // Heatmap
+      // -------------------------------
+      const retByDate = {};
+      for (let i = 0; i < retDates.length; i++) retByDate[retDates[i]] = dayReturns[i];
+      const retVals = Object.values(retByDate).filter(Number.isFinite);
+      const maxAbs = retVals.length ? Math.max(...retVals.map(v => Math.abs(v))) : 0;
+
+      const heat = $("heatmap");
+      if (heat) {
+        heat.innerHTML = "";
+        const byMonth = {};
+        Object.keys(retByDate).sort().forEach(dateStr => {
+          const m = dateStr.slice(0,7);
+          byMonth[m] = byMonth[m] || [];
+          byMonth[m].push(dateStr);
+        });
+
+        for (const month of Object.keys(byMonth)) {
+          const title = document.createElement("div");
+          title.className = "hm-month";
+          title.textContent = month;
+          heat.appendChild(title);
+
+          const row = document.createElement("div");
+          row.className = "hm-row";
+
+          const label = document.createElement("div");
+          label.className = "hm-label";
+          label.textContent = "days";
+          row.appendChild(label);
+
+          const daysWrap = document.createElement("div");
+          daysWrap.className = "flex flex-wrap gap-1";
+
+          byMonth[month].forEach(dateStr => {
+            const r = retByDate[dateStr];
+            const cell = document.createElement("div");
+            cell.className = "hm-day";
+            cell.style.background = heatColor(r, maxAbs);
+            cell.title = `${dateStr} • ${(r*100).toFixed(2)}%`;
+            daysWrap.appendChild(cell);
+          });
+
+          row.appendChild(daysWrap);
+          heat.appendChild(row);
+        }
+
+        const legend = document.createElement("div");
+        legend.className = "hm-legend";
+        legend.innerHTML = `
+          <span class="text-xs text-slate-400">Low</span>
+          <div class="hm-day" style="background:${heatColor(-maxAbs*0.2, maxAbs)}"></div>
+          <div class="hm-day" style="background:${heatColor(-maxAbs*0.6, maxAbs)}"></div>
+          <div class="hm-day" style="background:${heatColor(maxAbs*0.2, maxAbs)}"></div>
+          <div class="hm-day" style="background:${heatColor(maxAbs*0.6, maxAbs)}"></div>
+          <span class="text-xs text-slate-400">High</span>
+        `;
+        heat.appendChild(legend);
+      }
+
+      // Duration
+      const durations = trades
+        .map(t => durationMinutes(t.entry_time, t.exit_time))
+        .filter(v => Number.isFinite(v));
+
+      const durAvg = durations.length ? mean(durations) : 0;
+      const durMin = durations.length ? Math.min(...durations) : 0;
+      const durMax = durations.length ? Math.max(...durations) : 0;
+      const durMed = (() => {
+        if (!durations.length) return 0;
+        const s = durations.slice().sort((a,b)=>a-b);
+        const mid = Math.floor(s.length/2);
+        return s.length % 2 ? s[mid] : (s[mid-1] + s[mid]) / 2;
+      })();
+
+      $("durationStats").innerHTML = [
+        buildMini("Avg Duration", `${fmt(durAvg,1)} min`),
+        buildMini("Median", `${fmt(durMed,1)} min`),
+        buildMini("Min", `${fmt(durMin,1)} min`),
+        buildMini("Max", `${fmt(durMax,1)} min`)
+      ].join("");
+
+      CHARTS.chartDuration = new Chart($("chartDuration"), {
+        type: "bar",
+        data: {
+          labels: trades.map((t,i)=>`${t.date || "—"} #${i+1}`),
+          datasets: [{ label: "Duration (minutes)", data: trades.map(t => durationMinutes(t.entry_time, t.exit_time)), borderWidth: 0 }]
+        },
+        options: { responsive: true, plugins: { legend: { labels: { color: "#cbd5e1" } } }, scales: commonScales }
+      });
+
+      // Unhide
+      $("chips").classList.remove("hidden");
+      $("kpis").classList.remove("hidden");
+      $("charts").classList.remove("hidden");
+      $("analytics").classList.remove("hidden");
+      $("tables").classList.remove("hidden");
+      $("extras").classList.remove("hidden");
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const raw = sessionStorage.getItem("neuro_last_report");
+      if (!raw) { $("missing").classList.remove("hidden"); return; }
+
+      let payload = null;
+      try { payload = JSON.parse(raw); }
+      catch { $("missing").classList.remove("hidden"); return; }
+
+      $("btnBack").addEventListener("click", () => window.location.href = "./index.html");
+      $("btnExport").addEventListener("click", () => exportJSON(payload));
+      $("btnClear").addEventListener("click", () => {
+        sessionStorage.removeItem("neuro_last_report");
+        window.location.reload();
+      });
+
+      render(payload);
+    });
+  </script>
+</body>
+</html>

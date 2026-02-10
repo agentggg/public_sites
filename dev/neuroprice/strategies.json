@@ -1,0 +1,38 @@
+[
+  {
+    "name": "ORB Sharp Entry",
+    "desc": "Exploits volatility expansion in the first 30-60 minutes.",
+    "market": ["Indices", "Forex", "Metals"],
+    "tickers": {
+        "Indices": [
+            {"display": "Nasdaq (NQ)", "file": "NDX_clean.csv"},
+            {"display": "S&P 500 (ES)", "file": "GSPC_clean.csv"},
+            {"display": "Dow Jones (YM)", "file": "DJI_clean.csv"}
+        ],
+        "Forex": [
+            {"display": "EUR/USD", "file": "EURUSD_clean.csv"},
+            {"display": "GBP/USD", "file": "GBPUSD_clean.csv"},
+            {"display": "USD/JPY", "file": "USDJPY_clean.csv"}
+        ],
+        "Metals": [
+            {"display": "Gold", "file": "XAUUSD_clean.csv"},
+            {"display": "Silver", "file": "XAGUSD_clean.csv"}
+        ]
+    },
+    "exists": true,
+    "doc_url": "https://www.google.com"
+  },
+  {
+    "name": "MOMO – Imbalance Trend",
+    "desc": "Combines trend breaks, imbalance detection, and supply/demand entries.",
+    "market": ["Crypto", "Gold", "Forex", "Indices"],
+    "tickers": {
+        "Crypto": ["BTC-USD", "ETH-USD"],
+        "Gold": ["GC=F"],
+        "Forex": ["EURUSD=X", "GBPUSD=X"],
+        "Indices": ["NQ=F"]
+    },
+    "exists": false,
+    "doc_url": "https://www.google.com"
+  }
+]

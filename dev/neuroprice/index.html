@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NeuroPrice Edge | Universal Configurator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .holiday-alert { color: #e11d48; font-weight: 800; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    .dropdown-content {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #e2e8f0;
+      position: absolute;
+      width: 100%;
+      z-index: 50;
+      background: white;
+    }
+
+    .custom-date-pill {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 4px 12px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    /* Modal Overlay */
+    #emailModal { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); }
+
+    .animate-spin-slow { animation: spin 3s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  </style>
+</head>
+
+<body class="bg-slate-900 text-slate-100 p-6">
+
+  <div class="max-w-4xl mx-auto bg-white text-slate-900 rounded-2xl p-8 shadow-2xl">
+    <h1 class="text-3xl font-bold text-indigo-600 mb-2">NeuroPrice Edge 2026</h1>
+
+    <div class="space-y-6 mt-6">
+
+      <!-- 1. Search & Select Strategy -->
+      <div class="relative">
+        <label class="block font-bold mb-1">Search or Select Strategy</label>
+        <input
+          type="text"
+          id="stratInput"
+          placeholder="Click to view list or type to filter..."
+          class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+        />
+        <div id="stratDropdown" class="dropdown-content hidden rounded-b-lg shadow-lg"></div>
+
+        <div id="stratInfo" class="hidden mt-3 p-4 bg-indigo-50 border rounded-lg">
+          <p id="stratDesc" class="text-sm italic text-slate-700"></p>
+          <a id="learnMoreBtn" href="#" target="_blank" class="mt-2 inline-block text-xs font-bold text-indigo-600 underline">
+            How to run this strategy ↗
+          </a>
+        </div>
+
+        <div id="strategyLoadError" class="hidden mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm font-semibold"></div>
+      </div>
+
+      <!-- 2. Market & Ticker Selection -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block font-bold">Market</label>
+          <select id="marketSelect" class="w-full p-2 border rounded bg-slate-50"></select>
+        </div>
+        <div>
+          <label class="block font-bold">Ticker Symbol</label>
+          <select id="tickerSelect" class="w-full p-2 border rounded bg-slate-50"></select>
+        </div>
+      </div>
+
+      <!-- 3. Date Filtering with Validations -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-100 p-4 rounded-xl border border-slate-200">
+        <div>
+          <label class="block font-bold text-sm">Backtest Start Date</label>
+          <input type="date" id="startDate" class="w-full p-2 border rounded" />
+        </div>
+        <div>
+          <label class="block font-bold text-sm">Backtest End Date</label>
+          <input type="date" id="endDate" class="w-full p-2 border rounded" />
+        </div>
+
+        <div id="holidayNotice" class="col-span-full holiday-alert text-sm hidden py-2"></div>
+        <div id="dateError" class="col-span-full text-red-600 text-xs font-bold hidden"></div>
+      </div>
+
+      <!-- 4. System Skip Days -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block font-bold mb-1">Recurring Skip Day</label>
+          <select id="skipDay" class="w-full p-3 border rounded-lg">
+            <option value="">None (Trade all days)</option>
+            <option value="1">Skip Every Monday</option>
+            <option value="2">Skip Every Tuesday</option>
+            <option value="3">Skip Every Wednesday</option>
+            <option value="4">Skip Every Thursday</option>
+            <option value="5">Skip Every Friday</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold mb-1">Custom Blackout Dates</label>
+          <div class="flex gap-2">
+            <input type="date" id="customSkipInput" class="flex-1 p-2 border rounded-lg" />
+            <button type="button" id="addCustomDateBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold">+</button>
+          </div>
+          <div id="customDateList" class="flex flex-wrap gap-2 mt-3"></div>
+        </div>
+      </div>
+
+      <button id="generateBtn" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition shadow-lg mt-4">
+        Generate & Send Configuration
+      </button>
+
+      <pre id="jsonOutput" class="bg-slate-800 text-green-400 p-4 rounded mt-4 text-xs hidden overflow-x-auto"></pre>
+
+    </div>
+  </div>
+
+  <!-- EMAIL MODAL -->
+  <div id="emailModal" class="fixed inset-0 hidden flex items-center justify-center z-[100] p-4">
+    <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl text-slate-900">
+      <h2 class="text-2xl font-bold mb-2">Delivery Details</h2>
+      <p class="text-sm text-slate-500 mb-6">Where should we send your backtest report?</p>
+
+      <form id="contactForm" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase mb-1">First Name</label>
+            <input type="text" name="fname" value="Stevenson" autocomplete="given-name" required class="w-full p-2 border rounded bg-slate-50" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase mb-1">Last Name</label>
+            <input type="text" name="lname" value="Gerard" autocomplete="family-name" required class="w-full p-2 border rounded bg-slate-50" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase mb-1">Email Address</label>
+          <input type="email" name="email" value="stevensongerardeustache@outlook.com" autocomplete="email" required placeholder="you@example.com" class="w-full p-2 border rounded bg-slate-50" />
+        </div>
+
+        <div class="flex gap-3 mt-6">
+          <button type="button" id="cancelModalBtn" class="flex-1 py-2 text-slate-500 font-bold">Cancel</button>
+          <button type="submit" class="flex-1 py-2 bg-indigo-600 text-white rounded-lg font-bold">Confirm & Process</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- LOADING OVERLAY -->
+  <div id="loadingOverlay" class="fixed inset-0 hidden z-[200] flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur-md">
+    <div class="relative w-32 h-32 mb-8">
+      <div class="absolute inset-0 border-4 border-indigo-500/20 rounded-full"></div>
+      <div class="absolute inset-0 border-4 border-t-indigo-500 rounded-full animate-spin"></div>
+      <div class="absolute inset-4 border-2 border-b-cyan-400 rounded-full animate-spin-slow"></div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <svg class="w-12 h-12 text-indigo-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        </svg>
+      </div>
+    </div>
+
+    <div class="text-center max-w-md px-6">
+      <h3 id="loadingStatus" class="text-xl font-bold text-white mb-2 uppercase tracking-widest">Initializing Neural Core</h3>
+      <p id="loadingSubtext" class="text-slate-400 text-sm h-10 italic">Securing encrypted handshake with exchange servers...</p>
+
+      <div class="w-64 h-1.5 bg-slate-800 rounded-full mt-6 mb-2 overflow-hidden mx-auto">
+        <div id="loadingProgress" class="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 w-0 transition-all duration-500"></div>
+      </div>
+      <div id="loadingPercent" class="text-[10px] font-mono text-indigo-400 uppercase tracking-tighter">Engine Load: 0%</div>
+    </div>
+
+    <div class="mt-8 w-full max-w-lg bg-black/50 border border-slate-700 rounded-lg p-4 font-mono text-[10px] text-green-500 overflow-hidden h-32 shadow-2xl">
+      <div id="terminalLines" class="flex flex-col-reverse"></div>
+    </div>
+  </div>
+
+  <script>
+    // -----------------------------
+    // State
+    // -----------------------------
+    let registry = [];
+    let customSkipDates = [];
+    const today = new Date().toISOString().split("T")[0];
+
+    const holidays2026 = {
+      "2026-01-01": "New Year's Day", "2026-01-19": "MLK Jr. Day",
+      "2026-02-16": "Presidents' Day", "2026-05-25": "Memorial Day",
+      "2026-06-19": "Juneteenth", "2026-07-03": "Independence Day (Obs)",
+      "2026-09-07": "Labor Day", "2026-10-12": "Columbus Day",
+      "2026-11-11": "Veterans Day", "2026-11-26": "Thanksgiving",
+      "2026-12-25": "Christmas Day"
+    };
+
+    const loadingMessages = [
+      { main: "Neural Mapping", sub: "Optimizing 14-layer model for current volatility..." },
+      { main: "Data Synthesis", sub: "Aggregating liquidity + order flow..." },
+      { main: "Backtesting Engine", sub: "Running simulations on selected ticker..." },
+      { main: "Risk Calibration", sub: "Calculating drawdown & risk ratios..." },
+      { main: "Strategy Verification", sub: "Checking for bias and overfitting..." },
+      { main: "Finalizing Report", sub: "Compiling stats and report output..." }
+    ];
+
+    const terminalPhrases = [
+      "> CONNECTING TO DATA FEED...",
+      "> SYNCING TICKER DATA [SUCCESS]",
+      "> APPLYING FILTERS",
+      "> EXECUTING VIRTUAL TRADES...",
+      "> CALCULATING SHARPE RATIO",
+      "> GENERATING EQUITY CURVE"
+    ];
+
+    // -----------------------------
+    // Helpers
+    // -----------------------------
+    const $ = (id) => document.getElementById(id);
+
+    function showDropdown() { $("stratDropdown").classList.remove("hidden"); }
+    function hideDropdown() { $("stratDropdown").classList.add("hidden"); }
+
+    function showStrategyLoadError(msg) {
+      const box = $("strategyLoadError");
+      box.innerText = msg;
+      box.classList.remove("hidden");
+    }
+    function hideStrategyLoadError() {
+      $("strategyLoadError").classList.add("hidden");
+      $("strategyLoadError").innerText = "";
+    }
+
+    function normalizeTickers(tickersForMarket) {
+      // supports:
+      // 1) [{display, file}]
+      // 2) ["BTC-USD", "ETH-USD"]  -> auto-convert to {display, file}
+      if (!Array.isArray(tickersForMarket)) return [];
+
+      if (tickersForMarket.length === 0) return [];
+
+      if (typeof tickersForMarket[0] === "string") {
+        return tickersForMarket.map(sym => ({ display: sym, file: sym }));
+      }
+
+      // assume objects
+      return tickersForMarket.map(x => ({
+        display: x.display ?? String(x.file ?? ""),
+        file: x.file ?? String(x.display ?? "")
+      }));
+    }
+
+    function renderDropdown(items) {
+      const dropdown = $("stratDropdown");
+      dropdown.innerHTML = items.map(s => `
+        <div class="p-3 hover:bg-indigo-50 cursor-pointer border-b text-sm text-slate-700"
+             data-strategy="${encodeURIComponent(s.name)}">${s.name}</div>
+      `).join("");
+    }
+
+    function filterDropdown() {
+      const term = $("stratInput").value.toLowerCase();
+      const filtered = registry.filter(s => (s.name || "").toLowerCase().includes(term));
+      renderDropdown(filtered);
+    }
+
+    function selectStrategy(name) {
+      const strat = registry.find(s => s.name === name);
+      if (!strat) return;
+
+      $("stratInput").value = name;
+      hideDropdown();
+
+      $("stratInfo").classList.remove("hidden");
+      $("stratDesc").innerText = strat.desc || "";
+      $("learnMoreBtn").href = strat.doc_url || "#";
+
+      const mSelect = $("marketSelect");
+      mSelect.innerHTML = (strat.market || []).map(m => `<option value="${m}">${m}</option>`).join("");
+
+      populateTickers();
+    }
+
+    function populateTickers() {
+      const stratName = $("stratInput").value;
+      const strat = registry.find(s => s.name === stratName);
+      if (!strat) return;
+
+      const market = $("marketSelect").value;
+      const tickersForMarket = strat.tickers ? strat.tickers[market] : [];
+      const normalized = normalizeTickers(tickersForMarket);
+
+      $("tickerSelect").innerHTML = normalized
+        .map(t => `<option value="${t.file}">${t.display}</option>`)
+        .join("");
+    }
+
+    function validateDates() {
+      const start = $("startDate").value;
+      const end = $("endDate").value;
+      const errorEl = $("dateError");
+      const holidayEl = $("holidayNotice");
+
+      errorEl.classList.add("hidden");
+      holidayEl.classList.add("hidden");
+
+      if (!start || !end) {
+        errorEl.innerText = "❌ Please select both start and end dates.";
+        errorEl.classList.remove("hidden");
+        return false;
+      }
+      if (start > end) {
+        errorEl.innerText = "❌ Start date cannot be after end date.";
+        errorEl.classList.remove("hidden");
+        return false;
+      }
+      if (start > today || end > today) {
+        errorEl.innerText = "❌ Dates cannot be in the future.";
+        errorEl.classList.remove("hidden");
+        return false;
+      }
+
+      const found = [];
+      for (const d in holidays2026) {
+        if (d >= start && d <= end) found.push(`${holidays2026[d]} (${d})`);
+      }
+      if (found.length) {
+        holidayEl.innerHTML = `⚠️ OBSERVED 2026 FEDERAL HOLIDAYS:<br>${found.join("<br>")}`;
+        holidayEl.classList.remove("hidden");
+      }
+      return true;
+    }
+
+    function addCustomDate() {
+      const dateVal = $("customSkipInput").value;
+      if (dateVal && !customSkipDates.includes(dateVal)) {
+        customSkipDates.push(dateVal);
+        renderCustomDates();
+      }
+    }
+
+    function removeDate(dateStr) {
+      customSkipDates = customSkipDates.filter(d => d !== dateStr);
+      renderCustomDates();
+    }
+
+    function renderCustomDates() {
+      $("customDateList").innerHTML = customSkipDates.map(d => `
+        <div class="custom-date-pill">
+          ${d}
+          <button type="button" class="text-red-500 font-bold" data-remove="${d}">×</button>
+        </div>
+      `).join("");
+    }
+
+    function openModal() { $("emailModal").classList.remove("hidden"); }
+    function closeModal() { $("emailModal").classList.add("hidden"); }
+
+    // -----------------------------
+    // Loading overlay
+    // -----------------------------
+    function startLoadingOverlay() {
+      $("loadingOverlay").classList.remove("hidden");
+
+      let progress = 0;
+      let messageIdx = 0;
+
+      const progressInterval = setInterval(() => {
+        progress += Math.random() * 1.5;
+        if (progress > 98) progress = 98;
+        $("loadingProgress").style.width = `${progress}%`;
+        $("loadingPercent").innerText = `Engine Load: ${Math.floor(progress)}%`;
+      }, 1000);
+
+      const messageInterval = setInterval(() => {
+        messageIdx = (messageIdx + 1) % loadingMessages.length;
+        $("loadingStatus").innerText = loadingMessages[messageIdx].main;
+        $("loadingSubtext").innerText = loadingMessages[messageIdx].sub;
+      }, 5000);
+
+      const terminalInterval = setInterval(() => {
+        const lines = $("terminalLines");
+        const newLine = document.createElement("div");
+        newLine.innerText = terminalPhrases[Math.floor(Math.random() * terminalPhrases.length)];
+        lines.prepend(newLine);
+        if (lines.childNodes.length > 6) lines.removeChild(lines.lastChild);
+      }, 2500);
+
+      return () => {
+        clearInterval(progressInterval);
+        clearInterval(messageInterval);
+        clearInterval(terminalInterval);
+      };
+    }
+
+    function stopLoadingOverlay() {
+      $("loadingProgress").style.width = "100%";
+      $("loadingPercent").innerText = "Engine Load: 100%";
+      setTimeout(() => $("loadingOverlay").classList.add("hidden"), 400);
+    }
+
+    // -----------------------------
+    // Submit
+    // -----------------------------
+    async function submitFinal(event) {
+      event.preventDefault();
+
+      const formData = new FormData(event.target);
+
+      localStorage.setItem("neuro_fname", formData.get("fname"));
+      localStorage.setItem("neuro_lname", formData.get("lname"));
+      localStorage.setItem("neuro_email", formData.get("email"));
+
+      const config = {
+        strategy: $("stratInput").value,
+        market: $("marketSelect").value,
+        ticker: $("tickerSelect").value,
+        start_date: $("startDate").value,
+        end_date: $("endDate").value,
+        user: {
+          first_name: formData.get("fname"),
+          last_name: formData.get("lname"),
+          email: formData.get("email")
+        },
+        recurring_skip_index: $("skipDay").value,
+        custom_blackout_dates: customSkipDates
+      };
+
+      closeModal();
+
+      const stopAnimations = startLoadingOverlay();
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/neuro_filter", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(config)
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        stopAnimations();
+        stopLoadingOverlay();
+
+        const payload = {
+            status: response.ok ? "success" : "error",
+            request: config,
+            response: data
+        };
+
+        sessionStorage.setItem("neuro_last_report", JSON.stringify(payload));
+        window.location.href = "./report.html";
+
+        if (!response.ok) alert("Backend returned an error. See output JSON.");
+      } catch (err) {
+        stopAnimations();
+        stopLoadingOverlay();
+        alert("Neural Link Failed. Check if Flask is running and CORS allows this request.");
+        console.error(err);
+      }
+    }
+
+    // -----------------------------
+    // Load strategies.json
+    // -----------------------------
+    async function loadStrategies() {
+      hideStrategyLoadError();
+
+      try {
+        const res = await fetch("./strategies.json", { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status} loading strategies.json`);
+
+        const data = await res.json();
+        if (!Array.isArray(data)) throw new Error("strategies.json must be a JSON array");
+
+        // minimal shape check
+        for (const s of data) {
+          if (!s || typeof s !== "object" || !s.name) {
+            throw new Error("Each strategy must be an object with at least a 'name' field");
+          }
+        }
+
+        registry = data;
+        renderDropdown(registry);
+
+      } catch (e) {
+        console.error(e);
+
+        // Most common reason: file:// origin blocks fetch
+        const usingFileProtocol = location.protocol === "file:";
+        const hint = usingFileProtocol
+          ? "You opened index.html as file:// (double click). Browsers block fetch() to local files. Run a local server instead."
+          : "Make sure strategies.json is in the same folder as index.html and valid JSON.";
+
+        showStrategyLoadError(`❌ Could not load strategies.json. ${hint}`);
+      }
+    }
+
+    // -----------------------------
+    // Boot
+    // -----------------------------
+    document.addEventListener("DOMContentLoaded", async () => {
+      $("startDate").max = today;
+      $("endDate").max = today;
+
+      // saved contact values
+      const savedEmail = localStorage.getItem("neuro_email");
+      if (savedEmail) {
+        document.querySelector('input[name="fname"]').value = localStorage.getItem("neuro_fname") || "";
+        document.querySelector('input[name="lname"]').value = localStorage.getItem("neuro_lname") || "";
+        document.querySelector('input[name="email"]').value = savedEmail || "";
+      }
+
+      await loadStrategies();
+
+      // Strategy input behavior
+      $("stratInput").addEventListener("click", showDropdown);
+      $("stratInput").addEventListener("input", () => { showDropdown(); filterDropdown(); });
+
+      // click dropdown selects
+      $("stratDropdown").addEventListener("mousedown", (e) => {
+        const item = e.target.closest("[data-strategy]");
+        if (!item) return;
+        const name = decodeURIComponent(item.getAttribute("data-strategy"));
+        selectStrategy(name);
+      });
+
+      // close dropdown on outside click
+      document.addEventListener("click", (e) => {
+        if (!$("stratDropdown").contains(e.target) && e.target !== $("stratInput")) hideDropdown();
+      });
+
+      $("marketSelect").addEventListener("change", populateTickers);
+
+      $("startDate").addEventListener("change", validateDates);
+      $("endDate").addEventListener("change", validateDates);
+
+      $("addCustomDateBtn").addEventListener("click", addCustomDate);
+
+      $("customDateList").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-remove]");
+        if (!btn) return;
+        removeDate(btn.getAttribute("data-remove"));
+      });
+
+      $("generateBtn").addEventListener("click", () => {
+        if (!validateDates()) return;
+        if (!$("stratInput").value) return alert("Please select a strategy.");
+        openModal();
+      });
+
+      $("cancelModalBtn").addEventListener("click", closeModal);
+
+      $("contactForm").addEventListener("submit", submitFinal);
+    });
+  </script>
+</body>
+</html>
