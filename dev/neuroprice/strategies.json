@@ -1,7 +1,19 @@
 [
+      {
+    "name": "ORB 30 Minute Entry Test - 2024-02-12/13",
+    "desc": "Exploits volatility expansion in the first 30 minutes.",
+    "market": ["Indices"],
+    "tickers": {
+        "Indices": [
+            {"display": "Dummy Data", "file": "dummy_data.csv"}
+        ]
+    },
+    "exists": true,
+    "doc_url": "https://www.google.com/search?q=ORB+5+Minute+Entry"
+  },
   {
-    "name": "ORB Sharp Entry",
-    "desc": "Exploits volatility expansion in the first 30-60 minutes.",
+    "name": "ORB 5 Minute Entry",
+    "desc": "Exploits volatility expansion in the first 5 minutes.",
     "market": ["Indices", "Forex", "Metals"],
     "tickers": {
         "Indices": [
@@ -20,7 +32,76 @@
         ]
     },
     "exists": true,
-    "doc_url": "https://www.google.com/search?q=ORB+Sharp+Entry"
+    "doc_url": "https://www.google.com/search?q=ORB+5+Minute+Entry"
+  },
+  {
+    "name": "ORB 10 Minute Entry",
+    "desc": "Exploits volatility expansion in the first 10 minutes.",
+    "market": ["Indices", "Forex", "Metals"],
+    "tickers": {
+        "Indices": [
+            {"display": "Nasdaq (NQ)", "file": "NDX_clean.csv"},
+            {"display": "S&P 500 (ES)", "file": "GSPC_clean.csv"},
+            {"display": "Dow Jones (YM)", "file": "DJI_clean.csv"}
+        ],
+        "Forex": [
+            {"display": "EUR/USD", "file": "EURUSD_clean.csv"},
+            {"display": "GBP/USD", "file": "GBPUSD_clean.csv"},
+            {"display": "USD/JPY", "file": "USDJPY_clean.csv"}
+        ],
+        "Metals": [
+            {"display": "Gold", "file": "XAUUSD_clean.csv"},
+            {"display": "Silver", "file": "XAGUSD_clean.csv"}
+        ]
+    },
+    "exists": true,
+    "doc_url": "https://www.google.com/search?q=ORB+10+Minute+Entry"
+  },
+  {
+    "name": "ORB 15 Minute Entry",
+    "desc": "Exploits volatility expansion in the first 15 minutes.",
+    "market": ["Indices", "Forex", "Metals"],
+    "tickers": {
+        "Indices": [
+            {"display": "Nasdaq (NQ)", "file": "NDX_clean.csv"},
+            {"display": "S&P 500 (ES)", "file": "GSPC_clean.csv"},
+            {"display": "Dow Jones (YM)", "file": "DJI_clean.csv"}
+        ],
+        "Forex": [
+            {"display": "EUR/USD", "file": "EURUSD_clean.csv"},
+            {"display": "GBP/USD", "file": "GBPUSD_clean.csv"},
+            {"display": "USD/JPY", "file": "USDJPY_clean.csv"}
+        ],
+        "Metals": [
+            {"display": "Gold", "file": "XAUUSD_clean.csv"},
+            {"display": "Silver", "file": "XAGUSD_clean.csv"}
+        ]
+    },
+    "exists": true,
+    "doc_url": "https://www.google.com/search?q=ORB+15+Minute+Entry"
+  },
+    {
+    "name": "ORB 30 Minute Entry",
+    "desc": "Exploits volatility expansion in the first 30 minutes.",
+    "market": ["Indices", "Forex", "Metals"],
+    "tickers": {
+        "Indices": [
+            {"display": "Nasdaq (NQ)", "file": "NDX_clean.csv"},
+            {"display": "S&P 500 (ES)", "file": "GSPC_clean.csv"},
+            {"display": "Dow Jones (YM)", "file": "DJI_clean.csv"}
+        ],
+        "Forex": [
+            {"display": "EUR/USD", "file": "EURUSD_clean.csv"},
+            {"display": "GBP/USD", "file": "GBPUSD_clean.csv"},
+            {"display": "USD/JPY", "file": "USDJPY_clean.csv"}
+        ],
+        "Metals": [
+            {"display": "Gold", "file": "XAUUSD_clean.csv"},
+            {"display": "Silver", "file": "XAGUSD_clean.csv"}
+        ]
+    },
+    "exists": true,
+    "doc_url": "https://www.google.com/search?q=ORB+30+Minute+Entry"
   },
   {
     "name": "MOMO – Imbalance Trend",
