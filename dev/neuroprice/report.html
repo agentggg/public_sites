@@ -67,6 +67,43 @@
     <!-- Chips -->
     <div id="chips" class="hidden flex flex-wrap gap-2 mb-6"></div>
 
+    <!-- Strategy Summary (enhanced) -->
+    <div id="strategy" class="glass rounded-2xl p-6 mb-6">
+      <div class="font-extrabold text-lg mb-4">Strategy Summary</div>
+      
+      <!-- Top KPI Cards -->
+      <div id="strategyKPIs" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6"></div>
+
+      <!-- Configuration + Financial Events Grid -->
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        
+        <!-- Configuration Card -->
+        <div class="bg-slate-900/40 rounded-xl p-4 border border-white/5">
+          <div class="font-bold mb-2 text-slate-100">Configuration</div>
+          <div id="configDetails" class="text-xs text-slate-300 space-y-2 mono"></div>
+        </div>
+
+        <!-- Financial Events Card -->
+        <div class="bg-slate-900/40 rounded-xl p-4 border border-white/5">
+          <div class="font-bold mb-2 text-slate-100">Live Session Summary</div>
+          <div id="financialDetails" class="text-xs text-slate-300 space-y-3"></div>
+        </div>
+
+      </div>
+
+      <!-- Progress & Status -->
+      <div id="progressSection" class="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div class="bg-slate-900/40 rounded-xl p-4 border border-white/5">
+          <div class="text-xs text-slate-400 uppercase font-bold mb-3">Budget Health</div>
+          <div id="budgetProgress" class="space-y-3"></div>
+        </div>
+        <div class="bg-slate-900/40 rounded-xl p-4 border border-white/5">
+          <div class="text-xs text-slate-400 uppercase font-bold mb-3">Payout Progress</div>
+          <div id="payoutProgress" class="space-y-3"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- KPIs -->
     <div id="kpis" class="hidden grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6"></div>
 
@@ -243,6 +280,14 @@
       return (Number(n) * 100).toFixed(d) + "%";
     }
     function safeArr(x){ return Array.isArray(x) ? x : []; }
+
+    // small helper: escape HTML for pretty JSON blocks
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;');
+    }
 
     function mean(arr) {
       if (!arr.length) return 0;
@@ -467,6 +512,176 @@
       if (req.recurring_skip_index) chips.push(buildChip(`SkipIndex: ${req.recurring_skip_index}`));
       if (Array.isArray(req.custom_blackout_dates) && req.custom_blackout_dates.length) chips.push(buildChip(`Blackouts: ${req.custom_blackout_dates.length}`));
       $("chips").innerHTML = chips.join("");
+
+      // Strategy stats (if present)
+      const ss = payload.strategy_stats || null;
+      if (ss) {
+        // ===== TOP KPIs =====
+        const kCards = [
+          buildMini("Net Profit", `$${fmt(ss["Net Profit ($)"] ?? 0, 2)}`, "realized PnL"),
+          buildMini("Max Drawdown", `$${fmt(ss["Max Drawdown ($)"] ?? 0, 2)}`, "peak-to-trough"),
+          buildMini("Total Trades", `${ss["Total Trades"] ?? 0}`, "executed"),
+          buildMini("Win Rate", `${ss["Win Rate"] ?? "—"}`, "wins/total")
+        ].join("");
+        $("strategyKPIs").innerHTML = kCards;
+
+        // ===== CONFIGURATION =====
+        let configHTML = "";
+        if (ss.Configuration) {
+          const cfg = ss.Configuration;
+          const drawdownDisplay = cfg.drawdown 
+            ? `${cfg.drawdown.value}${cfg.drawdown.type === 'percent' ? '%' : '$'}` 
+            : "—";
+          const payoutDisplay = cfg.payout 
+            ? `${cfg.payout.value}${cfg.payout.type === 'percent' ? '%' : '$'}` 
+            : "—";
+
+          configHTML = `
+            <div class="space-y-2">
+              <div class="flex justify-between">
+                <span class="text-slate-400">Starting Budget:</span>
+                <span class="font-bold text-emerald-300">$${fmt(cfg.budget ?? 0, 2)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Max Drawdown:</span>
+                <span class="font-bold ${drawdownDisplay.includes('-') ? 'text-rose-300' : 'text-slate-200'}">${drawdownDisplay}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Payout Target:</span>
+                <span class="font-bold text-cyan-300">${payoutDisplay}</span>
+              </div>
+            </div>
+          `;
+        }
+        $("configDetails").innerHTML = configHTML || "No configuration data.";
+
+        // ===== FINANCIAL EVENTS =====
+        let financialHTML = "";
+        if (Array.isArray(ss.Financials) && ss.Financials.length) {
+          // Find the "Live Session Summary" event (last one with config)
+          const liveEvent = ss.Financials.find(f => f.event_type === "Live Session Summary");
+          const otherEvents = ss.Financials.filter(f => f.event_type !== "Live Session Summary");
+
+          // Render live summary if exists
+          let summaryHTML = "";
+          if (liveEvent) {
+            const cfg = liveEvent.config || {};
+            const currentBalance = Number(liveEvent.current_balance ?? 0);
+            const startingBudget = Number(cfg.starting_budget ?? 0);
+            const currentPayout = Number(liveEvent.current_payout_target ?? 0);
+            const percentTowardLoss = String(liveEvent.percent_towards_loss_limit ?? "0%").replace('%', '');
+            const percentTowardPayout = String(liveEvent.percent_towards_payout_goal ?? "0%").replace('%', '');
+            const sessionPnL = Number(liveEvent.total_session_pnl ?? 0);
+            const breachDuration = Number(liveEvent.total_breach_duration_minutes ?? 0);
+            const breachEvents = Number(liveEvent.total_breach_events ?? 0);
+            const withdrawalsPossible = Number(liveEvent.total_withdrawals_possible ?? 0);
+
+            const balancePercent = startingBudget > 0 ? (currentBalance / startingBudget) * 100 : 0;
+            const lossLimitPercent = parseFloat(percentTowardLoss);
+            const payoutPercent = parseFloat(percentTowardPayout);
+
+            summaryHTML = `
+              <div class="space-y-3 pb-3 border-b border-white/10">
+                <div class="text-slate-400 text-[11px] uppercase tracking-wide font-bold">Live Session Summary</div>
+                
+                <div class="space-y-1">
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Current Balance:</span>
+                    <span class="font-bold ${currentBalance < startingBudget ? 'text-rose-300' : 'text-emerald-300'}">$${fmt(currentBalance, 2)}</span>
+                  </div>
+                  <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                    <div class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-full transition-all" style="width: ${Math.max(0, Math.min(100, balancePercent))}%"></div>
+                  </div>
+                </div>
+
+                <div class="space-y-1">
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Payout Target:</span>
+                    <span class="font-bold text-cyan-300">$${fmt(currentPayout, 2)}</span>
+                  </div>
+                  <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                    <div class="bg-gradient-to-r from-blue-500 to-cyan-400 h-full transition-all" style="width: ${Math.min(100, payoutPercent)}%"></div>
+                  </div>
+                  <div class="text-[10px] text-slate-500">Progress: ${percentTowardPayout}</div>
+                </div>
+
+                <div class="space-y-1">
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Session PnL:</span>
+                    <span class="font-bold ${sessionPnL >= 0 ? 'text-emerald-300' : 'text-rose-300'}">$${fmt(sessionPnL, 2)}</span>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 pt-2">
+                  <div class="text-[10px] space-y-1">
+                    <div class="text-slate-500">Withdrawals:</div>
+                    <div class="font-bold text-emerald-300">${withdrawalsPossible}</div>
+                  </div>
+                  <div class="text-[10px] space-y-1">
+                    <div class="text-slate-500">Breach Events:</div>
+                    <div class="font-bold text-slate-100">${breachEvents}</div>
+                  </div>
+                  <div class="text-[10px] space-y-1">
+                    <div class="text-slate-500">Breach Duration:</div>
+                    <div class="font-bold text-slate-100">${Math.round(breachDuration / 60)}h</div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
+          // Timeline of other events
+          let timelineHTML = "";
+          if (otherEvents.length > 0) {
+            timelineHTML = `
+              <div class="space-y-2 pt-3">
+                <div class="text-slate-400 text-[10px] uppercase tracking-wide font-bold">Event Timeline</div>
+                <div class="space-y-1 max-h-[200px] overflow-y-auto">
+            `;
+            
+            otherEvents.forEach((evt, idx) => {
+              const isPayoutEvent = evt.event_type.includes("Payout");
+              const isBreachEvent = evt.event_type.includes("Breach");
+              const eventIcon = isPayoutEvent ? "✓" : "⚠";
+              const eventColor = isPayoutEvent ? "text-emerald-300" : "text-rose-300";
+              const breachDur = evt.breach_duration_minutes ? ` (${Math.round(evt.breach_duration_minutes / 60)}h)` : "";
+              
+              timelineHTML += `
+                <div class="flex gap-2 text-[10px] p-2 bg-slate-900/20 rounded border border-white/5">
+                  <span class="${eventColor} font-bold">${eventIcon}</span>
+                  <div class="flex-1">
+                    <div class="text-slate-300">${evt.date} ${evt.time}</div>
+                    <div class="text-slate-400">${evt.event_type}${breachDur}</div>
+                    <div class="text-slate-500 text-[9px]">Balance: $${fmt(evt.account_balance, 2)}</div>
+                  </div>
+                </div>
+              `;
+            });
+            
+            timelineHTML += `
+                </div>
+              </div>
+            `;
+          }
+
+          financialHTML = summaryHTML + timelineHTML;
+        }
+        $("financialDetails").innerHTML = financialHTML || "No financial events.";
+
+        // Show progress section if financials exist
+        if (Array.isArray(ss.Financials) && ss.Financials.length) {
+          $("progressSection").classList.remove("hidden");
+        } else {
+          $("progressSection").classList.add("hidden");
+        }
+
+      } else {
+        // Fallback: show placeholder when no strategy_stats
+        $("strategyKPIs").innerHTML = '<div class="col-span-full text-center text-slate-500 text-xs py-4">No strategy statistics available</div>';
+        $("configDetails").innerHTML = '<div class="text-slate-500 text-xs py-2">Awaiting configuration data...</div>';
+        $("financialDetails").innerHTML = '<div class="text-slate-500 text-xs py-2">Awaiting financial events...</div>';
+        $("progressSection").classList.add("hidden");
+      }
 
       // Daily arrays
       const dates = daily.map(d => d.Date);
@@ -971,7 +1186,34 @@
         window.location.reload();
       });
 
-      render(payload);
+      // Convert API response to standard format
+      let finalPayload = payload;
+      
+      // If API response (has strategy_stats at top level, no request)
+      if (payload.strategy_stats && !payload.request) {
+        finalPayload = {
+          status: payload.status || "success",
+          strategy_stats: payload.strategy_stats,
+          request: {
+            strategy: "—",
+            market: "—",
+            ticker: "—",
+            start_date: null,
+            end_date: null,
+            user: {}
+          },
+          response: {
+            trades: payload.trades || [],
+            daily_performance: payload.daily_performance || []
+          }
+        };
+      }
+      // If nested response (from request payload)
+      else if (payload.response?.strategy_stats && !payload.strategy_stats) {
+        payload.strategy_stats = payload.response.strategy_stats;
+      }
+
+      render(finalPayload);
     });
   </script>
 </body>
