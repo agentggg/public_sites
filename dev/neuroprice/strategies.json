@@ -5,7 +5,7 @@
     "market": ["Indices"],
     "tickers": {
         "Indices": [
-            {"display": "Dummy Data", "file": "dummy_data.csv"}
+            {"display": "Dummy Data", "file": "dummy_data"}
         ]
     },
     "exists": true,
@@ -17,18 +17,18 @@
     "market": ["Indices", "Forex", "Metals"],
     "tickers": {
         "Indices": [
-            {"display": "Nasdaq (NQ)", "file": "NDX_clean.csv"},
-            {"display": "S&P 500 (ES)", "file": "GSPC_clean.csv"},
-            {"display": "Dow Jones (YM)", "file": "DJI_clean.csv"}
+            {"display": "Nasdaq (NQ)", "file": "NDX_clean"},
+            {"display": "S&P 500 (ES)", "file": "GSPC_clean"},
+            {"display": "Dow Jones (YM)", "file": "DJI_clean"}
         ],
         "Forex": [
-            {"display": "EUR/USD", "file": "EURUSD_clean.csv"},
-            {"display": "GBP/USD", "file": "GBPUSD_clean.csv"},
-            {"display": "USD/JPY", "file": "USDJPY_clean.csv"}
+            {"display": "EUR/USD", "file": "EURUSD_clean"},
+            {"display": "GBP/USD", "file": "GBPUSD_clean"},
+            {"display": "USD/JPY", "file": "USDJPY_clean"}
         ],
         "Metals": [
-            {"display": "Gold", "file": "XAUUSD_clean.csv"},
-            {"display": "Silver", "file": "XAGUSD_clean.csv"}
+            {"display": "Gold", "file": "XAUUSD_clean"},
+            {"display": "Silver", "file": "XAGUSD_clean"}
         ]
     },
     "exists": true,
@@ -40,18 +40,18 @@
     "market": ["Indices", "Forex", "Metals"],
     "tickers": {
         "Indices": [
-            {"display": "Nasdaq (NQ)", "file": "NDX_clean.csv"},
-            {"display": "S&P 500 (ES)", "file": "GSPC_clean.csv"},
-            {"display": "Dow Jones (YM)", "file": "DJI_clean.csv"}
+            {"display": "Nasdaq (NQ)", "file": "NDX_clean"},
+            {"display": "S&P 500 (ES)", "file": "GSPC_clean"},
+            {"display": "Dow Jones (YM)", "file": "DJI_clean"}
         ],
         "Forex": [
-            {"display": "EUR/USD", "file": "EURUSD_clean.csv"},
-            {"display": "GBP/USD", "file": "GBPUSD_clean.csv"},
-            {"display": "USD/JPY", "file": "USDJPY_clean.csv"}
+            {"display": "EUR/USD", "file": "EURUSD_clean"},
+            {"display": "GBP/USD", "file": "GBPUSD_clean"},
+            {"display": "USD/JPY", "file": "USDJPY_clean"}
         ],
         "Metals": [
-            {"display": "Gold", "file": "XAUUSD_clean.csv"},
-            {"display": "Silver", "file": "XAGUSD_clean.csv"}
+            {"display": "Gold", "file": "XAUUSD_clean"},
+            {"display": "Silver", "file": "XAGUSD_clean"}
         ]
     },
     "exists": true,
@@ -63,41 +63,41 @@
     "market": ["Indices", "Forex", "Metals"],
     "tickers": {
         "Indices": [
-            {"display": "Nasdaq (NQ)", "file": "NDX_clean.csv"},
-            {"display": "S&P 500 (ES)", "file": "GSPC_clean.csv"},
-            {"display": "Dow Jones (YM)", "file": "DJI_clean.csv"}
+            {"display": "Nasdaq (NQ)", "file": "NDX_clean"},
+            {"display": "S&P 500 (ES)", "file": "GSPC_clean"},
+            {"display": "Dow Jones (YM)", "file": "DJI_clean"}
         ],
         "Forex": [
-            {"display": "EUR/USD", "file": "EURUSD_clean.csv"},
-            {"display": "GBP/USD", "file": "GBPUSD_clean.csv"},
-            {"display": "USD/JPY", "file": "USDJPY_clean.csv"}
+            {"display": "EUR/USD", "file": "EURUSD_clean"},
+            {"display": "GBP/USD", "file": "GBPUSD_clean"},
+            {"display": "USD/JPY", "file": "USDJPY_clean"}
         ],
         "Metals": [
-            {"display": "Gold", "file": "XAUUSD_clean.csv"},
-            {"display": "Silver", "file": "XAGUSD_clean.csv"}
+            {"display": "Gold", "file": "XAUUSD_clean"},
+            {"display": "Silver", "file": "XAGUSD_clean"}
         ]
     },
     "exists": true,
     "doc_url": "https://www.google.com/search?q=ORB+15+Minute+Entry"
   },
-    {
+  {
     "name": "ORB 30 Minute Entry",
     "desc": "Exploits volatility expansion in the first 30 minutes.",
     "market": ["Indices", "Forex", "Metals"],
     "tickers": {
         "Indices": [
-            {"display": "Nasdaq (NQ)", "file": "NDX_clean.csv"},
-            {"display": "S&P 500 (ES)", "file": "GSPC_clean.csv"},
-            {"display": "Dow Jones (YM)", "file": "DJI_clean.csv"}
+            {"display": "Nasdaq (NQ)", "file": "NDX_clean"},
+            {"display": "S&P 500 (ES)", "file": "GSPC_clean"},
+            {"display": "Dow Jones (YM)", "file": "DJI_clean"}
         ],
         "Forex": [
-            {"display": "EUR/USD", "file": "EURUSD_clean.csv"},
-            {"display": "GBP/USD", "file": "GBPUSD_clean.csv"},
-            {"display": "USD/JPY", "file": "USDJPY_clean.csv"}
+            {"display": "EUR/USD", "file": "EURUSD_clean"},
+            {"display": "GBP/USD", "file": "GBPUSD_clean"},
+            {"display": "USD/JPY", "file": "USDJPY_clean"}
         ],
         "Metals": [
-            {"display": "Gold", "file": "XAUUSD_clean.csv"},
-            {"display": "Silver", "file": "XAGUSD_clean.csv"}
+            {"display": "Gold", "file": "XAUUSD_clean"},
+            {"display": "Silver", "file": "XAGUSD_clean"}
         ]
     },
     "exists": true,
@@ -115,5 +115,28 @@
     },
     "exists": false,
     "doc_url": "https://www.google.com"
-  }
+  },
+  {
+  "name": "IFVG Liquidity Reversal",
+  "desc": "Identifies Inverse Fair Value Gaps (IFVG) formed by strong displacement candles and enters on liquidity failure beyond the imbalance zone. Designed to capture mean reversion moves after aggressive institutional expansion.",
+  "market": ["Indices", "Forex", "Metals"],
+  "tickers": {
+    "Indices": [
+      {"display": "Nasdaq (NQ)", "file": "NDX_clean"},
+      {"display": "S&P 500 (ES)", "file": "GSPC_clean"},
+      {"display": "Dow Jones (YM)", "file": "DJI_clean"}
+    ],
+    "Forex": [
+      {"display": "EUR/USD", "file": "EURUSD_clean"},
+      {"display": "GBP/USD", "file": "GBPUSD_clean"},
+      {"display": "USD/JPY", "file": "USDJPY_clean"}
+    ],
+    "Metals": [
+      {"display": "Gold", "file": "XAUUSD_clean"},
+      {"display": "Silver", "file": "XAGUSD_clean"}
+    ]
+  },
+  "exists": true,
+  "doc_url": "https://www.google.com/search?q=Inverse+Fair+Value+Gap+trading+strategy"
+}
 ]

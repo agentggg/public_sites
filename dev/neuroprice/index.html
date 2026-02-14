@@ -78,6 +78,40 @@
         </div>
       </div>
 
+      <!-- 2B. Timeframe Selection -->
+<div>
+  <label class="block font-bold mb-1">Timeframe</label>
+  <select id="timeframeSelect" class="w-full p-3 border rounded-lg bg-slate-50">
+    <!-- Minutes -->
+    <option value="1min">1 Minute</option>
+    <option value="2min">2 Minutes</option>
+    <option value="3min">3 Minutes</option>
+    <option value="5min" selected>5 Minutes (Default)</option>
+    <option value="10min">10 Minutes</option>
+    <option value="15min">15 Minutes</option>
+    <option value="30min">30 Minutes</option>
+    <option value="45min">45 Minutes</option>
+
+    <!-- Hours -->
+    <option value="1h">1 Hour</option>
+    <option value="2h">2 Hours</option>
+    <option value="4h">4 Hours</option>
+    <option value="6h">6 Hours</option>
+    <option value="12h">12 Hours</option>
+
+    <!-- Days -->
+    <option value="1D">1 Day</option>
+
+    <!-- Week -->
+    <option value="1W-MON">1 Week (Mon Start)</option>
+
+    <!-- Month -->
+    <option value="1MS">1 Month</option>
+
+    <!-- Year -->
+    <option value="1YS">1 Year</option>
+  </select>
+</div>
       <!-- 3. Date Filtering with Validations -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-100 p-4 rounded-xl border border-slate-200">
         <div>
@@ -598,7 +632,8 @@
           type: document.querySelector('input[name="payoutType"]:checked').value
         },
         asset_size: $("assetSize").value,
-        risk_ratio: parseFloat($("riskRatio").value)
+        risk_ratio: parseFloat($("riskRatio").value),
+        timeframe: $("timeframeSelect").value,
       };
 
       closeModal();
@@ -606,7 +641,7 @@
       const stopAnimations = startLoadingOverlay();
 
       try {
-        const response = await fetch(API, {
+        const response = await fetch(DEVAPI, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(config)
