@@ -1,0 +1,65 @@
+{
+  "strategy": ["IFVG", "FVG", "PO3", "OTE"],
+  "risk_ratio": [1.0, 1.5, 2.0, 3.0],
+
+  "markets": {
+
+    "Indices": {
+
+      "SPX500": {
+        "pip_unit": "point",
+        "description": "S&P 500 CFD",
+        "pip_values": {
+          "Micro": 0.10,
+          "Mini": 0.50,
+          "Standard": 1.00
+        }
+      },
+
+      "US30": {
+        "pip_unit": "point",
+        "description": "Dow Jones CFD",
+        "pip_values": {
+          "Micro": 0.10,
+          "Mini": 0.50,
+          "Standard": 1.00
+        }
+      },
+
+      "NAS100": {
+        "pip_unit": "point",
+        "description": "Nasdaq 100 CFD",
+        "pip_values": {
+          "Micro": 0.10,
+          "Mini": 0.50,
+          "Standard": 1.00
+        }
+      }
+    },
+
+    "Metals": {
+
+      "XAUUSD": {
+        "pip_unit": "0.01",
+        "description": "Gold CFD",
+        "pip_values": {
+          "Micro": 0.01,
+          "Mini": 0.10,
+          "Standard": 1.00
+        }
+      },
+
+      "XAGUSD": {
+        "pip_unit": "0.001",
+        "description": "Silver CFD",
+        "pip_values": {
+          "Micro": 0.05,
+          "Mini": 0.50,
+          "Standard": 5.00
+        }
+      }
+    }
+  },
+
+  "timeframe": ["1m", "5m", "15m", "1h", "1d"]
+}

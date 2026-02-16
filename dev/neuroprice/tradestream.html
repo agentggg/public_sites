@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neuro Price Edge | Trade Stream</title>
+
+<style>
+:root {
+  --bg: #0b0f18;
+  --card: rgba(20,25,40,0.75);
+  --border: rgba(255,255,255,0.08);
+  --accent: #00e0ff;
+  --success: #00ff9c;
+  --error: #ff4c4c;
+  --text: #e6edf3;
+}
+
+body {
+  margin:0;
+  font-family: "Segoe UI", Roboto, sans-serif;
+  background: radial-gradient(circle at top left,#111827,#0b0f18 60%);
+  color: var(--text);
+  display:flex;
+  justify-content:center;
+  padding:40px 15px;
+}
+
+.dashboard { width:100%; max-width:1000px; }
+
+.card {
+  backdrop-filter: blur(14px);
+  background: var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:35px;
+  box-shadow:0 0 60px rgba(0,0,0,0.5);
+}
+
+h1 { margin:0; font-size:26px; }
+.sub { opacity:.6; font-size:13px; margin-bottom:25px; }
+
+.section { margin-bottom:20px; }
+
+label { display:block; font-size:13px; margin-bottom:6px; opacity:.8; }
+
+select, input {
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:#111827;
+  color:var(--text);
+}
+
+select:focus, input:focus {
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 6px var(--accent);
+}
+
+button {
+  width:100%;
+  padding:13px;
+  border-radius:10px;
+  border:none;
+  background:var(--accent);
+  color:black;
+  font-weight:bold;
+  cursor:pointer;
+  transition:.2s;
+}
+
+button:hover { opacity:.85; }
+
+.loader-wrap { display:none; text-align:center; margin-top:25px; }
+
+.neural-loader {
+  width:90px;
+  height:90px;
+  border-radius:50%;
+  border:6px solid rgba(0,224,255,.2);
+  border-top:6px solid var(--accent);
+  animation:spin 1s linear infinite;
+  margin:20px auto;
+}
+
+@keyframes spin { 100% { transform:rotate(360deg); } }
+
+.message { display:none; margin-top:20px; padding:15px; border-radius:8px; }
+
+.success {
+  background:rgba(0,255,156,.1);
+  border:1px solid var(--success);
+  color:var(--success);
+}
+
+.error {
+  background:rgba(255,76,76,.1);
+  border:1px solid var(--error);
+  color:var(--error);
+}
+
+.json-preview {
+  margin-top:25px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 15px;
+  max-height: 300px;
+  overflow: auto;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+}
+
+.json-preview.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.json-header {
+  font-size: 13px;
+  opacity: 0.6;
+  margin-bottom: 8px;
+}
+
+pre {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4em;
+  color: #00e0ff;
+}
+
+#pipValueDisplay {
+  margin-top:12px;
+  font-size:13px;
+  opacity:.8;
+}
+
+@media(max-width:600px){
+  .card{padding:25px;}
+}
+</style>
+</head>
+<body>
+
+<div class="dashboard">
+  <div class="card">
+    <h1>Neuro Price Edge</h1>
+    <div class="sub">Trade Stream Configuration Console</div>
+
+    <div id="formArea"></div>
+
+    <div class="section">
+      <label for="notification_email">Notification Email</label>
+      <input type="email" id="notification_email" placeholder="you@example.com" required />
+    </div>
+
+    <button id="submitBtn">Initiate Trade Stream</button>
+
+    <div class="json-preview" id="jsonPreview">
+      <div class="json-header">Live Configuration Preview</div>
+      <pre id="jsonOutput">{}</pre>
+    </div>
+
+    <div id="pipValueDisplay"></div>
+
+    <div class="loader-wrap" id="loader">
+      <div class="neural-loader"></div>
+      <div>Neural engine evaluating liquidity & structure...</div>
+    </div>
+
+    <div id="message" class="message"></div>
+  </div>
+</div>
+
+<script>
+let schema = {};
+const API = "https://least-advertisements-hollow-normally.trycloudflare.com/neuro_filter"
+const DEVAPI = "http://127.0.0.1:8089/neuro_filter"
+const formArea = document.getElementById("formArea");
+
+async function loadSchema() {
+  try {
+    const response = await fetch("tradestream.json");
+    if (!response.ok) throw new Error();
+    schema = await response.json();
+    buildForm();
+  } catch (err) {
+    showError("Failed to load configuration schema.");
+    console.error(err);
+  }
+}
+
+function createDropdown(id,label,options){
+  const wrapper=document.createElement("div");
+  wrapper.className="section";
+
+  const labelEl=document.createElement("label");
+  labelEl.textContent=label;
+  labelEl.setAttribute("for",id);
+  wrapper.appendChild(labelEl);
+
+  const select=document.createElement("select");
+  select.id=id;
+
+  options.forEach(opt=>{
+    const option=document.createElement("option");
+    option.value=opt;
+    option.textContent=opt;
+    select.appendChild(option);
+  });
+
+  wrapper.appendChild(select);
+  formArea.appendChild(wrapper);
+}
+
+function buildForm(){
+
+  createDropdown("strategy","Strategy Model",schema.strategy);
+  createDropdown("risk_ratio","Risk / Reward Ratio",schema.risk_ratio);
+  createDropdown("market","Market Type",Object.keys(schema.markets));
+
+  const firstMarket=Object.keys(schema.markets)[0];
+  const firstSymbol=Object.keys(schema.markets[firstMarket])[0];
+
+  createDropdown("symbol","Symbol",
+    Object.keys(schema.markets[firstMarket])
+  );
+
+  createDropdown("asset_size","Asset Size",
+    Object.keys(schema.markets[firstMarket][firstSymbol].pip_values)
+  );
+
+  createDropdown("timeframe","Execution Timeframe",schema.timeframe);
+
+  attachListeners();
+  updateJsonPreview();
+}
+
+function attachListeners(){
+
+  document.getElementById("market").addEventListener("change",()=>{
+    const market=document.getElementById("market").value;
+    const symbolSelect=document.getElementById("symbol");
+    symbolSelect.innerHTML="";
+
+    Object.keys(schema.markets[market]).forEach(sym=>{
+      const opt=document.createElement("option");
+      opt.value=sym;
+      opt.textContent=sym;
+      symbolSelect.appendChild(opt);
+    });
+
+    updateAssetSizes();
+    updateJsonPreview();
+  });
+
+  document.getElementById("symbol").addEventListener("change",()=>{
+    updateAssetSizes();
+    updateJsonPreview();
+  });
+
+  ["strategy","risk_ratio","asset_size","timeframe"].forEach(id=>{
+    document.getElementById(id).addEventListener("change",updateJsonPreview);
+  });
+
+  document.getElementById("notification_email")
+    .addEventListener("input",updateJsonPreview);
+}
+
+function updateAssetSizes(){
+  const market=document.getElementById("market").value;
+  const symbol=document.getElementById("symbol").value;
+  const sizeSelect=document.getElementById("asset_size");
+  sizeSelect.innerHTML="";
+
+  const sizes=schema.markets[market][symbol].pip_values;
+
+  Object.keys(sizes).forEach(size=>{
+    const opt=document.createElement("option");
+    opt.value=size;
+    opt.textContent=size+" ($"+sizes[size]+")";
+    sizeSelect.appendChild(opt);
+  });
+}
+
+function updateJsonPreview(){
+
+  const market=document.getElementById("market")?.value;
+  const symbol=document.getElementById("symbol")?.value;
+  const size=document.getElementById("asset_size")?.value;
+
+  if(!market||!symbol||!size) return;
+
+  const asset=schema.markets[market][symbol];
+  const pipValue=asset.pip_values[size];
+
+  const preview={
+    strategy:document.getElementById("strategy").value,
+    risk_ratio:parseFloat(document.getElementById("risk_ratio").value),
+    market,
+    symbol,
+    asset_size:size,
+    pip_unit:asset.pip_unit,
+    value_per_pip: pipValue,
+    timeframe:document.getElementById("timeframe").value,
+    notification_email:document.getElementById("notification_email").value
+  };
+
+  document.getElementById("jsonOutput").textContent=
+    JSON.stringify(preview,null,2);
+
+  document.getElementById("jsonPreview").classList.add("visible");
+
+  document.getElementById("pipValueDisplay").innerHTML =
+    `<strong>Value Per ${asset.pip_unit}:</strong> $${pipValue}`;
+}
+
+function showError(msg){
+  const message=document.getElementById("message");
+  message.className="message error";
+  message.textContent=msg;
+  message.style.display="block";
+}
+
+document.getElementById("submitBtn")
+.addEventListener("click",async()=>{
+
+  const email=document.getElementById("notification_email").value;
+
+  if(!email||!/^\S+@\S+\.\S+$/.test(email)){
+    showError("Please enter a valid notification email address.");
+    return;
+  }
+
+  const market=document.getElementById("market").value;
+  const symbol=document.getElementById("symbol").value;
+  const size=document.getElementById("asset_size").value;
+  const asset=schema.markets[market][symbol];
+  const pipValue=asset.pip_values[size];
+
+  const config={
+    strategy:document.getElementById("strategy").value,
+    risk_ratio:parseFloat(document.getElementById("risk_ratio").value),
+    market,
+    symbol,
+    asset_size:size,
+    pip_unit:asset.pip_unit,
+    value_per_pip:pipValue,
+    timeframe:document.getElementById("timeframe").value,
+    notification_email:email
+  };
+
+  const loader=document.getElementById("loader");
+  const message=document.getElementById("message");
+
+  loader.style.display="block";
+  message.style.display="none";
+
+  try{
+    const response=await fetch(`${API}/trade-stream`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(config)
+    });
+
+    if(!response.ok) throw new Error();
+
+    loader.style.display="none";
+    message.className="message success";
+    message.textContent="Your request has been sent for processing. Please keep an eye on your email for results and further instructions.";
+    message.style.display="block";
+
+  }catch{
+    loader.style.display="none";
+    showError("Trade Stream submission failed. Please retry.");
+  }
+});
+
+loadSchema();
+</script>
+</body>
+</html>
