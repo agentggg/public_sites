@@ -207,9 +207,17 @@ function normalizeBasePath(basePath) {
   return withLeadingSlash.replace(/\/+$/, "");
 }
 
+function inferBasePath(pathname = window.location.pathname) {
+  const marker = "/app_support/";
+  const idx = String(pathname || "").indexOf(marker);
+  if (idx === -1) return "";
+  return pathname.slice(0, idx);
+}
+
 function sitePath(relativePath) {
   const cleanRelative = String(relativePath || "").replace(/^\/+/, "");
-  const basePath = normalizeBasePath(SITE_CONFIG && SITE_CONFIG.basePath);
+  const configuredBasePath = normalizeBasePath(SITE_CONFIG && SITE_CONFIG.basePath);
+  const basePath = configuredBasePath || normalizeBasePath(inferBasePath());
   return basePath ? `${basePath}/${cleanRelative}` : `/${cleanRelative}`;
 }
 

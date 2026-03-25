@@ -1,7 +1,8 @@
 const SITE_CONFIG = {
-  // For local use keep this as "".
-  // For GitHub Pages set it to your repo path, for example: "/PublicSites"
-  basePath: "/public_sites"
+  // Optional override.
+  // Leave as "" to auto-detect from the current URL.
+  // Example override for GitHub Pages repo path: "/public_sites"
+  basePath: ""
 };
 
 const TECH_AND_FAITH = {
