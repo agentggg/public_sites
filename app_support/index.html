@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#07111f">
+  <title>Tech & Faith Apps</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="nav">
+      <div class="container nav__inner">
+        <a class="brand" href="index.html">
+          <span class="brand__mark">TF</span>
+          <span class="brand__copy">
+            <span class="brand__title">Tech & Faith</span>
+            <span class="brand__sub">Mobile products and support</span>
+          </span>
+        </a>
+        <nav class="nav__links">
+          <a href="#apps-grid">Apps</a>
+          <a href="#help">Support</a>
+          <a href="apps.html">Store Links</a>
+        </nav>
+        <div class="nav__right">
+          <a class="nav__cta" href="apps.html">Store Links</a>
+          <div class="brand-partner"><img class="brand-partner__image" data-brand-image src="" alt=""></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="hero" id="hub-view">
+        <div class="hero-card">
+          <div data-reveal>
+            <div class="eyebrow"><strong>Tech & Faith</strong> App hub</div>
+            <h1>Tech & Faith builds mobile apps for faith, evangelism, dreams, fitness, and finance.</h1>
+            <p class="lede">Choose an app below to open its page. Live apps will take people straight in. Coming-soon apps like Lions Den and NeuroEdge will show a polished popup explaining what is on the way.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="apps-grid">
+        <div class="section-header" data-reveal>
+          <div class="eyebrow"><strong>Our Apps</strong> Tech & Faith products</div>
+          <h2>Explore what Tech & Faith is building.</h2>
+          <p>RAW focuses on real faith and ministry life. All Nations is an evangelism app to help evangelize and win souls to Jesus. Revealed Mysteries centers on dreams and prophetic understanding. Lions Den is a healthy exercise, workout, gym, and raw gym app coming soon. NeuroEdge is a stocks, investment, finances, and day trading app coming soon.</p>
+        </div>
+        <div class="selector-grid" id="hub-selector"></div>
+      </section>
+
+      <section class="hero" id="app-view" style="display:none;">
+        <div class="hero-card">
+          <div data-reveal>
+            <div class="eyebrow"><strong>Support</strong> Clear help and contact</div>
+            <h1>Support for <span class="gradient-text" data-app-name>App</span> that feels premium, clear, and mobile first.</h1>
+            <p class="lede" id="hero-description"></p>
+            <div class="hero-actions">
+              <a class="btn btn--primary" id="support-email" href="#">Email Support</a>
+              <a class="btn btn--secondary" data-link="privacy" href="privacy.html">Read Privacy Policy</a>
+            </div>
+          </div>
+          <aside class="meta-panel" data-reveal data-delay="1">
+            <div class="eyebrow"><strong>Contact</strong> Tech & Faith support</div>
+            <div class="copy-block">
+              <p>All support and privacy requests for <span data-app-name>App</span> route through <strong>Tech & Faith</strong>.</p>
+              <p>Email: <span data-support-email>tech.and.faith.contact@gmail.com</span></p>
+              <p id="support-status"></p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section" id="help" style="display:none;">
+        <div class="section-header" data-reveal>
+          <div class="eyebrow"><strong>Help Center</strong> Built for user trust</div>
+          <h2>High-signal support content without clutter.</h2>
+          <p id="support-intro"></p>
+        </div>
+        <div class="grid two-up" id="support-topics"></div>
+      </section>
+
+      <section class="section" id="features-section" style="display:none;">
+        <div class="section-header" data-reveal>
+          <div class="eyebrow"><strong>Core Experience</strong> Product-aligned support</div>
+          <h2>What users can expect from <span data-app-name>App</span>.</h2>
+          <p>The support page mirrors the product tone so the customer experience feels consistent from discovery to issue resolution.</p>
+        </div>
+        <div class="grid two-up" id="feature-grid"></div>
+      </section>
+
+      <section class="section" id="faq" style="display:none;">
+        <div class="section-header" data-reveal>
+          <div class="eyebrow"><strong>FAQ</strong> Quick answers</div>
+          <h2>Frequently asked questions for <span data-app-name>App</span>.</h2>
+          <p>These answers are app-specific, mobile-friendly, and easy to scan on a phone.</p>
+        </div>
+        <div class="stack" id="faq-list"></div>
+      </section>
+
+      <section class="section" id="contact-section" style="display:none;">
+        <div class="callout" data-reveal>
+          <strong>Need a direct response?</strong>
+          <p id="support-callout"></p>
+          <div class="button-row">
+            <a class="btn btn--primary" id="callout-email" href="#">Contact Support</a>
+            <a class="btn btn--secondary" data-link="apps" href="apps.html">Open Store Chooser</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <div class="footer__copy" id="footer-copy">Tech & Faith app hub featuring RAW, All Nations, Revealed Mysteries, Lions Den, and NeuroEdge. Copyright 2026 Tech & Faith LLC. All rights reserved.</div>
+        <div class="brand-partner footer__brand"><img class="brand-partner__image" data-brand-image src="" alt=""></div>
+        <nav class="footer__nav">
+          <a href="index.html">Home</a>
+          <a href="apps.html">Store Links</a>
+        </nav>
+      </div>
+    </footer>
+  </div>
+
+  <script src="redirects.js"></script>
+  <script src="config.js"></script>
+  <script src="site.js"></script>
+  <script>
+    (function () {
+      const app = getAppConfig();
+      setBrandAssets();
+      renderSelector(document.getElementById("hub-selector"), app && app.key);
+
+      if (!app) {
+        setDocumentTitle("Tech & Faith Apps");
+        revealOnScroll();
+        return;
+      }
+
+      document.getElementById("hub-view").style.display = "none";
+      document.getElementById("apps-grid").style.display = "none";
+      document.getElementById("app-view").style.display = "";
+      document.getElementById("help").style.display = "";
+      document.getElementById("features-section").style.display = "";
+      document.getElementById("faq").style.display = "";
+      document.getElementById("contact-section").style.display = "";
+
+      setTheme(app);
+      fillAppText(app);
+      setGlobalAppLinks(app);
+      setDocumentTitle(`${app.name} Support`);
+
+      document.getElementById("hero-description").textContent = app.heroDescription;
+      document.getElementById("support-intro").textContent = `${app.shortDescription} This page gives users one clear place to handle setup, privacy requests, and everyday troubleshooting for ${app.name}.`;
+      document.getElementById("support-callout").textContent = app.status === "development" ? `${app.name} is still in development. Tap any main action to view the coming-soon message.` : `For ${app.name} support, email ${app.supportEmail}. Include your device type, operating system version, the app version you are using, and a concise description of the issue.`;
+      document.getElementById("support-status").textContent = app.status === "development" ? `${app.name} is still in development.` : `${app.name} is currently positioned as available for active support and store-facing use.`;
+      document.getElementById("footer-copy").textContent = `${app.name} support and legal pages operated by ${TECH_AND_FAITH.legalName}. ${TECH_AND_FAITH.copyright}`;
+
+      const emailHref = app.status === "development" ? "#" : `mailto:${app.supportEmail}?subject=${encodeURIComponent(app.name + " Support Request")}`;
+      document.getElementById("support-email").href = emailHref;
+      document.getElementById("callout-email").href = emailHref;
+
+      document.getElementById("support-topics").innerHTML = app.supportTopics.map((item, index) => `
+        <article class="grid-card" data-reveal data-delay="${index % 3}">
+          <div class="grid-card__eyebrow">${item.eyebrow}</div>
+          <h3>${item.title}</h3>
+          <p>${item.text}</p>
+        </article>
+      `).join("");
+
+      document.getElementById("feature-grid").innerHTML = app.features.map((item, index) => `
+        <article class="grid-card" data-reveal data-delay="${(index % 3) + 1}">
+          <div class="grid-card__eyebrow">${app.name}</div>
+          <h3>${item.title}</h3>
+          <p>${item.text}</p>
+        </article>
+      `).join("");
+
+      document.getElementById("faq-list").innerHTML = app.faq.map((item, index) => `
+        <details class="faq-item" data-reveal data-delay="${(index % 3) + 1}">
+          <summary>${item.q}</summary>
+          <p>${item.a}</p>
+        </details>
+      `).join("");
+
+      disableActionsForDevelopment(app, ["#support-email", "#callout-email"]);
+      revealOnScroll();
+    })();
+  </script>
+</body>
+</html>

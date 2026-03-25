@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#07111f">
+  <title>Marketing Page</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="nav">
+      <div class="container nav__inner">
+        <a class="brand" data-link="support" href="index.html">
+          <span class="brand__mark" data-app-icon>APP</span>
+          <span class="brand__copy">
+            <span class="brand__title"><span data-app-name>App</span> Marketing</span>
+            <span class="brand__sub">Store-friendly overview and brand page</span>
+          </span>
+        </a>
+        <nav class="nav__links">
+          <a data-link="support" href="index.html">Support</a>
+          <a data-link="privacy" href="privacy.html">Privacy</a>
+          <a data-link="apps" href="apps.html">Store Links</a>
+        </nav>
+        <div class="nav__right">
+          <a class="nav__cta" data-link="apps" href="apps.html">Download Paths</a>
+          <div class="brand-partner"><img class="brand-partner__image" data-brand-image src="" alt=""></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="hero">
+        <div class="hero-card">
+          <div data-reveal>
+            <div class="eyebrow"><strong>Marketing</strong> Sleek, clean, 2026 style</div>
+            <h1><span class="gradient-text" data-app-name>App</span> presented with bold type, strong spacing, and premium motion.</h1>
+            <p class="lede" id="marketing-intro"></p>
+            <div class="hero-actions">
+              <a class="btn btn--primary" id="marketing-ios" href="#">Open iOS Listing</a>
+              <a class="btn btn--secondary" id="marketing-android" href="#">Open Android Listing</a>
+            </div>
+          </div>
+          <aside class="meta-panel" data-reveal data-delay="1">
+            <div class="eyebrow"><strong>Operator</strong> Tech & Faith</div>
+            <div class="copy-block">
+              <p>Managed by <strong data-brand-legal>Tech & Faith LLC</strong>.</p>
+              <p>Contact: <span data-support-email>tech.and.faith.contact@gmail.com</span></p>
+              <p id="marketing-status"></p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-header" data-reveal>
+          <div class="eyebrow"><strong>Overview</strong> Big-text landing page copy</div>
+          <h2>Mobile-first design that still feels expansive.</h2>
+          <p>This page can serve as the public-facing marketing URL for the selected app while keeping the look aligned with the support and privacy pages.</p>
+        </div>
+        <div class="grid three-up" id="marketing-grid"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <div class="footer__copy" id="marketing-footer"></div>
+        <div class="brand-partner footer__brand"><img class="brand-partner__image" data-brand-image src="" alt=""></div>
+        <nav class="footer__nav">
+          <a data-link="support" href="index.html">Support</a>
+          <a data-link="privacy" href="privacy.html">Privacy</a>
+          <a data-link="apps" href="apps.html">Store Links</a>
+        </nav>
+      </div>
+    </footer>
+  </div>
+
+  <script src="redirects.js"></script>
+  <script src="config.js"></script>
+  <script src="site.js"></script>
+  <script>
+    (function () {
+      const app = getAppConfig() || APP_CONFIG[DEFAULT_APP_KEY];
+      setTheme(app);
+      fillAppText(app);
+      setGlobalAppLinks(app);
+      setBrandAssets();
+      setDocumentTitle(`${app.name} Marketing`);
+
+      document.getElementById("marketing-intro").textContent = `${app.marketingIntro} This marketing page is built to feel sleek and encouraging on mobile, with large typography, glassy surfaces, subtle motion, and direct paths to both app stores.`;
+      document.getElementById("marketing-status").textContent = app.status === "development" ? `${app.name} is still in development and may not yet have public store listings.` : `${app.name} is presented with live store-oriented support and marketing materials.`;
+      document.getElementById("marketing-footer").textContent = `${app.name} marketing page operated by ${TECH_AND_FAITH.legalName}. ${TECH_AND_FAITH.copyright}`;
+      document.getElementById("marketing-ios").href = app.iosUrl && app.iosUrl !== "#" ? app.iosUrl : "#";
+      document.getElementById("marketing-android").href = app.androidUrl && app.androidUrl !== "#" ? app.androidUrl : "#";
+
+      const cards = [
+        { title: "Brand clarity", text: `${app.name} shows up consistently across the support page, privacy page, marketing page, and store chooser without manual rewrites in each file.` },
+        { title: "Mission fit", text: `${app.shortDescription} The page keeps the tone clean, welcoming, and easy to understand for mobile visitors.` },
+        { title: "Mobile-first rhythm", text: `Spacing, line lengths, call-to-action buttons, and information density are all tuned to feel native on modern phones first and then scale up.` }
+      ];
+
+      document.getElementById("marketing-grid").innerHTML = cards.map((item, index) => `
+        <article class="grid-card" data-reveal data-delay="${(index % 3) + 1}">
+          <div class="grid-card__eyebrow">${app.category}</div>
+          <h3>${item.title}</h3>
+          <p>${item.text}</p>
+        </article>
+      `).join("");
+
+      disableActionsForDevelopment(app, ["#marketing-ios", "#marketing-android"]);
+      revealOnScroll();
+    })();
+  </script>
+</body>
+</html>

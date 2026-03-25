@@ -1,0 +1,9 @@
+- [x] Create one shared redirect/link file for store URLs, support email, and Tech & Faith logo links
+- [x] Route every support and email reference to `tech.and.faith.contact@gmail.com`
+- [x] Remove localhost URL snapshot blocks, submission-reference panels, and search UI
+- [x] Update app copy for RAW, All Nations, Revealed Mysteries, Lions Den, and NeuroEdge
+- [x] Mark Lions Den and NeuroEdge as in development where appropriate
+- [x] Refresh the store chooser with iOS/Android branding colors and logos
+- [x] Add Tech & Faith branding at the top right and bottom center of each page
+- [x] Strengthen the privacy page with more protective operator-liability language
+- [x] Keep all redirect-style values centralized for easy future updates

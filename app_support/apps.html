@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#07111f">
+  <title>App Store Links</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="nav">
+      <div class="container nav__inner">
+        <a class="brand" data-link="support" href="index.html">
+          <span class="brand__mark">TF</span>
+          <span class="brand__copy">
+            <span class="brand__title">Tech & Faith Store Links</span>
+            <span class="brand__sub">Choose iOS or Android, then choose the app</span>
+          </span>
+        </a>
+        <nav class="nav__links">
+          <a data-link="support" href="index.html">Support</a>
+          <a data-link="privacy" href="privacy.html">Privacy</a>
+          <a data-link="marketing" href="marketing.html">Marketing</a>
+        </nav>
+        <div class="nav__right">
+          <a class="nav__cta" data-link="support" href="index.html">Back to Support</a>
+          <div class="brand-partner"><img class="brand-partner__image" data-brand-image src="" alt=""></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="hero">
+        <div class="hero-card">
+          <div data-reveal>
+            <div class="eyebrow"><strong>Download Flow</strong> Platform chooser first</div>
+            <h1>Tap your platform, then open the right <span class="gradient-text">store listing</span>.</h1>
+            <p class="lede">This page is built for phones first. Users choose iOS or Android, then pick from the five approved apps and jump directly into the correct store destination for that platform. Coming-soon apps show an explanatory popup instead of a live button.</p>
+          </div>
+          <aside class="meta-panel" data-reveal data-delay="1">
+            <div class="eyebrow"><strong>Tech & Faith</strong> Central download hub</div>
+            <p class="lede" style="margin:0;">Use this page to route users to the correct mobile store or to show when an app is still in development.</p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-header" data-reveal>
+          <div class="eyebrow"><strong>Step 1</strong> Choose a platform</div>
+          <h2>iOS or Android.</h2>
+          <p>Once a platform is selected, the app cards below update instantly with the correct store destination and call-to-action label.</p>
+        </div>
+        <div class="platform-switch">
+          <button class="platform-button platform-button--ios active" id="ios-button" type="button">
+            <span class="platform-button__row">
+              <span class="platform-button__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M15.15 12.93c.03 3.06 2.68 4.08 2.71 4.09-.02.07-.42 1.45-1.39 2.87-.84 1.23-1.72 2.46-3.1 2.49-1.35.03-1.79-.8-3.34-.8-1.55 0-2.04.78-3.31.83-1.33.05-2.35-1.34-3.2-2.56-1.73-2.5-3.05-7.06-1.28-10.14.88-1.53 2.46-2.49 4.17-2.52 1.3-.03 2.53.88 3.34.88.81 0 2.34-1.09 3.95-.93.67.03 2.54.27 3.75 2.05-.1.06-2.23 1.3-2.2 3.74Zm-2.66-6.67c.71-.86 1.19-2.05 1.06-3.24-1.02.04-2.25.68-2.98 1.54-.65.75-1.22 1.95-1.06 3.1 1.14.09 2.29-.58 2.98-1.4Z"/>
+                </svg>
+              </span>
+              <span><strong>iOS</strong><span>Open the Apple App Store version for each app.</span></span>
+            </span>
+          </button>
+          <button class="platform-button platform-button--android" id="android-button" type="button">
+            <span class="platform-button__row">
+              <span class="platform-button__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M7.4 7.2 5.7 4.1l.9-.5 1.8 3.2c1.1-.5 2.3-.8 3.6-.8s2.5.3 3.6.8l1.8-3.2.9.5-1.7 3.1c2.1 1.1 3.5 3 3.7 5.2H3.7c.2-2.2 1.6-4.1 3.7-5.2Zm3.1 10.8v4.2c0 .5-.4.8-.8.8H8.4c-.5 0-.8-.4-.8-.8V18H6.2c-.7 0-1.2-.5-1.2-1.2v-6.3h14v6.3c0 .7-.5 1.2-1.2 1.2h-1.4v4.2c0 .5-.4.8-.8.8h-1.3c-.5 0-.8-.4-.8-.8V18h-3Zm-2.5-6.3a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6Zm8 0a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6Z"/>
+                </svg>
+              </span>
+              <span><strong>Android</strong><span>Open the Google Play listing for each app.</span></span>
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-header" data-reveal>
+          <div class="eyebrow"><strong>Step 2</strong> Choose the app</div>
+          <h2>All five apps in one sleek chooser.</h2>
+          <p>The currently selected platform appears in the card button text so users know exactly where they are going before they tap.</p>
+        </div>
+        <div class="store-grid" id="store-grid"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <div class="footer__copy">Direct iOS and Android app download chooser for RAW, All Nations, Revealed Mysteries, Lions Den, and NeuroEdge.</div>
+        <div class="brand-partner footer__brand"><img class="brand-partner__image" data-brand-image src="" alt=""></div>
+        <nav class="footer__nav">
+          <a data-link="support" href="index.html">Support</a>
+          <a data-link="privacy" href="privacy.html">Privacy</a>
+          <a data-link="marketing" href="marketing.html">Marketing</a>
+        </nav>
+      </div>
+    </footer>
+  </div>
+
+  <script src="redirects.js"></script>
+  <script src="config.js"></script>
+  <script src="site.js"></script>
+  <script>
+    (function () {
+      const app = getAppConfig() || APP_CONFIG[DEFAULT_APP_KEY];
+      let platform = "ios";
+
+      setTheme(app);
+      fillAppText(app);
+      setGlobalAppLinks(app);
+      setBrandAssets();
+      setDocumentTitle("App Store Links");
+
+      const grid = document.getElementById("store-grid");
+      const iosButton = document.getElementById("ios-button");
+      const androidButton = document.getElementById("android-button");
+
+      function syncPlatform(next) {
+        platform = next;
+        iosButton.classList.toggle("active", platform === "ios");
+        androidButton.classList.toggle("active", platform === "android");
+        renderStoreCards(grid, platform);
+      }
+
+      iosButton.addEventListener("click", () => syncPlatform("ios"));
+      androidButton.addEventListener("click", () => syncPlatform("android"));
+
+      syncPlatform("ios");
+      revealOnScroll();
+    })();
+  </script>
+</body>
+</html>

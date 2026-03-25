@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#07111f">
+  <title>Privacy Policy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="nav">
+      <div class="container nav__inner">
+        <a class="brand" data-link="support" href="index.html">
+          <span class="brand__mark" data-app-icon>APP</span>
+          <span class="brand__copy">
+            <span class="brand__title"><span data-app-name>App</span> Privacy</span>
+            <span class="brand__sub">Detailed operator-protective policy</span>
+          </span>
+        </a>
+        <nav class="nav__links">
+          <a data-link="support" href="index.html">Support</a>
+          <a data-link="marketing" href="marketing.html">Marketing</a>
+          <a data-link="apps" href="apps.html">Store Links</a>
+        </nav>
+        <div class="nav__right">
+          <a class="nav__cta" data-link="support" href="index.html">Help Center</a>
+          <div class="brand-partner"><img class="brand-partner__image" data-brand-image src="" alt=""></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="hero">
+        <div class="hero-card">
+          <div data-reveal>
+            <div class="eyebrow"><strong>Privacy Policy</strong> Detailed and protective</div>
+            <h1><span class="gradient-text" data-app-name>App</span> privacy policy built for clarity and broad protection.</h1>
+            <p class="lede" id="privacy-intro"></p>
+            <div class="button-row">
+              <a class="btn btn--primary" data-link="support" href="index.html">Open Support Page</a>
+              <a class="btn btn--secondary" data-link="marketing" href="marketing.html">Open Marketing Page</a>
+            </div>
+          </div>
+          <aside class="meta-panel" data-reveal data-delay="1">
+            <div class="eyebrow"><strong>Tech & Faith</strong> Operator and contact</div>
+            <div class="copy-block">
+              <p>Operator: <strong data-brand-legal>Tech & Faith LLC</strong></p>
+              <p>Contact email: <span data-support-email>tech.and.faith.contact@gmail.com</span></p>
+              <p>This policy reserves broad rights for the operator and is written to minimize operator exposure to claims to the fullest extent permitted by law.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="callout" data-reveal>
+          <strong>Effective date</strong>
+          <p>Effective March 25, 2026.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-header" data-reveal>
+          <div class="eyebrow"><strong>Policy Scope</strong> Broad and specific</div>
+          <h2>Detailed handling of data, support, service operations, and liability limits.</h2>
+          <p>This policy is intentionally broad and specific so the support, legal, and app-store surfaces all feel cohesive. It is written to protect the operator through clear disclosures, reservation of rights, and strong limitation language.</p>
+        </div>
+        <div class="legal-stack" id="legal-grid-top"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-header" data-reveal>
+          <div class="eyebrow"><strong>Full Policy</strong> Long-form legal copy</div>
+          <h2>Everything users should know before using <span data-app-name>App</span>.</h2>
+          <p>The sections below are intentionally detailed to cover operational, legal, support-related, and risk-management scenarios.</p>
+        </div>
+        <div class="legal-stack" id="policy-sections"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <div class="footer__copy" id="privacy-footer"></div>
+        <div class="brand-partner footer__brand"><img class="brand-partner__image" data-brand-image src="" alt=""></div>
+        <nav class="footer__nav">
+          <a data-link="support" href="index.html">Support</a>
+          <a data-link="marketing" href="marketing.html">Marketing</a>
+          <a data-link="apps" href="apps.html">Store Links</a>
+        </nav>
+      </div>
+    </footer>
+  </div>
+
+  <script src="redirects.js"></script>
+  <script src="config.js"></script>
+  <script src="site.js"></script>
+  <script>
+    (function () {
+      const app = getAppConfig() || APP_CONFIG[DEFAULT_APP_KEY];
+      setTheme(app);
+      fillAppText(app);
+      setGlobalAppLinks(app);
+      setBrandAssets();
+      setDocumentTitle(`${app.name} Privacy Policy`);
+
+      document.getElementById("privacy-intro").textContent = `${app.name} is offered by ${TECH_AND_FAITH.legalName}. This policy is intentionally broad and protective, and it reserves extensive rights for the operator in connection with ${app.privacyFocus}, legal compliance, service administration, and risk management.`;
+      document.getElementById("privacy-footer").textContent = `${app.name} privacy policy page operated by ${TECH_AND_FAITH.legalName}. ${TECH_AND_FAITH.copyright}`;
+
+      const topCards = [
+        { title: "Information collected", text: `${app.name} may collect information users provide directly, including names, usernames, email addresses, support content, account preferences, subscription context, and any materials voluntarily submitted through forms, messages, or feedback channels.` },
+        { title: "Technical and device data", text: `The service may automatically receive device type, operating system data, app version, language, rough region, diagnostic logs, push token state, crash details, network indicators, and interaction signals needed to operate, secure, and improve ${app.name}.` },
+        { title: "Why the data is used", text: `Data may be used to provide the service, maintain accounts, answer support requests, protect users, prevent fraud, analyze service quality, comply with law, investigate abuse, enforce terms, preserve platform integrity, and defend against claims.` },
+        { title: "Rights and operator protections", text: `Users may request access, correction, deletion, or additional information where applicable. ${app.name} may verify identity before acting on requests and may retain information when reasonably necessary for compliance, dispute resolution, fraud prevention, legal defense, recordkeeping, or security.` }
+      ];
+
+      document.getElementById("legal-grid-top").innerHTML = topCards.map((item, index) => `
+        <article class="legal-card copy-block" data-reveal data-delay="${(index % 3) + 1}">
+          <h3>${item.title}</h3>
+          <p>${item.text}</p>
+        </article>
+      `).join("");
+
+      const sections = [
+        { title: "1. Scope and acceptance", body: [`By downloading, installing, accessing, or using ${app.name}, a user acknowledges that this privacy policy applies to the app, related support channels, marketing pages, update pages, and any official web properties that reference the app.`, `${app.name} may update this policy from time to time to reflect operational changes, legal obligations, product changes, platform expectations, or security requirements. Continued use after an updated policy becomes effective may constitute acceptance of the revised version to the extent permitted by law.`] },
+        { title: "2. Information users choose to provide", body: [`Users may submit contact details, account details, profile information, billing context, customer-service messages, deletion requests, screenshots, attachments, and other content when interacting with ${app.name} or its support channels.`, `If a user submits information about another person, the user represents that they have the necessary authority or consent to provide that information. ${app.name} may decline to process submissions that appear unauthorized, inaccurate, abusive, incomplete, or unlawful.`] },
+        { title: "3. Information generated through use of the service", body: [`${app.name} may generate or log records tied to service usage, including timestamps, session events, feature interactions, referral context, campaign markers, support history, in-app status changes, and technical diagnostics.`, `These records may be used for internal administration, product performance analysis, abuse prevention, debugging, quality assurance, user support, incident review, business continuity, lawful record retention, and legal defense.`] },
+        { title: "4. Device, network, and technical signals", body: [`To maintain reliability and security, ${app.name} may process device identifiers, OS information, browser or webview data, app build details, connectivity signals, crash logs, and approximate location derived from IP or region-level device information.`, `${app.name} does not promise uninterrupted availability and may use diagnostics and technical metadata to investigate outages, abuse patterns, failed transactions, rendering issues, performance problems, and compatibility concerns across supported devices.`] },
+        { title: "5. Legal bases and business purposes", body: [`Where relevant, ${app.name} may rely on performance of a contract, legitimate interests, compliance with legal obligations, protection of vital interests, consent, or other recognized legal grounds to process information.`, `Processing purposes may include service delivery, personalization, fraud prevention, abuse review, analytics, infrastructure management, communications, subscription administration, legal defense, security monitoring, and corporate transaction planning.`] },
+        { title: "6. Sharing and disclosure", body: [`${app.name} may share information with service providers, infrastructure vendors, analytics partners, customer-support tools, payment or subscription platforms, legal advisors, auditors, insurers, law enforcement, regulators, or transaction counterparties when reasonably necessary and lawful.`, `Information may also be disclosed when required to comply with legal process, protect rights or safety, investigate fraud or misuse, enforce agreements, respond to claims, or preserve the security and integrity of the service, operators, users, or the public.`] },
+        { title: "7. International processing and storage", body: [`Information associated with ${app.name} may be processed or stored in jurisdictions different from a user's place of residence. Those jurisdictions may have different privacy laws or data-protection standards.`, `By using the service, users understand that their information may be transferred, processed, and stored where the operator or its service providers maintain facilities, subject to reasonable safeguards and lawful transfer mechanisms where applicable.`] },
+        { title: "8. Data retention", body: [`${app.name} may retain information for as long as reasonably necessary to provide the service, maintain records, comply with law, resolve disputes, prevent fraud, enforce agreements, and preserve operational continuity.`, `Even after deletion requests, backup records, legal holds, security logs, cached information, or limited archived data may persist for legitimate business, compliance, technical, or evidentiary reasons.`] },
+        { title: "9. Security and no absolute guarantee", body: [`${app.name} uses administrative, technical, and organizational measures intended to reduce unauthorized access, misuse, alteration, loss, or disclosure of information.`, `No system, service, database, transmission method, or platform integration can be guaranteed completely secure. Users understand that use of internet-connected services carries inherent risk and that ${app.name}, ${TECH_AND_FAITH.legalName}, and their owners, managers, members, operators, contractors, and representatives disclaim liability to the fullest extent permitted by law for unauthorized access, outages, data loss, user decisions, third-party conduct, platform actions, or damages of any kind arising from or related to the app, its content, its operation, or its unavailability.`] },
+        { title: "10. Broad limitation of liability", body: [`To the fullest extent permitted by applicable law, ${TECH_AND_FAITH.legalName}, its affiliates, members, managers, employees, volunteers, contractors, licensors, service providers, and representatives are not liable for any direct, indirect, incidental, consequential, special, exemplary, punitive, statutory, or other damages, losses, claims, costs, or liabilities arising out of or relating to ${app.name}, user reliance, inability to use the service, third-party platforms, data issues, business interruption, spiritual interpretation, financial interpretation, physical activity outcomes, content accuracy, account actions, security incidents, or technical malfunction.`, `If any limitation of liability is held unenforceable in a particular jurisdiction, the maximum aggregate liability of the operator and all related parties shall be limited to the minimum amount permitted under applicable law and, where allowed, shall not exceed the amount a user paid directly to access the app during the twelve months preceding the event giving rise to the claim.`] },
+        { title: "11. User responsibility and indemnity", body: [`Users are solely responsible for their own decisions, actions, interpretations, physical activity choices, financial choices, spiritual conclusions, communications, submissions, and reliance on any material made available through ${app.name}.`, `To the fullest extent permitted by law, users agree to defend, indemnify, and hold harmless ${TECH_AND_FAITH.legalName} and its related parties from and against claims, demands, liabilities, judgments, damages, losses, costs, and expenses, including reasonable attorneys' fees, arising from or relating to use of ${app.name}, violation of law, violation of rights, misuse of the service, submitted content, or breach of any applicable agreement or policy.`] },
+        { title: "12. Children's privacy", body: [`${app.name} is not directed to children under any minimum age prohibited by applicable law without appropriate authorization or lawful basis. If the operator learns that information was collected in a manner inconsistent with legal requirements, reasonable steps may be taken to review and address the matter.`, `Parents or guardians who believe a child has submitted personal information inappropriately may contact support for review.`] },
+        { title: "13. User choices, deletion, and objections", body: [`Depending on jurisdiction, users may have rights to access, correct, delete, restrict, object to, or receive a copy of certain information. Requests may be limited where exemptions apply or where verification is incomplete, excessive, repetitive, or inconsistent with security, legal, or operational obligations.`, `${app.name} may request identity verification before responding to privacy requests and may decline, delay, or narrow responses where necessary to prevent unauthorized disclosure or protect the rights of others.`] },
+        { title: "14. Third-party platforms and external services", body: [`${app.name} may rely on Apple, Google, hosting providers, analytics services, communication tools, crash-reporting services, or other third-party platforms. Their practices are governed by their own terms and policies.`, `The operator is not responsible for the privacy or security practices of third parties except to the extent required by applicable law. Users should review the policies of the platforms they use alongside ${app.name}.`] },
+        { title: "15. Enforcement, misuse, and protective rights", body: [`The operator may review, preserve, and disclose information when reasonably necessary to investigate misuse, protect the service, defend against claims, preserve evidence, identify technical threats, enforce community or platform rules, or support internal risk management.`, `Nothing in this policy limits the operator's right to cooperate with lawful investigations or to take protective action where abuse, fraud, security incidents, platform violations, or other harmful conduct is suspected.`] },
+        { title: "16. Contact information", body: [`Privacy and data requests relating to ${app.name} may be submitted to ${app.supportEmail}. Users should include the app name, the relevant email address or account identifier, the type of request, and any details needed to locate the record in question.`, `Submitting a request does not guarantee a particular outcome, timeline, or legal conclusion. Requests will be reviewed based on applicable obligations, available verification, and operational considerations.`] }
+      ];
+
+      document.getElementById("policy-sections").innerHTML = sections.map((section, index) => `
+        <article class="legal-card copy-block" data-reveal data-delay="${(index % 3) + 1}">
+          <h3>${section.title}</h3>
+          ${section.body.map((paragraph) => `<p>${paragraph}</p>`).join("")}
+        </article>
+      `).join("");
+
+      revealOnScroll();
+    })();
+  </script>
+</body>
+</html>
