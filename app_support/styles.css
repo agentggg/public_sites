@@ -191,8 +191,8 @@ svg {
 }
 
 .brand-partner__image {
-  width: 7rem;
-  height: 7rem;
+  width: 16rem;
+  height: 16rem;
   object-fit: contain;
   border-radius: 999px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
