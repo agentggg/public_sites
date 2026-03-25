@@ -191,8 +191,8 @@ svg {
 }
 
 .brand-partner__image {
-  width: 3.1rem;
-  height: 3.1rem;
+  width: 4.4rem;
+  height: 4.4rem;
   object-fit: contain;
   border-radius: 999px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
@@ -418,8 +418,8 @@ svg {
 
 .app-pick__badge,
 .store-card__mark {
-  width: 4.6rem;
-  height: 4.6rem;
+  width: 5.8rem;
+  height: 5.8rem;
   border-radius: 1rem;
   display: grid;
   place-items: center;

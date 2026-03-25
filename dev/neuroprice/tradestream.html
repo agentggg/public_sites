@@ -177,8 +177,8 @@ pre {
 
 <script>
 let schema = {};
-const API = "https://least-advertisements-hollow-normally.trycloudflare.com/neuro_filter"
-const DEVAPI = "http://127.0.0.1:8089/neuro_filter"
+const API = "https://least-advertisements-hollow-normally.trycloudflare.com/tradestream"
+const DEVAPI = "http://127.0.0.1:8089/tradestream"
 const formArea = document.getElementById("formArea");
 
 async function loadSchema() {
@@ -304,7 +304,7 @@ function updateJsonPreview(){
     symbol,
     asset_size:size,
     pip_unit:asset.pip_unit,
-    value_per_pip: pipValue,
+    asset_size_multiplier: pipValue,
     timeframe:document.getElementById("timeframe").value,
     notification_email:document.getElementById("notification_email").value
   };
@@ -348,7 +348,7 @@ document.getElementById("submitBtn")
     symbol,
     asset_size:size,
     pip_unit:asset.pip_unit,
-    value_per_pip:pipValue,
+    asset_size_multiplier:pipValue,
     timeframe:document.getElementById("timeframe").value,
     notification_email:email
   };
@@ -360,7 +360,7 @@ document.getElementById("submitBtn")
   message.style.display="none";
 
   try{
-    const response=await fetch(`${API}/trade-stream`,{
+    const response=await fetch(`${DEVAPI}`,{
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify(config)
