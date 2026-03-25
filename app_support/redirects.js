@@ -1,7 +1,7 @@
 const SITE_CONFIG = {
   // For local use keep this as "".
   // For GitHub Pages set it to your repo path, for example: "/PublicSites"
-  basePath: ""
+  basePath: "/public_sites"
 };
 
 const TECH_AND_FAITH = {
