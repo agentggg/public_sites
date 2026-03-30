@@ -7,6 +7,10 @@ const APP_CONFIG = {
     iconWord: "RAW",
     category: "Lifestyle",
     version: "1.0.0",
+    iconSrc: "assets/images/rawlogoblack-1024.png",
+    iosUrl: "https://apps.apple.com/us/app/raw/id6477408767",
+    androidUrl: "https://play.google.com/store/apps/details?id=com.agentofgod.RAW&pcampaignid=web_share",
+    status: "live",
     accent: "#ff6a3d",
     accentSoft: "#ffb36f",
     accentGlow: "rgba(255, 106, 61, 0.35)",
@@ -46,6 +50,10 @@ const APP_CONFIG = {
     iconWord: "AN",
     category: "Social Networking",
     version: "1.0.0",
+    iconSrc: "assets/images/allnations.jpg",
+    iosUrl: "https://apps.apple.com/us/app/all-nations/id6000000002",
+    androidUrl: "https://play.google.com/store/apps/details?id=com.stevensongerard.allnations",
+    status: "live",
     accent: "#33a6ff",
     accentSoft: "#77e2ff",
     accentGlow: "rgba(51, 166, 255, 0.35)",
@@ -85,6 +93,10 @@ const APP_CONFIG = {
     iconWord: "RM",
     category: "Lifestyle",
     version: "1.0.0",
+    iconSrc: "assets/images/revealed.png",
+    iosUrl: "https://apps.apple.com/us/app/revealed-mysteries/id6000000003",
+    androidUrl: "https://play.google.com/store/apps/details?id=com.stevensongerard.revealed",
+    status: "live",
     accent: "#8a7dff",
     accentSoft: "#ff8fbc",
     accentGlow: "rgba(138, 125, 255, 0.35)",
@@ -124,6 +136,10 @@ const APP_CONFIG = {
     iconWord: "LD",
     category: "Health & Fitness",
     version: "1.0.0",
+    iconSrc: "assets/images/lionsden.png",
+    iosUrl: "#",
+    androidUrl: "#",
+    status: "development",
     accent: "#ff9f43",
     accentSoft: "#ff5c39",
     accentGlow: "rgba(255, 159, 67, 0.35)",
@@ -164,6 +180,10 @@ const APP_CONFIG = {
     iconWord: "NE",
     category: "Finance",
     version: "1.0.0",
+    iconSrc: "assets/images/neuroprice.png",
+    iosUrl: "#",
+    androidUrl: "#",
+    status: "development",
     accent: "#18c48f",
     accentSoft: "#4fc3ff",
     accentGlow: "rgba(24, 196, 143, 0.35)",
@@ -300,7 +320,6 @@ function fillAppText(app) {
 
 function hydrateAppLinks() {
   APP_KEYS.forEach((key) => {
-    Object.assign(APP_CONFIG[key], APP_LINKS[key] || {});
     APP_CONFIG[key].supportEmail = TECH_AND_FAITH.supportEmail;
     APP_CONFIG[key].copyright = TECH_AND_FAITH.copyright;
     APP_CONFIG[key].iconSrc = sitePath(APP_CONFIG[key].iconSrc);
