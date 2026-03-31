@@ -24,6 +24,12 @@
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+@media (max-width: 719px) {
+  :root {
+    --nav-h: 50px;
+  }
+}
+
 *,
 *::before,
 *::after {
@@ -610,6 +616,48 @@ svg {
 
 [data-reveal][data-delay="3"] {
   transition-delay: 320ms;
+}
+
+@media (max-width: 719px) {
+  .nav__inner {
+    gap: 0.55rem;
+  }
+
+  .brand {
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .brand__mark {
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 0.6rem;
+    font-size: 0.62rem;
+  }
+
+  .brand__title {
+    font-size: 0.8rem;
+    line-height: 1.05;
+  }
+
+  .brand__sub {
+    display: none;
+  }
+
+  .nav__right {
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+
+  .nav__cta {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+  }
+
+  .brand-partner {
+    display: none;
+  }
 }
 
 @media (min-width: 720px) {
