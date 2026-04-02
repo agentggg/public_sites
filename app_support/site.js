@@ -158,3 +158,28 @@ function disableActionsForDevelopment(app, selectors) {
 function setDocumentTitle(title) {
   document.title = title;
 }
+
+function setShareMeta({ title, description, image, imageAlt } = {}) {
+  const values = {
+    title: title || "Tech in the hands of the righteous",
+    description: description || "Tech & Faith app support, store links, and privacy resources.",
+    image: image || sitePath(TECH_AND_FAITH.logoSrc),
+    imageAlt: imageAlt || TECH_AND_FAITH.logoAlt
+  };
+
+  const mappings = [
+    ["meta[name='description']", "content", values.description],
+    ["meta[property='og:title']", "content", values.title],
+    ["meta[property='og:description']", "content", values.description],
+    ["meta[property='og:image']", "content", values.image],
+    ["meta[property='og:image:alt']", "content", values.imageAlt],
+    ["meta[name='twitter:title']", "content", values.title],
+    ["meta[name='twitter:description']", "content", values.description],
+    ["meta[name='twitter:image']", "content", values.image]
+  ];
+
+  mappings.forEach(([selector, attribute, value]) => {
+    const node = document.querySelector(selector);
+    if (node) node.setAttribute(attribute, value);
+  });
+}

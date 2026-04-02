@@ -4,12 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="index,follow">
+  <meta name="description" content="Tech in the hands of the righteous. Tech & Faith app support, store links, and privacy resources.">
   <meta name="theme-color" content="#07111f">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Tech in the hands of the righteous">
+  <meta property="og:description" content="Tech & Faith app support, store links, and privacy resources.">
   <meta property="og:image" content="/assets/images/techandfaithlogo.png">
   <meta property="og:image:alt" content="Tech & Faith logo">
+  <meta name="twitter:title" content="Tech in the hands of the righteous">
+  <meta name="twitter:description" content="Tech & Faith app support, store links, and privacy resources.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="/assets/images/techandfaithlogo.png">
-  <title>App Store Links</title>
+  <title>Tech in the hands of the righteous</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
@@ -118,6 +124,7 @@
       fillAppText(app);
       setGlobalAppLinks(app);
       setBrandAssets();
+      setShareMeta();
       setDocumentTitle("App Store Links");
 
       const grid = document.getElementById("store-grid");
