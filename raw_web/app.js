@@ -80,6 +80,7 @@ const state = {
     startDate: "",
     endDate: "",
     owner: "",
+    secondaryOwner: "",
     color: "#00FF00",
   },
   managerSelectedDeliverableId: "",
@@ -88,6 +89,9 @@ const state = {
     detail: "",
     startDate: "",
     endDate: "",
+    owner: "",
+    secondaryOwner: "",
+    color: "#00FF00",
   },
 };
 
@@ -394,6 +398,9 @@ function setManagerSelectedDeliverable(deliverableId) {
       detail: deliverable.deliverableDetails || "",
       startDate: deliverable.deliverableStartDate || "",
       endDate: deliverable.deliverableEndDate || "",
+      owner: String(deliverable.deliverableOwnerUsername || deliverable.deliverableOwner || ""),
+      secondaryOwner: String(deliverable.deliverableSecondaryOwnerUsername || deliverable.deliverableSecondaryOwner || ""),
+      color: deliverable.deliverableColor || "#00FF00",
     };
   }
   render();
@@ -733,10 +740,17 @@ function renderManageProjectsPage() {
           </div>
           <div class="form-grid">
             <div class="field-group">
-              <label for="mgr-deliverable-owner">Owner</label>
+              <label for="mgr-deliverable-owner">Primary support</label>
               <select id="mgr-deliverable-owner" name="deliverableOwner">
-                <option value="">Select owner</option>
+                <option value="">Select primary support</option>
                 ${state.people.map((person) => `<option value="${escapeHtml(person.username)}" ${state.managerCreateDeliverable.owner === person.username ? "selected" : ""}>${escapeHtml(`${person.first_name || ""} ${person.last_name || ""}`.trim() || person.username)}</option>`).join("")}
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="mgr-deliverable-secondary-owner">Secondary support (optional)</label>
+              <select id="mgr-deliverable-secondary-owner" name="deliverableSecondaryOwner">
+                <option value="">Select secondary support</option>
+                ${state.people.map((person) => `<option value="${escapeHtml(person.username)}" ${state.managerCreateDeliverable.secondaryOwner === person.username ? "selected" : ""}>${escapeHtml(`${person.first_name || ""} ${person.last_name || ""}`.trim() || person.username)}</option>`).join("")}
               </select>
             </div>
             <div class="field-group">
@@ -777,10 +791,17 @@ function renderManageProjectsPage() {
           </div>
           <div class="form-grid">
             <div class="field-group">
-              <label for="add-deliverable-owner">Owner</label>
+              <label for="add-deliverable-owner">Primary support</label>
               <select id="add-deliverable-owner" name="owner">
-                <option value="">Select owner</option>
+                <option value="">Select primary support</option>
                 ${state.people.map((person) => `<option value="${escapeHtml(person.username)}" ${state.managerCreateDeliverable.owner === person.username ? "selected" : ""}>${escapeHtml(`${person.first_name || ""} ${person.last_name || ""}`.trim() || person.username)}</option>`).join("")}
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="add-deliverable-secondary-owner">Secondary support (optional)</label>
+              <select id="add-deliverable-secondary-owner" name="secondaryOwner">
+                <option value="">Select secondary support</option>
+                ${state.people.map((person) => `<option value="${escapeHtml(person.username)}" ${state.managerCreateDeliverable.secondaryOwner === person.username ? "selected" : ""}>${escapeHtml(`${person.first_name || ""} ${person.last_name || ""}`.trim() || person.username)}</option>`).join("")}
               </select>
             </div>
             <div class="field-group">
@@ -819,6 +840,22 @@ function renderManageProjectsPage() {
               <div class="field-group">
                 <label for="edit-deliverable-end">End date</label>
                 <input id="edit-deliverable-end" name="endDate" type="date" value="${escapeHtml(toDateInputValue(state.managerEditDeliverable.endDate))}">
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="field-group">
+                <label for="edit-deliverable-owner">Primary support</label>
+                <select id="edit-deliverable-owner" name="owner">
+                  <option value="">Select primary support</option>
+                  ${state.people.map((person) => `<option value="${escapeHtml(person.username)}" ${state.managerEditDeliverable.owner === person.username ? "selected" : ""}>${escapeHtml(`${person.first_name || ""} ${person.last_name || ""}`.trim() || person.username)}</option>`).join("")}
+                </select>
+              </div>
+              <div class="field-group">
+                <label for="edit-deliverable-secondary-owner">Secondary support (optional)</label>
+                <select id="edit-deliverable-secondary-owner" name="secondaryOwner">
+                  <option value="">Select secondary support</option>
+                  ${state.people.map((person) => `<option value="${escapeHtml(person.username)}" ${state.managerEditDeliverable.secondaryOwner === person.username ? "selected" : ""}>${escapeHtml(`${person.first_name || ""} ${person.last_name || ""}`.trim() || person.username)}</option>`).join("")}
+                </select>
               </div>
             </div>
             <button class="button" type="submit" ${state.managerSelectedDeliverableId ? "" : "disabled"}>Save Deliverable Changes</button>
@@ -1177,16 +1214,37 @@ function renderMyDeliverableCard(item) {
 }
 
 function renderDeliverableDetail(item) {
+  const ownerName = deliverableSupportName(item, "primary");
+  const secondaryOwnerName = deliverableSupportName(item, "secondary");
   return `
     <div class="detail-stack">
       <div class="detail-line"><strong>Name</strong><span>${escapeHtml(item.deliverableName || "Deliverable")}</span></div>
-      <div class="detail-line"><strong>Owner</strong><span>${escapeHtml(`${item.deliverableOwner__first_name || ""} ${item.deliverableOwner__last_name || ""}`.trim() || item.deliverableOwner || "Not listed")}</span></div>
+      <div class="detail-line"><strong>Primary Support</strong><span>${escapeHtml(ownerName || "Not listed")}</span></div>
+      <div class="detail-line"><strong>Secondary Support</strong><span>${escapeHtml(secondaryOwnerName || "Not listed")}</span></div>
       <div class="detail-line"><strong>Status</strong><span>${escapeHtml(String(item.deliverableStatus || item.deliverableCompleted || "In progress"))}</span></div>
       <div class="detail-line"><strong>Start</strong><span>${escapeHtml(item.deliverableStartDate || "TBD")}</span></div>
       <div class="detail-line"><strong>End</strong><span>${escapeHtml(item.deliverableEndDate || "TBD")}</span></div>
       <div class="detail-block"><strong>Details</strong><p>${escapeHtml(item.deliverableDetails || "No additional details have been added yet.")}</p></div>
     </div>
   `;
+}
+
+function deliverableSupportName(item, type = "primary") {
+  if (type === "secondary") {
+    return (
+      item.deliverableSecondaryOwnerName ||
+      item.deliverableSecondaryOwnerUsername ||
+      item.deliverableSecondaryOwner ||
+      ""
+    );
+  }
+  return (
+    item.deliverableOwnerName ||
+    `${item.deliverableOwner__first_name || ""} ${item.deliverableOwner__last_name || ""}`.trim() ||
+    item.deliverableOwnerUsername ||
+    item.deliverableOwner ||
+    ""
+  );
 }
 
 function renderCommentItem(comment) {
@@ -1521,6 +1579,7 @@ async function handleCreateProject(event) {
   const deliverableStartDate = fromDateInputValue(String(formData.get("deliverableStartDate") || "").trim());
   const deliverableEndDate = fromDateInputValue(String(formData.get("deliverableEndDate") || "").trim());
   const deliverableOwner = String(formData.get("deliverableOwner") || "").trim();
+  const deliverableSecondaryOwner = String(formData.get("deliverableSecondaryOwner") || "").trim();
   const deliverableColor = String(formData.get("deliverableColor") || "").trim();
   if (deliverableName || deliverableDetails || deliverableOwner) {
     payload.deliverables.push({
@@ -1529,6 +1588,7 @@ async function handleCreateProject(event) {
       startDate: deliverableStartDate,
       endDate: deliverableEndDate,
       owner: deliverableOwner,
+      secondaryOwner: deliverableSecondaryOwner,
       color: deliverableColor,
     });
   }
@@ -1554,6 +1614,7 @@ async function handleCreateProject(event) {
       startDate: "",
       endDate: "",
       owner: currentUsername(),
+      secondaryOwner: "",
       color: "#00FF00",
     };
     flash("Project created.", "success");
@@ -1578,6 +1639,7 @@ async function handleAddDeliverable(event) {
     startDate: fromDateInputValue(String(formData.get("startDate") || "").trim()),
     endDate: fromDateInputValue(String(formData.get("endDate") || "").trim()),
     owner: String(formData.get("owner") || "").trim(),
+    secondaryOwner: String(formData.get("secondaryOwner") || "").trim(),
     color: String(formData.get("color") || "").trim(),
   };
 
@@ -1590,6 +1652,7 @@ async function handleAddDeliverable(event) {
       },
     });
     clearFormDraft("add-deliverable-form");
+    delete state.projectDeliverables[state.selectedProjectId];
     await loadProjectDeliverables(state.selectedProjectId);
     state.managerCreateDeliverable = {
       name: "",
@@ -1597,6 +1660,7 @@ async function handleAddDeliverable(event) {
       startDate: "",
       endDate: "",
       owner: currentUsername(),
+      secondaryOwner: "",
       color: "#00FF00",
     };
     flash("Deliverable added.", "success");
@@ -1624,6 +1688,8 @@ async function handleEditDeliverable(event) {
         detail: String(formData.get("detail") || "").trim(),
         startDate: fromDateInputValue(String(formData.get("startDate") || "").trim()),
         endDate: fromDateInputValue(String(formData.get("endDate") || "").trim()),
+        owner: String(formData.get("owner") || "").trim(),
+        secondaryOwner: String(formData.get("secondaryOwner") || "").trim(),
         projectName: Number(state.selectedProjectId),
       },
     });
