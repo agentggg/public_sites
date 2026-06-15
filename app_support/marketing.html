@@ -111,7 +111,7 @@
       setDocumentTitle(`${app.name} Marketing`);
 
       document.getElementById("marketing-intro").textContent = `${app.marketingIntro} This marketing page is built to feel sleek and encouraging on mobile, with large typography, glassy surfaces, subtle motion, and direct paths to both app stores.`;
-      document.getElementById("marketing-status").textContent = app.status === "development" ? `${app.name} is still in development and may not yet have public store listings.` : `${app.name} is presented with live store-oriented support and marketing materials.`;
+      document.getElementById("marketing-status").textContent = app.status === "development" ? `${app.name} is still in development and may not yet have public store listings.` : `${app.name} is live, with full support and marketing pages available.`;
       document.getElementById("marketing-footer").textContent = `${app.name} marketing page operated by ${TECH_AND_FAITH.legalName}. ${TECH_AND_FAITH.copyright}`;
       document.getElementById("marketing-ios").href = app.iosUrl && app.iosUrl !== "#" ? app.iosUrl : "#";
       document.getElementById("marketing-android").href = app.androidUrl && app.androidUrl !== "#" ? app.androidUrl : "#";
@@ -122,7 +122,7 @@
       }
 
       const cards = [
-        { title: "Brand clarity", text: `${app.name} shows up consistently across the support page, privacy page, marketing page, and store chooser without manual rewrites in each file.` },
+        { title: "Consistent experience", text: `${app.name} looks and reads the same across its support, privacy, marketing, and download pages, so everything stays clear and familiar.` },
         { title: "Mission fit", text: `${app.shortDescription} The page keeps the tone clean, welcoming, and easy to understand for mobile visitors.` },
         { title: "Mobile-first rhythm", text: `Spacing, line lengths, call-to-action buttons, and information density are all tuned to feel native on modern phones first and then scale up.` }
       ];

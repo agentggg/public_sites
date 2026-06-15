@@ -147,13 +147,13 @@ const APP_CONFIG = {
     storeLabel: "Workout, healthy exercise, gym, and raw gym energy. Coming soon.",
     headline: "A workout app that is still coming soon.",
     shortDescription: "Lions Den is a coming-soon workout app focused on healthy exercise, gym discipline, raw gym energy, and practical fitness momentum.",
-    heroDescription: "Lions Den is a coming-soon workout app being developed around healthy exercise, gym routines, raw gym energy, discipline, and consistent action. The support and marketing pages are ready early so store-facing information stays organized while the app continues development.",
+    heroDescription: "Lions Den is a coming-soon workout app built around healthy exercise, gym routines, raw gym energy, discipline, and consistent action. It is still in development right now, and this page shares what the app is about while that work continues.",
     marketingIntro: "Lions Den is being shaped as a bold, mobile-first workout, exercise, healthy-living, and gym experience.",
     privacyFocus: "account administration, app support, diagnostics, security review, and service development",
     comingSoonBlurb: "Lions Den is a workout app focused on healthy exercise, gym routines, raw gym discipline, and practical fitness momentum. It is still in development right now.",
     features: [
       { title: "Workout focus", text: "Lions Den is being built around practical training, healthy exercise, gym discipline, and consistent movement." },
-      { title: "Early support setup", text: "Store-facing support and legal pages are already organized while the product continues development." },
+      { title: "Ready when you are", text: "Support and privacy information is already in place so you know what to expect as the app gets closer to launch." },
       { title: "Clear expectations", text: "The site clearly signals that the app is still in development so people are not misled about availability." },
       { title: "Mobile-first buildout", text: "The presentation is optimized for phones and future app-store traffic from the start." }
     ],
@@ -169,7 +169,7 @@ const APP_CONFIG = {
       { q: "How do I contact support?", a: "Main actions for Lions Den currently show a coming-soon message because the app is still in development." },
       { q: "Can I report harmful behavior?", a: "Yes. Report behavior or content through in-app tools where available or send the details to support for review." },
       { q: "How do I request account deletion?", a: "Submit a deletion request through support and be prepared to verify ownership before any sensitive action is taken." },
-      { q: "Why does the site show different app names?", a: "The app key in the URL controls which of the five allowed app identities is rendered across the site." }
+      { q: "Where can I learn more about Lions Den?", a: "This page will keep the latest details about Lions Den as it moves toward launch. For questions, email tech.and.faith.contact@gmail.com." }
     ]
   },
   neuroprice: {

@@ -180,7 +180,7 @@
       document.getElementById("hero-description").textContent = app.heroDescription;
       document.getElementById("support-intro").textContent = `${app.shortDescription} This page gives users one clear place to handle setup, privacy requests, and everyday troubleshooting for ${app.name}.`;
       document.getElementById("support-callout").textContent = app.status === "development" ? `${app.name} is still in development. Tap any main action to view the coming-soon message.` : `For ${app.name} support, email ${app.supportEmail}. Include your device type, operating system version, the app version you are using, and a concise description of the issue.`;
-      document.getElementById("support-status").textContent = app.status === "development" ? `${app.name} is still in development.` : `${app.name} is currently positioned as available for active support and store-facing use.`;
+      document.getElementById("support-status").textContent = app.status === "development" ? `${app.name} is still in development.` : `${app.name} is live and actively supported.`;
       document.getElementById("footer-copy").textContent = `${app.name} support and legal pages operated by ${TECH_AND_FAITH.legalName}. ${TECH_AND_FAITH.copyright}`;
 
       const emailHref = app.status === "development" ? "#" : `mailto:${app.supportEmail}?subject=${encodeURIComponent(app.name + " Support Request")}`;
