@@ -64,13 +64,16 @@ function ensureComingSoonModal() {
 function showComingSoonModal(app) {
   ensureComingSoonModal();
   const modal = document.getElementById("coming-soon-modal");
-  document.getElementById("coming-soon-title").textContent = `${app.name} is still in development`;
-  document.getElementById("coming-soon-copy").textContent = app.comingSoonBlurb || `${app.name} is still in development.`;
+  const inDevelopment = app.status === "development";
+  document.getElementById("coming-soon-title").textContent = inDevelopment
+    ? `${app.name} is still in development`
+    : `${app.name} store listing is on the way`;
+  document.getElementById("coming-soon-copy").textContent = app.comingSoonBlurb || `${app.name} details are coming soon.`;
   modal.classList.remove("hidden");
 }
 
 function wireComingSoonAction(element, app) {
-  if (!element || !app || app.status !== "development") return;
+  if (!element || !app) return;
   element.addEventListener("click", (event) => {
     event.preventDefault();
     showComingSoonModal(app);
@@ -102,9 +105,10 @@ function renderStoreCards(container, platform) {
     const app = APP_CONFIG[key];
     const inDevelopment = app.status === "development";
     const url = platform === "android" ? app.androidUrl : app.iosUrl;
+    const noLink = inDevelopment || !url || url === "#";
     const card = document.createElement("a");
     card.className = "store-card";
-    if (inDevelopment || !url || url === "#") {
+    if (noLink) {
       card.href = "#";
       wireComingSoonAction(card, app);
     } else {
@@ -112,13 +116,20 @@ function renderStoreCards(container, platform) {
       card.target = "_blank";
       card.rel = "noreferrer";
     }
+    const cta = inDevelopment
+      ? "Still in development"
+      : noLink
+        ? "Listing coming soon"
+        : platform === "android"
+          ? "Open in Google Play"
+          : "Open in App Store";
     card.innerHTML = `
       <span class="store-card__mark"><img class="app-logo app-logo--card" src="${app.iconSrc}" alt="${app.name} app icon"></span>
       <span class="store-card__meta">
         <span class="store-card__name">${app.name}</span>
         <span class="store-card__desc">${app.storeLabel}</span>
       </span>
-      <span class="store-card__cta">${inDevelopment ? "Still in development" : platform === "android" ? "Open in Google Play" : "Open in App Store"}</span>
+      <span class="store-card__cta">${cta}</span>
       <span class="store-card__hint">Look for this icon when searching in the store.</span>
       ${inDevelopment ? '<span class="store-card__status">In Development</span>' : ""}
     `;

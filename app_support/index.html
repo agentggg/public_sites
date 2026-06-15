@@ -50,7 +50,7 @@
           <div data-reveal>
             <div class="eyebrow"><strong>Tech & Faith</strong> App hub</div>
             <h1>Tech & Faith builds mobile apps for faith, evangelism, dreams, fitness, and finance.</h1>
-            <p class="lede">Choose an app below to open its page. Live apps will take people straight in. Coming-soon apps like Lions Den and NeuroEdge will show a polished popup explaining what is on the way.</p>
+            <p class="lede">Choose an app below to open its page. Live apps will take people straight in. Coming-soon apps like Lions Den will show a polished popup explaining what is on the way.</p>
           </div>
         </div>
       </section>
@@ -59,7 +59,7 @@
         <div class="section-header" data-reveal>
           <div class="eyebrow"><strong>Our Apps</strong> Tech & Faith products</div>
           <h2>Explore what Tech & Faith is building.</h2>
-          <p>RAW focuses on real faith and ministry life. All Nations is an evangelism app to help evangelize and win souls to Jesus. Revealed Mysteries centers on dreams and prophetic understanding. Lions Den is a healthy exercise, workout, gym, and raw gym app coming soon. NeuroEdge is a stocks, investment, finances, and day trading app coming soon.</p>
+          <p>RAW focuses on real faith and ministry life. All Nations is an evangelism app to help evangelize and win souls to Jesus. Revealed Mysteries centers on dreams and prophetic understanding. Lions Den is a healthy exercise, workout, gym, and raw gym app coming soon. NeuroEdge is an app for learning how markets work, made for education and entertainment only and never financial advice.</p>
         </div>
         <div class="selector-grid" id="hub-selector"></div>
       </section>
@@ -83,6 +83,13 @@
               <p id="support-status"></p>
             </div>
           </aside>
+        </div>
+      </section>
+
+      <section class="section" id="disclaimer-section" style="display:none;">
+        <div class="callout" data-reveal>
+          <strong>Important: education and entertainment only</strong>
+          <p id="disclaimer-copy"></p>
         </div>
       </section>
 
@@ -156,6 +163,10 @@
       document.getElementById("hub-view").style.display = "none";
       document.getElementById("apps-grid").style.display = "none";
       document.getElementById("app-view").style.display = "";
+      if (app.disclaimer) {
+        document.getElementById("disclaimer-section").style.display = "";
+        document.getElementById("disclaimer-copy").textContent = app.disclaimer;
+      }
       document.getElementById("help").style.display = "";
       document.getElementById("features-section").style.display = "";
       document.getElementById("faq").style.display = "";

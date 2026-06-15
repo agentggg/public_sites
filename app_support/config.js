@@ -175,45 +175,46 @@ const APP_CONFIG = {
   neuroprice: {
     key: "neuroprice",
     name: "NeuroEdge",
-    tag: "Stocks, investment, finances, day trading.",
+    tag: "Learn how markets work — education and entertainment only.",
     icon: "N",
     iconWord: "NE",
-    category: "Finance",
+    category: "Education",
     version: "1.0.0",
     iconSrc: "assets/images/neuroprice.png",
     iosUrl: "#",
     androidUrl: "#",
-    status: "development",
+    status: "live",
     accent: "#18c48f",
     accentSoft: "#4fc3ff",
     accentGlow: "rgba(24, 196, 143, 0.35)",
     gradient: "linear-gradient(135deg, #0dce84 0%, #18c48f 40%, #4fc3ff 100%)",
-    storeLabel: "Stocks, investment, finances, and day trading. Coming soon.",
-    headline: "A day trading app that is still coming soon.",
-    shortDescription: "NeuroEdge is a coming-soon day trading app being developed around stocks, investment workflows, market decisions, and personal finances.",
-    heroDescription: "NeuroEdge is a coming-soon day trading app built around stocks, investment workflows, market awareness, and finance-focused mobile tools. The support and legal pages are in place early so app-store information, support contact details, and policy language are structured while the product continues development.",
-    marketingIntro: "NeuroEdge is being positioned as a sharp, mobile-first day trading experience with clean presentation for stocks, investments, and finances.",
-    privacyFocus: "account administration, support operations, diagnostics, fraud prevention, legal compliance, and service development",
-    comingSoonBlurb: "NeuroEdge is a day trading app focused on stocks, investing, market awareness, and finance-centered workflows. It is still in development right now.",
+    storeLabel: "A fun, simple way to learn how markets work. For education and entertainment only — not financial advice.",
+    headline: "Support for a market-learning app made purely for education and entertainment.",
+    shortDescription: "NeuroEdge is an educational and entertainment app that makes learning about stocks and markets simple and fun. It is not a trading or signal app, and it does not give financial advice.",
+    heroDescription: "NeuroEdge is built to help everyday people learn how markets work in a simple, fun, easy-to-follow way. It is for education and entertainment only. NeuroEdge is not a trading app, not a signal app, and it never gives financial, investment, or money advice. Nothing in it should be used to make real buying or selling decisions.",
+    marketingIntro: "NeuroEdge is a clean, mobile-first way to explore and learn about markets for fun. It is strictly an educational and entertainment experience, not a trading tool, not a signal service, and not financial advice.",
+    privacyFocus: "account administration, support operations, educational content delivery, diagnostics, and service maintenance",
+    disclaimer: "NeuroEdge is for educational and entertainment purposes only. It is NOT a trading app and NOT a signal service. It does not provide financial, investment, tax, or legal advice, and nothing in the app is a recommendation to buy, sell, or hold anything. Markets carry risk. Always do your own research and talk to a licensed professional before making any financial decision.",
+    comingSoonBlurb: "NeuroEdge is an educational and entertainment app for learning how markets work in a simple, fun way. It is not a trading or signal app and does not give financial advice.",
     features: [
-      { title: "Day trading focus", text: "NeuroEdge is being built around day trading workflows, stocks, investment decisions, and clean finance-focused mobile interaction." },
-      { title: "Development status", text: "The public-facing pages clearly show that the app is still in development while keeping support information ready." },
-      { title: "Clear legal structure", text: "Support, privacy, and marketing pages stay aligned without exposing unnecessary local URL details." },
-      { title: "Mobile-first flow", text: "The design stays large, sleek, and readable on phones, even before full product release." }
+      { title: "Learn the basics", text: "NeuroEdge breaks down how markets work in plain, everyday language so anyone can follow along and enjoy it." },
+      { title: "Education and entertainment only", text: "Everything inside is made for learning and fun. NeuroEdge is not a trading app, not a signal app, and it does not give financial advice." },
+      { title: "Simple and friendly", text: "Clean screens, easy wording, and a relaxed pace make it approachable for complete beginners and the curious." },
+      { title: "Do your own research", text: "NeuroEdge encourages people to keep learning and to talk to a licensed professional before making any real money decision." }
     ],
     supportTopics: [
-      { eyebrow: "Development", title: "Current release state", text: "NeuroEdge is still in development, so feature scope, availability, and release timing may change." },
-      { eyebrow: "Finance", title: "Core direction", text: "The product is being shaped around stocks, investment workflows, finances, and day trading support." },
-      { eyebrow: "Product", title: "Report issues", text: "Use the site to learn about the app and see its coming-soon details while launch work continues." },
-      { eyebrow: "Compliance", title: "Ask policy questions", text: "Contact support for privacy, data, or policy concerns tied to the app or its services." }
+      { eyebrow: "What it is", title: "Education and entertainment", text: "NeuroEdge is a learning and entertainment app about how markets work. It is not a trading or signal app and does not give financial advice." },
+      { eyebrow: "Getting started", title: "Jump right in", text: "Install NeuroEdge, set up your account, and start exploring simple, fun lessons about markets at your own pace." },
+      { eyebrow: "Using the app", title: "Everyday help", text: "Get help with loading, saved progress, notifications, and other common day-to-day questions." },
+      { eyebrow: "Privacy", title: "Submit requests", text: "Use the support email on this site for data access, correction, deletion, or policy questions." }
     ],
     faq: [
-      { q: "Is NeuroEdge available now?", a: "NeuroEdge is still in development, and public store availability may not yet be active." },
-      { q: "What kind of app is NeuroEdge?", a: "NeuroEdge is being developed as a stocks, investment, finances, and day trading app." },
-      { q: "What if data looks delayed?", a: "As the app is still in development, live-feature expectations and data behavior may change before release." },
-      { q: "Can I ask for deletion of my account data?", a: "Yes. Submit a support request and include enough information to verify the account before sensitive action is taken." },
-      { q: "Is this financial advice?", a: "No. NeuroEdge content, tools, and support materials are informational only and not individualized financial, investment, legal, or tax advice." },
-      { q: "How does the site know which app to show?", a: "The page accepts only the five approved keys and swaps the app branding and content automatically." }
+      { q: "What kind of app is NeuroEdge?", a: "NeuroEdge is an educational and entertainment app that helps people learn how markets work in a simple, fun way." },
+      { q: "Is NeuroEdge a trading or signal app?", a: "No. NeuroEdge is not a trading app and not a signal app. It does not place trades, send buy or sell signals, or tell anyone what to do with their money." },
+      { q: "Does NeuroEdge give financial advice?", a: "No. NeuroEdge is for education and entertainment only. Nothing in it is financial, investment, tax, or legal advice, and nothing is a recommendation to buy, sell, or hold anything. Always do your own research and talk to a licensed professional before making any financial decision." },
+      { q: "How do I contact support for NeuroEdge?", a: "Email tech.and.faith.contact@gmail.com and include the app name plus a short description of your question or issue." },
+      { q: "Can I request deletion of my account data?", a: "Yes. Submit a request through the support email on this site and include enough information to verify the account before any sensitive action is taken." },
+      { q: "Why is a feature not loading?", a: "First confirm you are on the latest version, then retry on a stable connection. If it continues, restart the app and send support a screenshot if you can." }
     ]
   }
 };
